@@ -1,0 +1,204 @@
+/* Custom Dialog Box Styles */
+.dialog-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+}
+
+.dialog-overlay.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.dialog-box {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow-y: auto;
+    transform: scale(0.7) translateY(20px);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.dialog-overlay.show .dialog-box {
+    transform: scale(1) translateY(0);
+}
+
+.dialog-header {
+    padding: 24px 24px 16px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dialog-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dialog-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.dialog-icon.success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.dialog-icon.error {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.dialog-icon.warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.dialog-icon.info {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.dialog-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.dialog-close:hover {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.dialog-body {
+    padding: 20px 24px;
+    color: #666;
+    line-height: 1.6;
+}
+
+.dialog-footer {
+    padding: 16px 24px 24px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+.dialog-btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.dialog-btn-primary {
+    background: linear-gradient(135deg, #000000, #333333);
+    color: white;
+}
+
+.dialog-btn-primary:hover {
+    background: linear-gradient(135deg, #333333, #555555);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.dialog-btn-secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.dialog-btn-secondary:hover {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.dialog-btn-danger {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.dialog-btn-danger:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .dialog-box {
+        width: 95%;
+        margin: 20px;
+    }
+    
+    .dialog-header {
+        padding: 20px 20px 12px;
+    }
+    
+    .dialog-body {
+        padding: 16px 20px;
+    }
+    
+    .dialog-footer {
+        padding: 12px 20px 20px;
+        flex-direction: column;
+    }
+    
+    .dialog-btn {
+        width: 100%;
+    }
+}
+
+/* Animation for dialog content */
+.dialog-content {
+    animation: slideInUp 0.3s ease;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

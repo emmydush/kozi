@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Dialog Demo - Household Connect</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/dialog.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .demo-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            padding: 40px;
+            margin: 50px auto;
+            max-width: 800px;
+        }
+        
+        .demo-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .demo-subtitle {
+            color: #666;
+            margin-bottom: 2rem;
+        }
+        
+        .demo-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .demo-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .demo-btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .demo-btn-error {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .demo-btn-warning {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+        
+        .demo-btn-info {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+        
+        .demo-btn-custom {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+        
+        .code-example {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 2rem;
+        }
+        
+        .code-example pre {
+            margin: 0;
+            color: #333;
+            font-size: 0.9rem;
+        }
+        
+        .feature-list {
+            list-style: none;
+            padding: 0;
+            margin: 2rem 0;
+        }
+        
+        .feature-list li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feature-list i {
+            color: #10b981;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="demo-container">
+            <h1 class="demo-title">Custom Dialog Box System</h1>
+            <p class="demo-subtitle">Modern, responsive, and customizable dialog boxes to replace browser alerts</p>
+            
+            <div class="demo-buttons">
+                <button class="demo-btn demo-btn-success" onclick="showSuccess()">
+                    <i class="fas fa-check"></i> Success Dialog
+                </button>
+                
+                <button class="demo-btn demo-btn-error" onclick="showError()">
+                    <i class="fas fa-times"></i> Error Dialog
+                </button>
+                
+                <button class="demo-btn demo-btn-warning" onclick="showWarning()">
+                    <i class="fas fa-exclamation-triangle"></i> Warning Dialog
+                </button>
+                
+                <button class="demo-btn demo-btn-info" onclick="showInfo()">
+                    <i class="fas fa-info-circle"></i> Info Dialog
+                </button>
+                
+                <button class="demo-btn demo-btn-custom" onclick="showCustom()">
+                    <i class="fas fa-magic"></i> Custom Dialog
+                </button>
+                
+                <button class="demo-btn demo-btn-warning" onclick="showConfirm()">
+                    <i class="fas fa-question"></i> Confirm Dialog
+                </button>
+            </div>
+            
+            <div class="feature-list">
+                <h3>Features:</h3>
+                <li><i class="fas fa-check-circle"></i> Modern, clean design with smooth animations</li>
+                <li><i class="fas fa-check-circle"></i> Responsive layout for mobile and desktop</li>
+                <li><i class="fas fa-check-circle"></i> Multiple dialog types (success, error, warning, info)</li>
+                <li><i class="fas fa-check-circle"></i> Customizable buttons and actions</li>
+                <li><i class="fas fa-check-circle"></i> Keyboard support (ESC to close)</li>
+                <li><i class="fas fa-check-circle"></i> Click outside to close (optional)</li>
+                <li><i class="fas fa-check-circle"></i> Promise-based API for async handling</li>
+            </div>
+            
+            <div class="code-example">
+                <h3>Usage Examples:</h3>
+                <pre>// Simple success dialog
+showAlert('Operation completed successfully!', 'success');
+
+// Error dialog
+showAlert('Something went wrong. Please try again.', 'error');
+
+// Confirmation dialog
+showConfirm('Are you sure you want to delete this item?', 
+    () => console.log('Confirmed'), 
+    () => console.log('Cancelled')
+);
+
+// Custom dialog with multiple buttons
+dialog.show({
+    title: 'Custom Dialog',
+    message: 'This is a custom dialog with multiple options.',
+    type: 'info',
+    buttons: [
+        { text: 'Option 1', type: 'secondary', action: () => console.log('Option 1') },
+        { text: 'Option 2', type: 'primary', action: () => console.log('Option 2') },
+        { text: 'Option 3', type: 'danger', action: () => console.log('Option 3') }
+    ]
+});</pre>
+            </div>
+        </div>
+    </div>
+
+    <script src="assets/js/dialog.js"></script>
+    <script>
+        function showSuccess() {
+            showAlert('Your profile has been updated successfully!', 'success', 'Profile Updated');
+        }
+        
+        function showError() {
+            showAlert('Failed to connect to the server. Please check your internet connection and try again.', 'error', 'Connection Error');
+        }
+        
+        function showWarning() {
+            showAlert('Your session will expire in 5 minutes. Please save your work.', 'warning', 'Session Expiry');
+        }
+        
+        function showInfo() {
+            showAlert('New features have been added to your dashboard. Check them out!', 'info', 'New Features Available');
+        }
+        
+        function showCustom() {
+            dialog.show({
+                title: 'Custom Action Required',
+                message: 'We need your permission to access your camera for profile verification. This helps us ensure to safety and security of our community.',
+                type: 'info',
+                buttons: [
+                    { 
+                        text: 'Not Now', 
+                        type: 'secondary', 
+                        action: () => console.log('Permission denied') 
+                    },
+                    { 
+                        text: 'Allow Camera', 
+                        type: 'primary', 
+                        action: () => {
+                            showAlert('Camera permission granted!', 'success');
+                        }
+                    }
+                ]
+            });
+        }
+        
+        function showConfirm() {
+            showConfirm(
+                'Are you sure you want to delete this job posting? This action cannot be undone.',
+                () => showAlert('Job posting deleted successfully!', 'success'),
+                () => showAlert('Action cancelled', 'info')
+            );
+        }
+    </script>
+</body>
+</html>

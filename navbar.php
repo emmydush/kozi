@@ -48,15 +48,13 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
             <div class="nav-item dropdown me-2 me-sm-3">
                 <a class="nav-link text-white p-2 p-sm-1" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 1.1rem;">
                     <i class="fas fa-bell"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.6rem;">
-                        3
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-count" style="font-size: 0.6rem;">
+                        0
                     </span>
                 </a>
-                <ul class="dropdown-menu dropdown-menu-end">
+                <ul class="dropdown-menu dropdown-menu-end" id="notifications-dropdown">
                     <li><h6 class="dropdown-header">Notifications</h6></li>
-                    <li><a class="dropdown-item" href="#">New job application received</a></li>
-                    <li><a class="dropdown-item" href="#">Payment confirmed</a></li>
-                    <li><a class="dropdown-item" href="#">New message from Marie</a></li>
+                    <li><div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Loading...</div></li>
                 </ul>
             </div>
             
@@ -64,8 +62,8 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
             <div class="nav-item me-2 me-sm-3">
                 <a class="nav-link text-white p-2 p-sm-1" href="messages.php" style="font-size: 1.1rem;">
                     <i class="fas fa-envelope"></i>
-                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info" style="font-size: 0.6rem;">
-                        5
+                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-info messages-count" style="font-size: 0.6rem;">
+                        0
                     </span>
                 </a>
             </div>
@@ -337,5 +335,72 @@ window.addEventListener('resize', function() {
     if (window.innerWidth >= 992) {
         sidebar.classList.remove('show');
     }
+});
+
+// Load notifications and messages dynamically
+function loadNotifications() {
+    fetch('api/notifications.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notificationCount = document.querySelector('.notification-count');
+                const dropdown = document.getElementById('notifications-dropdown');
+                
+                // Update count
+                notificationCount.textContent = data.data.unread_count;
+                notificationCount.style.display = data.data.unread_count > 0 ? 'inline-block' : 'none';
+                
+                // Update dropdown content
+                let html = '<li><h6 class="dropdown-header">Notifications</h6></li>';
+                
+                if (data.data.notifications.length === 0) {
+                    html += '<li><div class="dropdown-item text-muted">No new notifications</div></li>';
+                } else {
+                    data.data.notifications.forEach(notification => {
+                        html += `
+                            <li>
+                                <a class="dropdown-item" href="${notification.link}">
+                                    <div class="d-flex">
+                                        <i class="${notification.icon} me-2 text-muted"></i>
+                                        <div>
+                                            <div>${notification.message}</div>
+                                            <small class="text-muted">${notification.time}</small>
+                                        </div>
+                                    </div>
+                                </a>
+                            </li>
+                        `;
+                    });
+                }
+                
+                dropdown.innerHTML = html;
+            }
+        })
+        .catch(error => console.error('Error loading notifications:', error));
+}
+
+function loadMessagesCount() {
+    fetch('api/messages-count.php')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const messagesCount = document.querySelector('.messages-count');
+                messagesCount.textContent = data.data.unread_count;
+                messagesCount.style.display = data.data.unread_count > 0 ? 'inline-block' : 'none';
+            }
+        })
+        .catch(error => console.error('Error loading messages count:', error));
+}
+
+// Load notifications and messages when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    loadNotifications();
+    loadMessagesCount();
+    
+    // Refresh notifications every 30 seconds
+    setInterval(loadNotifications, 30000);
+    
+    // Refresh messages count every 30 seconds
+    setInterval(loadMessagesCount, 30000);
 });
 </script>

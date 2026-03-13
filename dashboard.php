@@ -33,6 +33,7 @@ if ($user_role === 'worker') {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="assets/css/dialog.css">
 <style>
         .sidebar {
             min-height: calc(100vh - 60px);
@@ -739,8 +740,11 @@ if ($user_role === 'worker') {
             <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
+            <a class="nav-link" href="job-applications.php">
+                <i class="fas fa-users"></i> Job Applications
+            </a>
             <a class="nav-link" href="workers.php">
-                <i class="fas fa-users"></i> Find Workers
+                <i class="fas fa-search"></i> Find Workers
             </a>
             <a class="nav-link" href="my-jobs.php">
                 <i class="fas fa-briefcase"></i> My Jobs
@@ -1037,6 +1041,7 @@ if ($user_role === 'worker') {
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
+    <script src="assets/js/dialog.js"></script>
     <script>
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
@@ -1732,13 +1737,77 @@ if ($user_role === 'worker') {
                                     </div>
                                     
                                     <!-- Skills Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4">
+                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-check-circle text-dark me-2"></i>Skills
                                             </h5>
                                         </div>
                                         ${getWorkerSkills(worker.skills)}
+                                    </div>
+                                    
+                                    <!-- Education Card -->
+                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                        <div class="card-header-modern mb-3">
+                                            <h5 class="mb-0 fw-bold text-dark">
+                                                <i class="fas fa-graduation-cap text-dark me-2"></i>Education
+                                            </h5>
+                                        </div>
+                                        <div class="education-content">
+                                            <p class="text-dark mb-0">${worker.education || 'Education information not provided'}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Languages Card -->
+                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                        <div class="card-header-modern mb-3">
+                                            <h5 class="mb-0 fw-bold text-dark">
+                                                <i class="fas fa-language text-dark me-2"></i>Languages
+                                            </h5>
+                                        </div>
+                                        <div class="languages-content">
+                                            <p class="text-dark mb-0">${worker.languages || 'Language information not provided'}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- National ID Card -->
+                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                        <div class="card-header-modern mb-3">
+                                            <h5 class="mb-0 fw-bold text-dark">
+                                                <i class="fas fa-id-card text-dark me-2"></i>Identity Verification
+                                            </h5>
+                                        </div>
+                                        <div class="id-content">
+                                            <div class="id-info mb-3">
+                                                <small class="text-muted d-block">National ID Number</small>
+                                                <span class="fw-semibold text-success">${worker.national_id || 'Not provided'}</span>
+                                            </div>
+                                            ${worker.national_id_photo ? `
+                                                <div class="id-photo">
+                                                    <small class="text-muted d-block mb-2">National ID Document</small>
+                                                    <img src="uploads/profiles/${worker.national_id_photo}" 
+                                                         alt="National ID" 
+                                                         class="img-thumbnail rounded" 
+                                                         style="max-width: 200px; cursor: pointer;"
+                                                         onclick="viewNationalIdModal('${worker.national_id_photo}', '${worker.name}')">
+                                                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="viewNationalIdModal('${worker.national_id_photo}', '${worker.name}')">
+                                                        <i class="fas fa-search me-1"></i>View Full Size
+                                                    </button>
+                                                </div>
+                                            ` : '<p class="text-muted mb-0">National ID photo not available</p>'}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Certifications Card -->
+                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                        <div class="card-header-modern mb-3">
+                                            <h5 class="mb-0 fw-bold text-dark">
+                                                <i class="fas fa-certificate text-dark me-2"></i>Certifications
+                                            </h5>
+                                        </div>
+                                        <div class="certifications-content">
+                                            <p class="text-dark mb-0">${worker.certifications || 'No certifications listed'}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2005,6 +2074,59 @@ if ($user_role === 'worker') {
                 });
             }
         });
+        
+        function viewNationalIdModal(photoFilename, workerName) {
+            // Create modal if it doesn't exist
+            if (!document.getElementById('nationalIdModal')) {
+                const modalHTML = `
+                    <div class="modal fade" id="nationalIdModal" tabindex="-1">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">National ID Document</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body text-center">
+                                    <h6 class="mb-3">Worker: <span id="nationalIdWorkerName"></span></h6>
+                                    <img id="nationalIdImage" src="" alt="National ID" class="img-fluid" style="max-height: 500px; border-radius: 8px;">
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                document.body.insertAdjacentHTML('beforeend', modalHTML);
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('nationalIdModal'));
+            const imageElement = document.getElementById('nationalIdImage');
+            const nameElement = document.getElementById('nationalIdWorkerName');
+            
+            imageElement.src = 'uploads/profiles/' + photoFilename;
+            nameElement.textContent = workerName;
+            modal.show();
+        }
     </script>
+    
+    <!-- National ID Modal -->
+    <div class="modal fade" id="nationalIdModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">National ID Document</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <h6 class="mb-3">Worker: <span id="nationalIdWorkerName"></span></h6>
+                    <img id="nationalIdImage" src="" alt="National ID" class="img-fluid" style="max-height: 500px; border-radius: 8px;">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
