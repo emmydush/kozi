@@ -8,7 +8,35 @@ if (!is_logged_in()) {
 
 // Get user role
 $user_role = $_SESSION['user_role'];
+$user_id = $_SESSION['user_id'];
 $user_name = $_SESSION['user_name'];
+
+// Fetch jobs from database
+$jobs = [];
+$sql = "SELECT j.*, u.name as employer_name, u.email as employer_email 
+        FROM jobs j 
+        JOIN users u ON j.employer_id = u.id 
+        WHERE j.status = 'active' 
+        ORDER BY j.created_at DESC";
+$result = $conn->query($sql);
+
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $jobs[] = $row;
+    }
+}
+
+// Get job statistics for filters
+$total_jobs = count($jobs);
+$job_types = [];
+$locations = [];
+
+foreach ($jobs as $job) {
+    $job_types[] = $job['job_type'];
+    $locations[] = $job['location'];
+}
+$unique_job_types = array_unique($job_types);
+$unique_locations = array_unique($locations);
 ?>
 
 <!DOCTYPE html>
@@ -19,41 +47,61 @@ $user_name = $_SESSION['user_name'];
     <title>Find Jobs - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 60px);
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             width: 250px;
             z-index: 1000;
             transition: all 0.3s;
+            transform: translateX(-100%);
+            border-radius: 0 20px 20px 0;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+        }
+        
+        .sidebar.show {
+            transform: translateX(0);
         }
         
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border-radius: 12px;
             margin: 5px 10px;
             transition: all 0.3s;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
         }
         
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            transform: translateX(5px);
         }
         
         .sidebar .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
             width: 20px;
+            font-size: 1rem;
         }
         
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
+            margin-left: 0;
+            padding: 15px;
+            min-height: calc(100vh - 60px);
+            margin-top: 60px;
+            background: #f8f9fa;
+        }
+        
+        body {
             background: #f8f9fa;
         }
         
@@ -61,6 +109,7 @@ $user_name = $_SESSION['user_name'];
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 20px 0 0;
         }
         
         .sidebar-header h3 {
@@ -69,47 +118,34 @@ $user_name = $_SESSION['user_name'];
             font-size: 1.2rem;
         }
         
-        .user-profile {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 24px;
-            color: #667eea;
-        }
-        
-        .user-name {
-            color: white;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .user-role {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-        
         .mobile-menu-toggle {
             display: none;
             position: fixed;
             top: 20px;
             left: 20px;
             z-index: 1001;
-            background: #667eea;
+            background: #000000;
             color: white;
             border: none;
             padding: 10px 15px;
             border-radius: 5px;
+        }
+        
+        @media (min-width: 992px) {
+            .sidebar {
+                transform: translateX(0);
+            }
+            
+            .main-content {
+                margin-left: 250px;
+                padding: 20px;
+            }
+        }
+        
+        @media (min-width: 768px) and (max-width: 991px) {
+            .sidebar {
+                width: 260px;
+            }
         }
         
         @media (max-width: 768px) {
@@ -141,28 +177,35 @@ $user_name = $_SESSION['user_name'];
             box-shadow: 0 4px 20px rgba(0,0,0,0.15);
         }
         
+        .status-badge {
+            font-size: 0.8rem;
+        }
+        
+        .job-card {
+            transition: transform 0.2s;
+            border: 2px solid #e9ecef;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
+        }
+        
+        .job-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-color: #000000;
+        }
+        
         .job-badge {
             font-size: 0.8rem;
         }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
+    <?php include 'navbar.php'; ?>
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
-        <div class="user-profile">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-name"><?php echo htmlspecialchars($user_name); ?></div>
-            <div class="user-role"><?php echo ucfirst(htmlspecialchars($user_role)); ?></div>
         </div>
         
         <nav class="nav flex-column p-3">
@@ -171,7 +214,7 @@ $user_name = $_SESSION['user_name'];
             </a>
             
             <?php if ($user_role === 'employer'): ?>
-            <a class="nav-link" href="#post-job">
+            <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
             <a class="nav-link" href="workers.php">
@@ -224,152 +267,171 @@ $user_name = $_SESSION['user_name'];
         <div class="row">
             <div class="col-12">
                 <h2>Find Jobs</h2>
-                <p class="text-muted">Browse available job opportunities</p>
+                <p class="text-muted">Discover available job opportunities in your area</p>
             </div>
         </div>
 
-        <!-- Filters -->
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-md-8">
+                <div class="input-group">
+                    <input type="text" class="form-control" placeholder="Search for jobs, keywords, or companies...">
+                    <button class="btn btn-dark" type="button">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle w-100" type="button" id="sortDropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-sort me-2"></i>Sort By
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-clock me-2"></i>Latest Posted</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-money-bill-wave me-2"></i>Salary: High to Low</a></li>
+                        <li><a class="dropdown-item" href="#"><i class="fas fa-map-marker-alt me-2"></i>Nearest First</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Pills -->
         <div class="row mb-4">
             <div class="col-12">
-                <div class="card">
-                    <div class="card-body">
-                        <h5 class="card-title">Filter Jobs</h5>
-                        <div class="row">
-                            <div class="col-md-3">
-                                <label class="form-label">Job Type</label>
-                                <select class="form-select" id="job-type-filter">
-                                    <option value="">All Types</option>
-                                    <option value="cleaning">Cleaning</option>
-                                    <option value="cooking">Cooking</option>
-                                    <option value="childcare">Childcare</option>
-                                    <option value="eldercare">Eldercare</option>
-                                    <option value="gardening">Gardening</option>
-                                    <option value="other">Other</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Location</label>
-                                <select class="form-select" id="location-filter">
-                                    <option value="">All Locations</option>
-                                    <option value="kigali">Kigali</option>
-                                    <option value="nyabugogo">Nyabugogo</option>
-                                    <option value="kicukiro">Kicukiro</option>
-                                    <option value="gasabo">Gasabo</option>
-                                    <option value="nyarugenge">Nyarugenge</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Salary Range</label>
-                                <select class="form-select" id="salary-filter">
-                                    <option value="">Any Salary</option>
-                                    <option value="0-50000">Below RWF 50,000</option>
-                                    <option value="50000-100000">RWF 50,000 - 100,000</option>
-                                    <option value="100000-150000">RWF 100,000 - 150,000</option>
-                                    <option value="150000+">Above RWF 150,000</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Work Hours</label>
-                                <select class="form-select" id="hours-filter">
-                                    <option value="">Any Hours</option>
-                                    <option value="full-time">Full-time</option>
-                                    <option value="part-time">Part-time</option>
-                                    <option value="weekend">Weekend Only</option>
-                                </select>
-                            </div>
-                        </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark dropdown-toggle" type="button" id="jobTypeDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-briefcase me-2"></i>Job Type
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="selectJobType('all')">All Types</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectJobType('cleaning')">Cleaning</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectJobType('cooking')">Cooking</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectJobType('childcare')">Childcare</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectJobType('eldercare')">Eldercare</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectJobType('gardening')">Gardening</a></li>
+                        </ul>
                     </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark dropdown-toggle" type="button" id="locationDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-map-marker-alt me-2"></i>Location
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="selectLocation('all')">All Locations</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectLocation('kigali')">Kigali</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectLocation('nyabugogo')">Nyabugogo</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectLocation('kicukiro')">Kicukiro</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectLocation('gasabo')">Gasabo</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectLocation('nyarugenge')">Nyarugenge</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark dropdown-toggle" type="button" id="salaryDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-money-bill-wave me-2"></i>Salary Range
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="selectSalary('all')">All Salaries</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectSalary('0-50000')">Below RWF 50,000</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectSalary('50000-100000')">RWF 50,000 - 100,000</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectSalary('100000-150000')">RWF 100,000 - 150,000</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectSalary('150000+')">Above RWF 150,000</a></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="dropdown">
+                        <button class="btn btn-outline-dark dropdown-toggle" type="button" id="hoursDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-clock me-2"></i>Work Hours
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="selectHours('all')">All Hours</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectHours('full-time')">Full-time</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectHours('part-time')">Part-time</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="selectHours('weekend')">Weekend Only</a></li>
+                        </ul>
+                    </div>
+                    
+                    <button class="btn btn-outline-secondary" onclick="clearFilters()">
+                        <i class="fas fa-times me-2"></i>Clear Filters
+                    </button>
+                </div>
+                
+                <!-- Active Filters Display -->
+                <div class="mt-3" id="active-filters">
+                    <small class="text-muted">No filters selected</small>
                 </div>
             </div>
         </div>
 
         <!-- Job Listings -->
         <div class="row" id="jobs-container">
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">House Cleaner Needed</h5>
-                            <span class="badge bg-success job-badge">Full-time</span>
-                        </div>
-                        <p class="card-text">Looking for an experienced house cleaner for a family home in Kigali. Responsibilities include cleaning, laundry, and occasional cooking.</p>
-                        <div class="mb-2">
-                            <span class="badge bg-primary">Cleaning</span>
-                            <span class="badge bg-info">Kigali</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong class="text-success">RWF 50,000/month</strong>
-                            <button class="btn btn-primary btn-sm">Apply Now</button>
-                        </div>
+            <?php if (empty($jobs)): ?>
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        No active jobs found at the moment. Please check back later.
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">Childcare Provider</h5>
-                            <span class="badge bg-warning job-badge">Part-time</span>
-                        </div>
-                        <p class="card-text">Need a reliable childcare provider for 2 children (ages 3 and 5). Must have experience with toddlers and be patient.</p>
-                        <div class="mb-2">
-                            <span class="badge bg-primary">Childcare</span>
-                            <span class="badge bg-info">Kicukiro</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong class="text-success">RWF 35,000/month</strong>
-                            <button class="btn btn-primary btn-sm">Apply Now</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">Weekend Gardener</h5>
-                            <span class="badge bg-info job-badge">Weekend</span>
-                        </div>
-                        <p class="card-text">Looking for someone to maintain garden and lawn on weekends. Knowledge of plants and basic landscaping required.</p>
-                        <div class="mb-2">
-                            <span class="badge bg-primary">Gardening</span>
-                            <span class="badge bg-info">Gasabo</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong class="text-success">RWF 20,000/weekend</strong>
-                            <button class="btn btn-primary btn-sm">Apply Now</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">Elderly Care Assistant</h5>
-                            <span class="badge bg-success job-badge">Full-time</span>
-                        </div>
-                        <p class="card-text">Seeking a compassionate caregiver for an elderly person. Duties include companionship, medication reminders, and light housekeeping.</p>
-                        <div class="mb-2">
-                            <span class="badge bg-primary">Eldercare</span>
-                            <span class="badge bg-info">Nyarugenge</span>
-                        </div>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <strong class="text-success">RWF 80,000/month</strong>
-                            <button class="btn btn-primary btn-sm">Apply Now</button>
+            <?php else: ?>
+                <?php foreach ($jobs as $job): ?>
+                    <div class="col-md-6 mb-4">
+                        <div class="card job-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title">
+                                        <?php 
+                                        $icons = [
+                                            'cleaning' => 'fa-broom',
+                                            'cooking' => 'fa-utensils',
+                                            'childcare' => 'fa-child',
+                                            'eldercare' => 'fa-user-nurse',
+                                            'gardening' => 'fa-seedling',
+                                            'other' => 'fa-briefcase'
+                                        ];
+                                        $icon = isset($icons[$job['job_type']]) ? $icons[$job['job_type']] : 'fa-briefcase';
+                                        ?>
+                                        <i class="fas <?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($job['title']); ?>
+                                    </h5>
+                                    <span class="badge bg-dark job-badge"><?php echo htmlspecialchars($job['work_hours']); ?></span>
+                                </div>
+                                <p class="card-text"><?php echo htmlspecialchars(substr($job['description'], 0, 150)) . '...'; ?></p>
+                                <div class="mb-2">
+                                    <span class="badge bg-dark">
+                                        <i class="fas fa-briefcase me-1"></i><?php echo ucfirst(htmlspecialchars($job['job_type'])); ?>
+                                    </span>
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($job['location']); ?>
+                                    </span>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <strong class="text-dark">
+                                        <i class="fas fa-money-bill-wave me-1"></i><?php echo format_currency($job['salary']); ?>
+                                        <?php echo strpos($job['work_hours'], 'weekend') !== false ? '/weekend' : '/month'; ?>
+                                    </strong>
+                                    <button class="btn btn-dark btn-sm" onclick="applyForJob(<?php echo $job['id']; ?>)">
+                                        <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
     <script>
+        // Filter state
+        let currentFilters = {
+            jobType: 'all',
+            location: 'all',
+            salary: 'all',
+            hours: 'all'
+        };
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
@@ -378,36 +440,197 @@ $user_name = $_SESSION['user_name'];
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-menu-toggle');
+            const toggle = document.getElementById('mobile-menu-toggle');
             
-            if (window.innerWidth <= 768 && 
+            if (window.innerWidth < 992 && 
                 !sidebar.contains(event.target) && 
-                !toggle.contains(event.target) && 
+                !toggle?.contains(event.target) && 
                 sidebar.classList.contains('show')) {
                 sidebar.classList.remove('show');
             }
         });
         
-        // Filter functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            const filters = ['job-type-filter', 'location-filter', 'salary-filter', 'hours-filter'];
-            
-            filters.forEach(filterId => {
-                document.getElementById(filterId).addEventListener('change', filterJobs);
-            });
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 992) {
+                sidebar.classList.remove('show');
+            }
         });
         
-        function filterJobs() {
-            // This would typically make an API call to filter jobs
-            console.log('Filtering jobs...');
-            // For demo purposes, we'll just show a message
-            const container = document.getElementById('jobs-container');
-            container.innerHTML = '<div class="col-12"><p class="text-center">Loading filtered jobs...</p></div>';
+        // Filter selection functions
+        function selectJobType(type) {
+            currentFilters.jobType = type;
+            updateButtonText('jobTypeDropdown', getJobTypeText(type));
+            updateActiveFilters();
+        }
+        
+        function selectLocation(location) {
+            currentFilters.location = location;
+            updateButtonText('locationDropdown', getLocationText(location));
+            updateActiveFilters();
+        }
+        
+        function selectSalary(salary) {
+            currentFilters.salary = salary;
+            updateButtonText('salaryDropdown', getSalaryText(salary));
+            updateActiveFilters();
+        }
+        
+        function selectHours(hours) {
+            currentFilters.hours = hours;
+            updateButtonText('hoursDropdown', getHoursText(hours));
+            updateActiveFilters();
+        }
+        
+        // Helper functions to get display text
+        function getJobTypeText(type) {
+            const types = {
+                'all': 'Job Type',
+                'cleaning': 'Cleaning',
+                'cooking': 'Cooking',
+                'childcare': 'Childcare',
+                'eldercare': 'Eldercare',
+                'gardening': 'Gardening'
+            };
+            return types[type] || 'Job Type';
+        }
+        
+        function getLocationText(location) {
+            const locations = {
+                'all': 'Location',
+                'kigali': 'Kigali',
+                'nyabugogo': 'Nyabugogo',
+                'kicukiro': 'Kicukiro',
+                'gasabo': 'Gasabo',
+                'nyarugenge': 'Nyarugenge'
+            };
+            return locations[location] || 'Location';
+        }
+        
+        function getSalaryText(salary) {
+            const salaries = {
+                'all': 'Salary Range',
+                '0-50000': 'Below RWF 50,000',
+                '50000-100000': 'RWF 50,000 - 100,000',
+                '100000-150000': 'RWF 100,000 - 150,000',
+                '150000+': 'Above RWF 150,000'
+            };
+            return salaries[salary] || 'Salary Range';
+        }
+        
+        function getHoursText(hours) {
+            const hoursMap = {
+                'all': 'Work Hours',
+                'full-time': 'Full-time',
+                'part-time': 'Part-time',
+                'weekend': 'Weekend Only'
+            };
+            return hoursMap[hours] || 'Work Hours';
+        }
+        
+        // Update dropdown button text
+        function updateButtonText(dropdownId, text) {
+            const button = document.getElementById(dropdownId);
+            if (button) {
+                // Keep the icon and update the text
+                const icon = button.querySelector('i').outerHTML;
+                button.innerHTML = icon + ' ' + text + ' <span class="dropdown-toggle"></span>';
+            }
+        }
+        
+        // Update active filters display
+        function updateActiveFilters() {
+            const container = document.getElementById('active-filters');
+            const filters = [];
             
+            if (currentFilters.jobType !== 'all') {
+                filters.push(`<span class="badge bg-dark me-2"><i class="fas fa-briefcase me-1"></i>${getJobTypeText(currentFilters.jobType)}</span>`);
+            }
+            
+            if (currentFilters.location !== 'all') {
+                filters.push(`<span class="badge bg-dark me-2"><i class="fas fa-map-marker-alt me-1"></i>${getLocationText(currentFilters.location)}</span>`);
+            }
+            
+            if (currentFilters.salary !== 'all') {
+                filters.push(`<span class="badge bg-dark me-2"><i class="fas fa-money-bill-wave me-1"></i>${getSalaryText(currentFilters.salary)}</span>`);
+            }
+            
+            if (currentFilters.hours !== 'all') {
+                filters.push(`<span class="badge bg-dark me-2"><i class="fas fa-clock me-1"></i>${getHoursText(currentFilters.hours)}</span>`);
+            }
+            
+            container.innerHTML = filters.length > 0 ? filters.join('') : '<small class="text-muted">No filters selected</small>';
+        }
+        
+        // Apply filters
+        function applyFilters() {
+            console.log('Applying filters:', currentFilters);
+            
+            // Show loading state
+            const container = document.getElementById('jobs-container');
+            container.innerHTML = '<div class="col-12"><p class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Filtering jobs...</p></div>';
+            
+            // Simulate API call
             setTimeout(() => {
-                location.reload(); // Reload to show all jobs for demo
+                // For demo purposes, just reload the page
+                // In a real application, you would make an API call here
+                location.reload();
             }, 1000);
         }
+        
+        // Clear all filters
+        function clearFilters() {
+            currentFilters = {
+                jobType: 'all',
+                location: 'all',
+                salary: 'all',
+                hours: 'all'
+            };
+            
+            // Reset button texts
+            updateButtonText('jobTypeDropdown', 'Job Type');
+            updateButtonText('locationDropdown', 'Location');
+            updateButtonText('salaryDropdown', 'Salary Range');
+            updateButtonText('hoursDropdown', 'Work Hours');
+            
+            updateActiveFilters();
+        }
+        
+        // Apply for job function
+        function applyForJob(jobId) {
+            <?php if ($user_role === 'worker'): ?>
+            if (confirm('Are you sure you want to apply for this job?')) {
+                fetch('api/apply-job.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ job_id: jobId })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Application submitted successfully!');
+                        location.reload();
+                    } else {
+                        alert(data.message || 'Application failed. Please try again.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Network error. Please try again.');
+                });
+            }
+            <?php else: ?>
+            alert('Only workers can apply for jobs. Please switch to worker account.');
+            <?php endif; ?>
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateActiveFilters();
+        });
     </script>
 </body>
 </html>

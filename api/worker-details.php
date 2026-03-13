@@ -10,8 +10,10 @@ try {
         json_response(['success' => false, 'message' => 'Worker ID is required'], 400);
     }
     
-    $sql = "SELECT w.*, COUNT(r.id) as review_count, AVG(r.rating) as avg_rating 
+    $sql = "SELECT w.*, u.name, u.email, u.phone, u.profile_image as user_profile_image,
+                   COUNT(r.id) as review_count, AVG(r.rating) as avg_rating 
             FROM workers w 
+            LEFT JOIN users u ON w.user_id = u.id 
             LEFT JOIN reviews r ON w.id = r.worker_id 
             WHERE w.id = ? AND w.status = 'active' 
             GROUP BY w.id";
@@ -26,11 +28,13 @@ try {
     }
     
     $worker = $result->fetch_assoc();
-    $worker['formatted_rate'] = format_currency($worker['hourly_rate']);
-    $worker['avg_rating'] = $worker['avg_rating'] ?: 0;
-    $worker['profile_image'] = $worker['profile_image'] ?: 'https://picsum.photos/seed/' . $worker['id'] . '/400/300.jpg';
     
-    // Get reviews
+    $worker['formatted_rate'] = isset($worker['hourly_rate']) ? format_currency($worker['hourly_rate']) : 'RWF 0';
+    $worker['avg_rating'] = $worker['avg_rating'] ?: 0;
+    $worker['review_count'] = $worker['review_count'] ?: 0;
+    
+    $worker['profile_image'] = $worker['user_profile_image'] ?: 'https://picsum.photos/seed/' . $worker['id'] . '/400/300.jpg';
+    
     $reviews_sql = "SELECT r.*, u.name as reviewer_name 
                     FROM reviews r 
                     LEFT JOIN users u ON r.user_id = u.id 

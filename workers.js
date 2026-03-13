@@ -18,17 +18,24 @@ function loadWorkers() {
     
     axios.get(`api/all-workers.php?${params.toString()}`)
         .then(response => {
-            const workers = response.data.data;
-            displayWorkers(workers);
-            
-            if (workers.length === 0) {
-                document.getElementById('workers-container').innerHTML = `
-                    <div class="col-12 text-center py-5">
-                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h4>No workers found</h4>
-                        <p class="text-muted">Try adjusting your filters or search criteria.</p>
-                    </div>
-                `;
+            if (response.data.success) {
+                const workers = response.data.data;
+                displayWorkers(workers);
+                
+                // Update results count
+                updateResultsCount(workers.length, response.data.pagination.total_items);
+                
+                if (workers.length === 0) {
+                    document.getElementById('workers-container').innerHTML = `
+                        <div class="col-12 text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h4>No workers found</h4>
+                            <p class="text-muted">Try adjusting your filters or search criteria.</p>
+                        </div>
+                    `;
+                }
+            } else {
+                showError(response.data.message || 'Failed to load workers');
             }
         })
         .catch(error => {
@@ -48,36 +55,18 @@ function displayWorkers(workers) {
 
 function createWorkerCard(worker) {
     const card = document.createElement('div');
-    card.className = 'col-md-6 col-lg-4 mb-4';
+    card.className = 'col-md-6 col-lg-3 mb-4';
     
-    const ratingStars = getRatingStars(worker.rating);
     const skills = worker.skills ? worker.skills.split(',').slice(0, 3) : [];
     
     card.innerHTML = `
-        <div class="card h-100 shadow-sm border-0 worker-card">
-            <img src="${worker.profile_image}" class="card-img-top" alt="${worker.name}" style="height: 250px; object-fit: cover;">
-            <div class="card-body d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="card-title">${worker.name}</h5>
-                    <span class="badge bg-success">${worker.type}</span>
-                </div>
-                <div class="mb-2">
-                    ${ratingStars} <small class="text-muted">(${worker.review_count} reviews)</small>
-                </div>
-                <p class="card-text text-muted small mb-2">${worker.description.substring(0, 100)}...</p>
-                <div class="mb-2">
-                    <small class="text-muted"><i class="fas fa-map-marker-alt"></i> ${worker.location}</small>
-                </div>
-                <div class="mb-3">
-                    ${skills.map(skill => `<span class="badge bg-light text-dark me-1">${skill}</span>`).join('')}
-                </div>
-                <div class="mt-auto">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <span class="fw-bold">${worker.formatted_rate}/hr</span>
-                        <span class="text-muted small">${worker.experience_years} yrs exp</span>
-                    </div>
-                    <a href="worker-details.php?id=${worker.id}" class="btn btn-primary mt-3 w-100">View Profile</a>
-                </div>
+        <div class="card h-100 shadow-sm border-0 worker-card modern-worker-card">
+            <div class="text-center p-3">
+                <img src="${worker.profile_image}" class="rounded-circle mb-3" alt="${worker.name}" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #f8f9fa;">
+                <h5 class="card-title mb-1 fw-bold">${worker.name}</h5>
+                <p class="text-muted mb-2">${worker.type}</p>
+                <p class="card-text text-muted small mb-3">${worker.description.substring(0, 80)}${worker.description.length > 80 ? '...' : ''}</p>
+                <a href="worker-details.php?id=${worker.id}" class="btn btn-primary w-100">View Profile</a>
             </div>
         </div>
     `;

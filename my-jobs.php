@@ -9,6 +9,98 @@ if (!is_logged_in()) {
 // Get user role
 $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
+$user_id = $_SESSION['user_id'];
+
+if ($user_role === 'employer') {
+    // Fetch jobs posted by employer
+    $jobs = [];
+    $sql = "SELECT j.*, 
+                   COUNT(ja.id) as application_count,
+                   SUM(CASE WHEN ja.status = 'accepted' THEN 1 ELSE 0 END) as accepted_count
+            FROM jobs j 
+            LEFT JOIN job_applications ja ON j.id = ja.job_id 
+            WHERE j.employer_id = ? 
+            GROUP BY j.id 
+            ORDER BY j.created_at DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $jobs[] = $row;
+        }
+    }
+    
+    // Calculate statistics
+    $total_posted = count($jobs);
+    $active_count = 0;
+    $filled_count = 0;
+    $total_applications = 0;
+    
+    foreach ($jobs as $job) {
+        if ($job['status'] === 'active') {
+            $active_count++;
+        } else if ($job['status'] === 'filled') {
+            $filled_count++;
+        }
+        $total_applications += $job['application_count'];
+    }
+    
+} else {
+    // Fetch active jobs for worker (accepted applications)
+    $active_jobs = [];
+    $sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.job_type,
+                   u.name as employer_name, u.email as employer_email,
+                   b.start_date, b.end_date, b.status as booking_status
+            FROM job_applications ja
+            JOIN jobs j ON ja.job_id = j.id
+            JOIN users u ON j.employer_id = u.id
+            LEFT JOIN bookings b ON ja.worker_id = b.worker_id AND ja.job_id = (SELECT id FROM jobs WHERE employer_id = b.user_id LIMIT 1)
+            WHERE ja.worker_id = ? AND ja.status = 'accepted'
+            ORDER BY ja.applied_at DESC";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result && $result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $active_jobs[] = $row;
+        }
+    }
+    
+    // Calculate worker statistics
+    $active_count = count($active_jobs);
+    
+    // Fetch completed jobs count
+    $completed_sql = "SELECT COUNT(*) as completed FROM earnings WHERE worker_id = ? AND payment_status = 'paid'";
+    $stmt = $conn->prepare($completed_sql);
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $completed_result = $stmt->get_result();
+    $completed_count = $completed_result->fetch_assoc()['completed'];
+    
+    // Calculate earnings
+    $this_month_sql = "SELECT COALESCE(SUM(amount), 0) as total FROM earnings 
+                      WHERE worker_id = ? AND payment_status = 'paid' 
+                      AND MONTH(work_date) = MONTH(CURRENT_DATE) AND YEAR(work_date) = YEAR(CURRENT_DATE)";
+    $stmt = $conn->prepare($this_month_sql);
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $month_result = $stmt->get_result();
+    $this_month_earnings = $month_result->fetch_assoc()['total'];
+    
+    // Calculate pending payments
+    $pending_sql = "SELECT COALESCE(SUM(amount), 0) as total FROM earnings 
+                   WHERE worker_id = ? AND payment_status = 'pending'";
+    $stmt = $conn->prepare($pending_sql);
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $pending_result = $stmt->get_result();
+    $pending_payments = $pending_result->fetch_assoc()['total'];
+}
 ?>
 
 <!DOCTYPE html>
@@ -19,62 +111,83 @@ $user_name = $_SESSION['user_name'];
     <title>My Jobs - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 60px);
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             width: 250px;
             z-index: 1000;
             transition: all 0.3s;
+            transform: translateX(-100%);
+            border-radius: 0 20px 20px 0;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.15);
         }
-        
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border-radius: 12px;
             margin: 5px 10px;
             transition: all 0.3s;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
         }
-        
+
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            transform: translateX(5px);
         }
-        
+
         .sidebar .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
             width: 20px;
+            font-size: 1rem;
         }
-        
+
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
+            margin-left: 0;
+            padding: 15px;
+            min-height: calc(100vh - 60px);
+            margin-top: 60px;
             background: #f8f9fa;
         }
-        
+
+        body {
+            background: #f8f9fa;
+        }
+
         .sidebar-header {
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 20px 0 0;
         }
-        
+
         .sidebar-header h3 {
             color: white;
             margin: 0;
             font-size: 1.2rem;
         }
-        
+
         .user-profile {
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
-        
+
         .user-avatar {
             width: 60px;
             height: 60px;
@@ -85,84 +198,331 @@ $user_name = $_SESSION['user_name'];
             justify-content: center;
             margin: 0 auto 10px;
             font-size: 24px;
-            color: #667eea;
+            color: #000000;
         }
-        
+
         .user-name {
             color: white;
             font-weight: bold;
             margin-bottom: 5px;
         }
-        
+
         .user-role {
             color: rgba(255, 255, 255, 0.7);
             font-size: 0.9rem;
         }
-        
-        .mobile-menu-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-        }
-        
-        @media (max-width: 768px) {
+
+        @media (min-width: 992px) {
             .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
-                margin-left: 0;
-            }
-            
-            .mobile-menu-toggle {
-                display: block;
+                margin-left: 250px;
+                padding: 20px;
             }
         }
-        
-        .job-card {
-            transition: transform 0.2s;
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .sidebar {
+                width: 260px;
+            }
+        }
+
+        .card {
+            margin-bottom: 1rem;
             border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 15px;
         }
-        
+
+        .btn {
+            min-height: 44px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #000000, #333333);
+            color: white;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #000000;
+            color: #000000;
+            background: white;
+        }
+
+        .btn-outline-primary:hover {
+            background: #000000;
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #e9ecef;
+            color: var(--text-dark);
+            background: white;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            border-color: #e9ecef;
+        }
+
+        .btn-outline-danger {
+            border: 2px solid #dc3545;
+            color: #dc3545;
+            background: white;
+        }
+
+        .btn-outline-danger:hover {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-sm {
+            min-height: 38px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .row > * {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .row {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+
+        .nav-tabs .nav-link {
+            min-height: 44px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-control, .form-select {
+            min-height: 44px;
+            padding: 10px 15px;
+            font-size: 16px;
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #495057;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 6px 10px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #000000;
+            font-weight: 700;
+        }
+
+        h5 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .job-card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 15px;
+        }
+
         .job-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-        
+
         .status-badge {
             font-size: 0.8rem;
+        }
+
+        .card.bg-primary {
+            background: linear-gradient(135deg, #000000, #333333) !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-success {
+            background: #000000 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-info {
+            background: #333333 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-warning {
+            background: #000000 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-primary:hover, .card.bg-success:hover, .card.bg-info:hover, .card.bg-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .card.bg-primary .card-title,
+        .card.bg-success .card-title,
+        .card.bg-info .card-title,
+        .card.bg-warning .card-title {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .card.bg-primary h2,
+        .card.bg-success h2,
+        .card.bg-info h2,
+        .card.bg-warning h2 {
+            font-size: 2rem;
+            margin-bottom: 0;
+            font-weight: 700;
+            color: white !important;
+        }
+
+        .card.bg-primary h5,
+        .card.bg-success h5,
+        .card.bg-info h5,
+        .card.bg-warning h5 {
+            color: white !important;
+        }
+
+        .dropdown-menu {
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: none;
+        }
+
+        .list-group-item {
+            padding: 15px;
+            border: none;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .row > * {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .row {
+                margin-left: -8px;
+                margin-right: -8px;
+            }
+
+            .col-lg-3.col-md-6.col-sm-12 {
+                margin-bottom: 1rem;
+            }
+
+            .card.bg-primary h2,
+            .card.bg-success h2,
+            .card.bg-info h2,
+            .card.bg-warning h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .row > * {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+
+            .row {
+                margin-left: -5px;
+                margin-right: -5px;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .card.bg-primary h2,
+            .card.bg-success h2,
+            .card.bg-info h2,
+            .card.bg-warning h2 {
+                font-size: 1.3rem;
+            }
+
+            .card.bg-primary .card-title,
+            .card.bg-success .card-title,
+            .card.bg-info .card-title,
+            .card.bg-warning .card-title {
+                font-size: 0.8rem;
+            }
         }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-    
+    <?php include 'navbar.php'; ?>
+
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
-        <div class="user-profile">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-name"><?php echo htmlspecialchars($user_name); ?></div>
-            <div class="user-role"><?php echo ucfirst(htmlspecialchars($user_role)); ?></div>
         </div>
         
         <nav class="nav flex-column p-3">
@@ -171,7 +531,7 @@ $user_name = $_SESSION['user_name'];
             </a>
             
             <?php if ($user_role === 'employer'): ?>
-            <a class="nav-link" href="#post-job">
+            <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
             <a class="nav-link" href="workers.php">
@@ -235,7 +595,7 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-primary text-white">
                     <div class="card-body">
                         <h5 class="card-title">Total Posted</h5>
-                        <h2>8</h2>
+                        <h2><?php echo $total_posted; ?></h2>
                     </div>
                 </div>
             </div>
@@ -243,7 +603,7 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">Active</h5>
-                        <h2>5</h2>
+                        <h2><?php echo $active_count; ?></h2>
                     </div>
                 </div>
             </div>
@@ -251,7 +611,7 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-info text-white">
                     <div class="card-body">
                         <h5 class="card-title">Applications</h5>
-                        <h2>23</h2>
+                        <h2><?php echo $total_applications; ?></h2>
                     </div>
                 </div>
             </div>
@@ -259,55 +619,48 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-warning text-white">
                     <div class="card-body">
                         <h5 class="card-title">Filled</h5>
-                        <h2>3</h2>
+                        <h2><?php echo $filled_count; ?></h2>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">House Cleaner Needed</h5>
-                            <span class="badge bg-success status-badge">Active</span>
-                        </div>
-                        <p class="card-text">Looking for an experienced house cleaner for a family home in Kigali.</p>
-                        <div class="mb-2">
-                            <small class="text-muted">Posted: 1 week ago</small><br>
-                            <small class="text-muted">Applications: 12</small><br>
-                            <small class="text-muted">Salary: RWF 50,000/month</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary">View Applications</button>
-                            <button class="btn btn-sm btn-outline-secondary">Edit Job</button>
-                            <button class="btn btn-sm btn-outline-danger">Close Job</button>
-                        </div>
+            <?php if (empty($jobs)): ?>
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You haven't posted any jobs yet. Click "Post Job" to get started!
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">Childcare Provider</h5>
-                            <span class="badge bg-warning status-badge">Filled</span>
-                        </div>
-                        <p class="card-text">Need a reliable childcare provider for 2 children (ages 3 and 5).</p>
-                        <div class="mb-2">
-                            <small class="text-muted">Posted: 2 weeks ago</small><br>
-                            <small class="text-muted">Applications: 8</small><br>
-                            <small class="text-muted">Salary: RWF 35,000/month</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary">View Worker</button>
-                            <button class="btn btn-sm btn-outline-secondary">Manage Job</button>
+            <?php else: ?>
+                <?php foreach ($jobs as $job): ?>
+                    <div class="col-md-6 mb-4">
+                        <div class="card job-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title"><?php echo htmlspecialchars($job['title']); ?></h5>
+                                    <span class="badge bg-dark status-badge"><?php echo ucfirst(htmlspecialchars($job['status'])); ?></span>
+                                </div>
+                                <p class="card-text"><?php echo htmlspecialchars(substr($job['description'], 0, 120)) . '...'; ?></p>
+                                <div class="mb-2">
+                                    <small class="text-muted">Posted: <?php echo format_date($job['created_at']); ?></small><br>
+                                    <small class="text-muted">Applications: <?php echo $job['application_count']; ?></small><br>
+                                    <small class="text-muted">Salary: <?php echo format_currency($job['salary']); ?>/month</small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-dark" onclick="viewApplications(<?php echo $job['id']; ?>)">
+                                        <i class="fas fa-eye me-1"></i>View Applications
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="editJob(<?php echo $job['id']; ?>)">
+                                        <i class="fas fa-edit me-1"></i>Edit Job
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
 
         <?php else: ?>
@@ -317,7 +670,7 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">Active Jobs</h5>
-                        <h2>3</h2>
+                        <h2><?php echo $active_count; ?></h2>
                     </div>
                 </div>
             </div>
@@ -325,7 +678,7 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-primary text-white">
                     <div class="card-body">
                         <h5 class="card-title">Completed</h5>
-                        <h2>15</h2>
+                        <h2><?php echo $completed_count; ?></h2>
                     </div>
                 </div>
             </div>
@@ -333,7 +686,7 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-info text-white">
                     <div class="card-body">
                         <h5 class="card-title">This Month</h5>
-                        <h2>RWF 150,000</h2>
+                        <h2><?php echo format_currency($this_month_earnings); ?></h2>
                     </div>
                 </div>
             </div>
@@ -341,56 +694,63 @@ $user_name = $_SESSION['user_name'];
                 <div class="card bg-warning text-white">
                     <div class="card-body">
                         <h5 class="card-title">Pending Payment</h5>
-                        <h2>RWF 25,000</h2>
+                        <h2><?php echo format_currency($pending_payments); ?></h2>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="row">
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">House Cleaning - John Mukiza</h5>
-                            <span class="badge bg-success status-badge">Active</span>
-                        </div>
-                        <p class="card-text">Full-time house cleaning position in Kigali. Started 2 weeks ago.</p>
-                        <div class="mb-2">
-                            <small class="text-muted">Started: 2 weeks ago</small><br>
-                            <small class="text-muted">Salary: RWF 50,000/month</small><br>
-                            <small class="text-muted">Next Payment: 5 days</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary">View Details</button>
-                            <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                            <button class="btn btn-sm btn-outline-info">Log Hours</button>
-                        </div>
+            <?php if (empty($active_jobs)): ?>
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle me-2"></i>
+                        You don't have any active jobs yet. Start applying for jobs to get work!
                     </div>
                 </div>
-            </div>
-            
-            <div class="col-md-6 mb-4">
-                <div class="card job-card">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="card-title">Weekend Gardening - Grace Kantengwa</h5>
-                            <span class="badge bg-info status-badge">Part-time</span>
-                        </div>
-                        <p class="card-text">Weekend gardening and landscaping work in Gasabo district.</p>
-                        <div class="mb-2">
-                            <small class="text-muted">Started: 1 month ago</small><br>
-                            <small class="text-muted">Salary: RWF 20,000/weekend</small><br>
-                            <small class="text-muted">Next Work: Saturday</small>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-sm btn-primary">View Details</button>
-                            <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                            <button class="btn btn-sm btn-outline-success">Mark Complete</button>
+            <?php else: ?>
+                <?php foreach ($active_jobs as $job): ?>
+                    <div class="col-md-6 mb-4">
+                        <div class="card job-card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h5 class="card-title">
+                                        <?php 
+                                        $icons = [
+                                            'cleaning' => 'fa-broom',
+                                            'cooking' => 'fa-utensils',
+                                            'childcare' => 'fa-child',
+                                            'eldercare' => 'fa-user-nurse',
+                                            'gardening' => 'fa-seedling',
+                                            'other' => 'fa-briefcase'
+                                        ];
+                                        $icon = isset($icons[$job['job_type']]) ? $icons[$job['job_type']] : 'fa-briefcase';
+                                        ?>
+                                        <?php echo htmlspecialchars($job['title']); ?> - <?php echo htmlspecialchars($job['employer_name']); ?>
+                                    </h5>
+                                    <span class="badge bg-dark status-badge">
+                                        <?php echo isset($job['booking_status']) && $job['booking_status'] === 'confirmed' ? 'Confirmed' : 'Active'; ?>
+                                    </span>
+                                </div>
+                                <p class="card-text"><?php echo htmlspecialchars(substr($job['description'], 0, 120)) . '...'; ?></p>
+                                <div class="mb-2">
+                                    <small class="text-muted">Started: <?php echo isset($job['start_date']) ? format_date($job['start_date']) : 'Recently'; ?></small><br>
+                                    <small class="text-muted">Salary: <?php echo format_currency($job['salary']); ?>/month</small><br>
+                                    <small class="text-muted">Next Payment: <?php echo isset($job['end_date']) ? format_date($job['end_date']) : 'TBD'; ?></small>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-dark" onclick="viewJobDetails(<?php echo $job['job_id']; ?>)">
+                                        <i class="fas fa-eye me-1"></i>View Details
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-secondary" onclick="messageEmployer(<?php echo $job['job_id']; ?>, '<?php echo htmlspecialchars($job['employer_name']); ?>')">
+                                        <i class="fas fa-envelope me-1"></i>Message Employer
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
         <?php endif; ?>
     </div>
@@ -402,16 +762,48 @@ $user_name = $_SESSION['user_name'];
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
         }
+
+        <?php if ($user_role === 'employer'): ?>
+        // View applications for a job
+        function viewApplications(jobId) {
+            window.location.href = 'job-applications.php?job_id=' + jobId;
+        }
         
+        // Edit job
+        function editJob(jobId) {
+            window.location.href = 'edit-job.php?id=' + jobId;
+        }
+        <?php else: ?>
+        // View job details
+        function viewJobDetails(jobId) {
+            window.location.href = 'job-details.php?id=' + jobId;
+        }
+        
+        // Message employer
+        function messageEmployer(jobId, employerName) {
+            if (confirm('Would you like to send a message to ' + employerName + '?')) {
+                window.location.href = 'messages.php?job_id=' + jobId;
+            }
+        }
+        <?php endif; ?>
+
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(event.target) && 
-                !toggle.contains(event.target) && 
+            const toggle = document.getElementById('mobile-menu-toggle');
+
+            if (window.innerWidth < 992 &&
+                !sidebar.contains(event.target) &&
+                !toggle?.contains(event.target) &&
                 sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 992) {
                 sidebar.classList.remove('show');
             }
         });

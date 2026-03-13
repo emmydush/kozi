@@ -9,10 +9,55 @@ if (!is_logged_in()) {
 // Get user role
 $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
+$user_id = $_SESSION['user_id'];
 
 // Only workers should access this page
 if ($user_role !== 'worker') {
     redirect('dashboard.php');
+}
+
+// Fetch applications from database
+$applications = [];
+$sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.job_type,
+               u.name as employer_name, u.email as employer_email
+        FROM job_applications ja
+        JOIN jobs j ON ja.job_id = j.id
+        JOIN users u ON j.employer_id = u.id
+        WHERE ja.worker_id = ?
+        ORDER BY ja.applied_at DESC";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('i', $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result && $result->num_rows > 0) {
+    while ($row = $result->fetch_assoc()) {
+        $applications[] = $row;
+    }
+}
+
+// Calculate statistics
+$total_applications = count($applications);
+$pending_count = 0;
+$under_review_count = 0;
+$accepted_count = 0;
+$rejected_count = 0;
+
+foreach ($applications as $app) {
+    switch ($app['status']) {
+        case 'pending':
+            $pending_count++;
+            break;
+        case 'under_review':
+            $under_review_count++;
+            break;
+        case 'accepted':
+            $accepted_count++;
+            break;
+        case 'rejected':
+            $rejected_count++;
+            break;
+    }
 }
 ?>
 
@@ -24,41 +69,62 @@ if ($user_role !== 'worker') {
     <title>My Applications - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
-    <style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 60px);
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             width: 250px;
             z-index: 1000;
             transition: all 0.3s;
+            transform: translateX(-100%);
+            border-radius: 0 20px 20px 0;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.15);
+        }
+        
+        .sidebar.show {
+            transform: translateX(0);
         }
         
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border-radius: 12px;
             margin: 5px 10px;
             transition: all 0.3s;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
         }
         
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            transform: translateX(5px);
         }
         
         .sidebar .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
             width: 20px;
+            font-size: 1rem;
         }
         
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
+            margin-left: 0;
+            padding: 15px;
+            min-height: calc(100vh - 60px);
+            margin-top: 60px;
+            background: #f8f9fa;
+        }
+        
+        /* Update main content background for consistency */
+        body {
             background: #f8f9fa;
         }
         
@@ -66,6 +132,7 @@ if ($user_role !== 'worker') {
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 20px 0 0;
         }
         
         .sidebar-header h3 {
@@ -74,100 +141,91 @@ if ($user_role !== 'worker') {
             font-size: 1.2rem;
         }
         
-        .user-profile {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 24px;
-            color: #667eea;
-        }
-        
-        .user-name {
-            color: white;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .user-role {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-        
-        .mobile-menu-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-        }
-        
-        @media (max-width: 768px) {
+        /* Mobile-first responsive design */
+        @media (min-width: 992px) {
             .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
                 transform: translateX(0);
             }
             
             .main-content {
-                margin-left: 0;
+                margin-left: 250px;
+                padding: 20px;
             }
-            
-            .mobile-menu-toggle {
-                display: block;
+        }
+        
+        @media (min-width: 768px) and (max-width: 991px) {
+            .sidebar {
+                width: 260px;
             }
         }
         
         .application-card {
             transition: transform 0.2s;
-            border: none;
+            border: 2px solid #e9ecef;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: white;
         }
         
         .application-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            border-color: #000000;
         }
         
         .status-badge {
             font-size: 0.8rem;
         }
+        
+        /* Statistics cards styling */
+        .card.bg-primary {
+            background: linear-gradient(135deg, #000000, #333333) !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .card.bg-success {
+            background: #000000 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .card.bg-info {
+            background: #333333 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .card.bg-warning {
+            background: #000000 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+        
+        .card.bg-primary:hover, .card.bg-success:hover, .card.bg-info:hover, .card.bg-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
+    <?php include 'navbar.php'; ?>
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
-        <div class="user-profile">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-name"><?php echo htmlspecialchars($user_name); ?></div>
-            <div class="user-role"><?php echo ucfirst(htmlspecialchars($user_role)); ?></div>
         </div>
         
         <nav class="nav flex-column p-3">
@@ -190,12 +248,6 @@ if ($user_role !== 'worker') {
             
             <a class="nav-link" href="messages.php">
                 <i class="fas fa-envelope"></i> Messages
-            </a>
-            <a class="nav-link" href="profile.php">
-                <i class="fas fa-user-cog"></i> Profile Settings
-            </a>
-            <a class="nav-link" href="reviews.php">
-                <i class="fas fa-star"></i> Reviews
             </a>
             
             <hr class="text-white-50">
@@ -223,32 +275,32 @@ if ($user_role !== 'worker') {
             <div class="col-md-3">
                 <div class="card bg-primary text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Total Applications</h5>
-                        <h2>12</h2>
+                        <h5 class="card-title"><i class="fas fa-file-alt me-2"></i>Total Applications</h5>
+                        <h2><?php echo $total_applications; ?></h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-warning text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Pending</h5>
-                        <h2>3</h2>
+                        <h5 class="card-title"><i class="fas fa-clock me-2"></i>Pending</h5>
+                        <h2><?php echo $pending_count; ?></h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-info text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Under Review</h5>
-                        <h2>5</h2>
+                        <h5 class="card-title"><i class="fas fa-search me-2"></i>Under Review</h5>
+                        <h2><?php echo $under_review_count; ?></h2>
                     </div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="card bg-success text-white">
                     <div class="card-body">
-                        <h5 class="card-title">Accepted</h5>
-                        <h2>4</h2>
+                        <h5 class="card-title"><i class="fas fa-check-circle me-2"></i>Accepted</h5>
+                        <h2><?php echo $accepted_count; ?></h2>
                     </div>
                 </div>
             </div>
@@ -282,193 +334,82 @@ if ($user_role !== 'worker') {
             <!-- All Applications -->
             <div class="tab-pane fade show active" id="all" role="tabpanel">
                 <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">House Cleaner Needed</h5>
-                                    <span class="badge bg-success status-badge">Accepted</span>
-                                </div>
-                                <p class="card-text">Applied for a full-time house cleaning position in Kigali.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: John Mukiza</small><br>
-                                    <small class="text-muted">Applied: 2 days ago</small><br>
-                                    <small class="text-muted">Salary: RWF 50,000/month</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                                </div>
+                    <?php if (empty($applications)): ?>
+                        <div class="col-12">
+                            <div class="alert alert-info text-center">
+                                <i class="fas fa-info-circle me-2"></i>
+                                You haven't applied for any jobs yet. Start browsing jobs to apply!
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">Childcare Provider</h5>
-                                    <span class="badge bg-warning status-badge">Pending</span>
-                                </div>
-                                <p class="card-text">Applied for part-time childcare position for 2 children.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: Marie Uwimana</small><br>
-                                    <small class="text-muted">Applied: 5 days ago</small><br>
-                                    <small class="text-muted">Salary: RWF 35,000/month</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">Weekend Gardener</h5>
-                                    <span class="badge bg-info status-badge">Under Review</span>
-                                </div>
-                                <p class="card-text">Applied for weekend gardening and landscaping work.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: Grace Kantengwa</small><br>
-                                    <small class="text-muted">Applied: 1 week ago</small><br>
-                                    <small class="text-muted">Salary: RWF 20,000/weekend</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
+                    <?php else: ?>
+                        <?php foreach ($applications as $application): ?>
+                            <div class="col-md-6 mb-4">
+                                <div class="card application-card">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h5 class="card-title">
+                                                <?php 
+                                                $icons = [
+                                                    'cleaning' => 'fa-broom',
+                                                    'cooking' => 'fa-utensils',
+                                                    'childcare' => 'fa-child',
+                                                    'eldercare' => 'fa-user-nurse',
+                                                    'gardening' => 'fa-seedling',
+                                                    'other' => 'fa-briefcase'
+                                                ];
+                                                $icon = isset($icons[$application['job_type']]) ? $icons[$application['job_type']] : 'fa-briefcase';
+                                                ?>
+                                                <i class="fas <?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($application['title']); ?>
+                                            </h5>
+                                            <span class="badge bg-dark status-badge"><?php echo ucfirst(htmlspecialchars($application['status'])); ?></span>
+                                        </div>
+                                        <p class="card-text"><?php echo htmlspecialchars(substr($application['description'], 0, 120)) . '...'; ?></p>
+                                        <div class="mb-2">
+                                            <small class="text-muted"><i class="fas fa-user me-1"></i>Employer: <?php echo htmlspecialchars($application['employer_name']); ?></small><br>
+                                            <small class="text-muted"><i class="fas fa-calendar me-1"></i>Applied: <?php echo format_date($application['applied_at']); ?></small><br>
+                                            <small class="text-muted"><i class="fas fa-money-bill-wave me-1"></i>Salary: <?php echo format_currency($application['salary']); ?>/month</small>
+                                        </div>
+                                        <div class="d-flex gap-2">
+                                            <button class="btn btn-sm btn-dark" onclick="viewApplicationDetails(<?php echo $application['id']; ?>)">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-secondary" onclick="messageEmployer(<?php echo $application['job_id']; ?>, '<?php echo htmlspecialchars($application['employer_name']); ?>')">
+                                                <i class="fas fa-envelope me-1"></i>Message Employer
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">Elderly Care Assistant</h5>
-                                    <span class="badge bg-danger status-badge">Rejected</span>
-                                </div>
-                                <p class="card-text">Application for elderly care position was not successful.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: Joseph Niyonzima</small><br>
-                                    <small class="text-muted">Applied: 2 weeks ago</small><br>
-                                    <small class="text-muted">Salary: RWF 80,000/month</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Withdraw Application</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
                 </div>
             </div>
             
             <!-- Pending Applications -->
             <div class="tab-pane fade" id="pending" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">Childcare Provider</h5>
-                                    <span class="badge bg-warning status-badge">Pending</span>
-                                </div>
-                                <p class="card-text">Applied for part-time childcare position for 2 children.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: Marie Uwimana</small><br>
-                                    <small class="text-muted">Applied: 5 days ago</small><br>
-                                    <small class="text-muted">Salary: RWF 35,000/month</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="pending-applications">
+                    <p class="text-muted">Loading pending applications...</p>
                 </div>
             </div>
             
             <!-- Under Review Applications -->
             <div class="tab-pane fade" id="review" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">Weekend Gardener</h5>
-                                    <span class="badge bg-info status-badge">Under Review</span>
-                                </div>
-                                <p class="card-text">Applied for weekend gardening and landscaping work.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: Grace Kantengwa</small><br>
-                                    <small class="text-muted">Applied: 1 week ago</small><br>
-                                    <small class="text-muted">Salary: RWF 20,000/weekend</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="review-applications">
+                    <p class="text-muted">Loading applications under review...</p>
                 </div>
             </div>
             
             <!-- Accepted Applications -->
             <div class="tab-pane fade" id="accepted" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">House Cleaner Needed</h5>
-                                    <span class="badge bg-success status-badge">Accepted</span>
-                                </div>
-                                <p class="card-text">Applied for a full-time house cleaning position in Kigali.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: John Mukiza</small><br>
-                                    <small class="text-muted">Applied: 2 days ago</small><br>
-                                    <small class="text-muted">Salary: RWF 50,000/month</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Message Employer</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="accepted-applications">
+                    <p class="text-muted">Loading accepted applications...</p>
                 </div>
             </div>
             
             <!-- Rejected Applications -->
             <div class="tab-pane fade" id="rejected" role="tabpanel">
-                <div class="row">
-                    <div class="col-md-6 mb-4">
-                        <div class="card application-card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h5 class="card-title">Elderly Care Assistant</h5>
-                                    <span class="badge bg-danger status-badge">Rejected</span>
-                                </div>
-                                <p class="card-text">Application for elderly care position was not successful.</p>
-                                <div class="mb-2">
-                                    <small class="text-muted">Employer: Joseph Niyonzima</small><br>
-                                    <small class="text-muted">Applied: 2 weeks ago</small><br>
-                                    <small class="text-muted">Salary: RWF 80,000/month</small>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button class="btn btn-sm btn-primary">View Details</button>
-                                    <button class="btn btn-sm btn-outline-secondary">Withdraw Application</button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                <div id="rejected-applications">
+                    <p class="text-muted">Loading rejected applications...</p>
                 </div>
             </div>
         </div>
@@ -482,15 +423,37 @@ if ($user_role !== 'worker') {
             sidebar.classList.toggle('show');
         }
         
+        // View application details
+        function viewApplicationDetails(applicationId) {
+            // You can implement a modal or redirect to details page
+            alert('Application details feature coming soon! Application ID: ' + applicationId);
+        }
+        
+        // Message employer
+        function messageEmployer(jobId, employerName) {
+            if (confirm('Would you like to send a message to ' + employerName + '?')) {
+                // Redirect to messages page with job context
+                window.location.href = 'messages.php?job_id=' + jobId;
+            }
+        }
+        
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-menu-toggle');
+            const toggle = document.getElementById('mobile-menu-toggle');
             
-            if (window.innerWidth <= 768 && 
+            if (window.innerWidth < 992 && 
                 !sidebar.contains(event.target) && 
-                !toggle.contains(event.target) && 
+                !toggle?.contains(event.target) && 
                 sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 992) {
                 sidebar.classList.remove('show');
             }
         });

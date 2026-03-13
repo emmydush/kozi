@@ -49,8 +49,21 @@
             left: 0;
             right: 0;
             bottom: 0;
+            background: url('https://picsum.photos/seed/household-workers/1920/1080.jpg') center/cover;
+            opacity: 0.2;
+            z-index: 0;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
             background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
             opacity: 0.3;
+            z-index: 1;
         }
 
         .hero-particles {
@@ -58,6 +71,7 @@
             width: 100%;
             height: 100%;
             overflow: hidden;
+            z-index: 2;
         }
 
         .particle {
@@ -72,17 +86,23 @@
             50% { transform: translateY(-20px); }
         }
 
+        .hero-content {
+            position: relative;
+            z-index: 3;
+        }
+
         .hero-content h1 {
             font-size: 3.5rem;
             font-weight: 800;
             margin-bottom: 1.5rem;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
         }
 
         .hero-content .lead {
             font-size: 1.3rem;
             margin-bottom: 2rem;
             opacity: 0.95;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
         }
 
         .hero-buttons {
@@ -131,13 +151,12 @@
         .feature-card {
             background: white;
             border-radius: 20px;
-            padding: 2.5rem;
+            overflow: hidden;
             box-shadow: 0 10px 40px rgba(0,0,0,0.1);
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
             height: 100%;
             position: relative;
-            overflow: hidden;
         }
 
         .feature-card::before {
@@ -150,6 +169,7 @@
             background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
             transform: scaleX(0);
             transition: transform 0.3s ease;
+            z-index: 1;
         }
 
         .feature-card:hover::before {
@@ -161,25 +181,72 @@
             box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
         }
 
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            border-radius: 20px;
+        .feature-image {
+            height: 200px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .feature-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .feature-card:hover .feature-image img {
+            transform: scale(1.1);
+        }
+
+        .feature-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.3));
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 1.5rem;
+        }
+
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
         }
 
         .feature-icon i {
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: white;
         }
 
         .feature-card:hover .feature-icon {
             transform: scale(1.1) rotate(5deg);
+        }
+
+        .feature-content {
+            padding: 1.5rem;
+            text-align: center;
+        }
+
+        .feature-content h4 {
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-dark);
+        }
+
+        .feature-content p {
+            color: var(--text-light);
+            margin-bottom: 0;
         }
 
         /* Stats Section */
@@ -283,201 +350,6 @@
             opacity: 0.95;
         }
 
-        /* Enhanced Footer */
-        footer {
-            background: #2c3e50;
-            color: white;
-            padding: 3rem 0 1rem;
-        }
-
-        .footer-links a {
-            color: rgba(255,255,255,0.8);
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .footer-links a:hover {
-            color: white;
-        }
-
-        .social-icons a {
-            color: white;
-            font-size: 1.2rem;
-            margin: 0 0.5rem;
-            transition: all 0.3s ease;
-        }
-
-            }
-
-            .btn-hero-outline {
-                background: transparent;
-                color: white;
-                border: 2px solid white;
-                backdrop-filter: blur(10px);
-            }
-
-            .btn-hero-outline:hover {
-                background: white;
-                color: var(--primary-color);
-                transform: translateY(-3px);
-            }
-
-            /* Enhanced Feature Cards */
-            .feature-card {
-                background: white;
-                border-radius: 20px;
-                padding: 2.5rem;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                border: none;
-                height: 100%;
-                position: relative;
-                overflow: hidden;
-            }
-
-            .feature-card::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 5px;
-                background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
-                transform: scaleX(0);
-                transition: transform 0.3s ease;
-            }
-
-            .feature-card:hover::before {
-                transform: scaleX(1);
-            }
-
-            .feature-card:hover {
-                transform: translateY(-10px);
-                box-shadow: 0 20px 60px rgba(102, 126, 234, 0.2);
-            }
-
-            .feature-icon {
-                width: 80px;
-                height: 80px;
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                border-radius: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                margin: 0 auto 1.5rem;
-                transition: all 0.3s ease;
-            }
-
-            .feature-icon i {
-                font-size: 2rem;
-                color: white;
-            }
-
-            .feature-card:hover .feature-icon {
-                transform: scale(1.1) rotate(5deg);
-            }
-
-            /* Stats Section */
-            .stats-section {
-                background: linear-gradient(135deg, var(--bg-light), white);
-                padding: 4rem 0;
-            }
-
-            .stat-card {
-                text-align: center;
-                padding: 2rem;
-            }
-
-            .stat-number {
-                font-size: 3rem;
-                font-weight: 800;
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                -webkit-background-clip: text;
-                -webkit-text-fill-color: transparent;
-                margin-bottom: 0.5rem;
-            }
-
-            .stat-label {
-                font-size: 1.1rem;
-                color: var(--text-light);
-                font-weight: 500;
-            }
-
-            /* Enhanced Workers Section */
-            .workers-section {
-                padding: 5rem 0;
-                background: white;
-            }
-
-            .worker-preview-card {
-                background: white;
-                border-radius: 15px;
-                overflow: hidden;
-                box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-                transition: all 0.3s ease;
-                cursor: pointer;
-            }
-
-            .worker-preview-card:hover {
-                transform: translateY(-5px);
-                box-shadow: 0 15px 40px rgba(0,0,0,0.15);
-            }
-
-            .worker-preview-img {
-                height: 150px;
-                background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                color: white;
-                font-size: 3rem;
-            }
-
-            .worker-preview-info {
-                padding: 1.5rem;
-            }
-
-            .worker-name {
-                font-weight: 600;
-                font-size: 1.1rem;
-                margin-bottom: 0.5rem;
-            }
-
-            .worker-skills {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 0.3rem;
-                margin-top: 0.5rem;
-            }
-
-            .skill-badge {
-                background: var(--bg-light);
-                color: var(--text-dark);
-                padding: 0.2rem 0.6rem;
-                border-radius: 15px;
-                font-size: 0.75rem;
-                font-weight: 500;
-            }
-
-            /* CTA Section */
-            .cta-section {
-                background: linear-gradient(135deg, var(--success-color), var(--accent-color));
-                padding: 5rem 0;
-                color: white;
-            }
-
-            .cta-content h2 {
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 1.5rem;
-            }
-
-            .cta-content p {
-                font-size: 1.2rem;
-                margin-bottom: 2rem;
-                opacity: 0.95;
-            }
-
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-content h1 {
@@ -550,6 +422,10 @@
             
             .hero-section {
                 padding: 2rem 0;
+            }
+            
+            .hero-image img {
+                max-height: 300px !important;
             }
             
             .section-title {
@@ -795,7 +671,7 @@
                             <a href="jobs.php" class="btn btn-hero-primary">
                                 <i class="fas fa-search"></i> Find Workers
                             </a>
-                            <a href="#post-job" class="btn btn-hero-outline">
+                            <a href="post-job.php" class="btn btn-hero-outline">
                                 <i class="fas fa-plus"></i> Post Job
                             </a>
                         <?php else: ?>
@@ -809,9 +685,13 @@
                     </div>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
-                    <div class="hero-image text-center">
-                        <div style="font-size: 15rem; opacity: 0.3;">
-                            <i class="fas fa-users"></i>
+                    <div class="hero-image text-center position-relative">
+                        <img src="https://picsum.photos/seed/household-workers-team/600/500.jpg" 
+                             alt="Household Workers Team" 
+                             class="img-fluid rounded-3 shadow-lg"
+                             style="max-height: 500px; object-fit: cover;">
+                        <div class="hero-image-overlay position-absolute top-0 start-0 w-100 h-100 rounded-3" 
+                             style="background: linear-gradient(45deg, rgba(0,0,0,0.1), rgba(0,0,0,0.3)); pointer-events: none;">
                         </div>
                     </div>
                 </div>
@@ -861,56 +741,98 @@
             <div class="row g-4">
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-broom"></i>
+                        <div class="feature-image">
+                            <img src="https://picsum.photos/seed/professional-house-cleaning-maid-service/400/300.jpg" alt="Professional House Cleaning Service">
+                            <div class="feature-image-overlay">
+                                <div class="feature-icon">
+                                    <i class="fas fa-broom"></i>
+                                </div>
+                            </div>
                         </div>
-                        <h4>House Cleaning</h4>
-                        <p class="text-muted">Professional cleaning services for homes and apartments with eco-friendly products.</p>
+                        <div class="feature-content">
+                            <h4>House Cleaning</h4>
+                            <p class="text-muted">Professional cleaning services for homes and apartments with eco-friendly products.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-utensils"></i>
+                        <div class="feature-image">
+                            <img src="https://picsum.photos/seed/domestic-cook-kitchen-meal-preparation/400/300.jpg" alt="Domestic Cooking and Meal Preparation">
+                            <div class="feature-image-overlay">
+                                <div class="feature-icon">
+                                    <i class="fas fa-utensils"></i>
+                                </div>
+                            </div>
                         </div>
-                        <h4>Cooking & Meal Prep</h4>
-                        <p class="text-muted">Experienced cooks for daily meals, meal planning, and special occasions.</p>
+                        <div class="feature-content">
+                            <h4>Cooking & Meal Prep</h4>
+                            <p class="text-muted">Experienced cooks for daily meals, meal planning, and special occasions.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-baby"></i>
+                        <div class="feature-image">
+                            <img src="https://picsum.photos/seed/nanny-childcare-provider-babysitter/400/300.jpg" alt="Nanny Childcare Provider Service">
+                            <div class="feature-image-overlay">
+                                <div class="feature-icon">
+                                    <i class="fas fa-baby"></i>
+                                </div>
+                            </div>
                         </div>
-                        <h4>Childcare</h4>
-                        <p class="text-muted">Trusted caregivers for your children's safety, development, and well-being.</p>
+                        <div class="feature-content">
+                            <h4>Childcare</h4>
+                            <p class="text-muted">Trusted caregivers for your children's safety, development, and well-being.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="400">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-user-friends"></i>
+                        <div class="feature-image">
+                            <img src="https://picsum.photos/seed/elderly-caregiver-senior-care-assistant/400/300.jpg" alt="Elderly Caregiver Senior Care Service">
+                            <div class="feature-image-overlay">
+                                <div class="feature-icon">
+                                    <i class="fas fa-user-friends"></i>
+                                </div>
+                            </div>
                         </div>
-                        <h4>Elder Care</h4>
-                        <p class="text-muted">Compassionate caregivers providing support and companionship for elderly family members.</p>
+                        <div class="feature-content">
+                            <h4>Elder Care</h4>
+                            <p class="text-muted">Compassionate caregivers providing support and companionship for elderly family members.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="500">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-seedling"></i>
+                        <div class="feature-image">
+                            <img src="https://picsum.photos/seed/gardener-landscaping-garden-maintenance/400/300.jpg" alt="Professional Gardener Landscaping Service">
+                            <div class="feature-image-overlay">
+                                <div class="feature-icon">
+                                    <i class="fas fa-seedling"></i>
+                                </div>
+                            </div>
                         </div>
-                        <h4>Gardening</h4>
-                        <p class="text-muted">Expert gardeners for lawn maintenance, landscaping, and plant care.</p>
+                        <div class="feature-content">
+                            <h4>Gardening</h4>
+                            <p class="text-muted">Expert gardeners for lawn maintenance, landscaping, and plant care.</p>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="600">
                     <div class="feature-card">
-                        <div class="feature-icon">
-                            <i class="fas fa-car"></i>
+                        <div class="feature-image">
+                            <img src="https://picsum.photos/seed/personal-driver-family-chauffeur-service/400/300.jpg" alt="Personal Driver Family Chauffeur Service">
+                            <div class="feature-image-overlay">
+                                <div class="feature-icon">
+                                    <i class="fas fa-car"></i>
+                                </div>
+                            </div>
                         </div>
-                        <h4>Driving</h4>
-                        <p class="text-muted">Professional drivers for family transportation and errands.</p>
+                        <div class="feature-content">
+                            <h4>Driving</h4>
+                            <p class="text-muted">Professional drivers for family transportation and errands.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1035,7 +957,7 @@
                         <a href="jobs.php" class="btn btn-light btn-lg me-3">
                             <i class="fas fa-search me-2"></i>Browse Workers
                         </a>
-                        <a href="#post-job" class="btn btn-outline-light btn-lg">
+                        <a href="post-job.php" class="btn btn-outline-light btn-lg">
                             <i class="fas fa-plus me-2"></i>Post a Job
                         </a>
                     <?php else: ?>
@@ -1055,55 +977,103 @@
     <footer>
         <div class="container">
             <div class="row">
-                <div class="col-lg-4 mb-4">
-                    <h5 class="mb-3">Household Connect</h5>
-                    <p class="text-muted">Connecting Kigali families with trusted household workers since 2024.</p>
+                <!-- Brand Section -->
+                <div class="col-lg-4 col-md-6 footer-section">
+                    <a href="index.php" class="footer-brand">
+                        <i class="fas fa-home"></i>
+                        Household Connect
+                    </a>
+                    <p class="footer-description">
+                        Connecting Kigali families with trusted household workers since 2024. Your reliable partner for all domestic help needs.
+                    </p>
                     <div class="social-icons">
-                        <a href="#"><i class="fab fa-facebook-f"></i></a>
-                        <a href="#"><i class="fab fa-twitter"></i></a>
-                        <a href="#"><i class="fab fa-instagram"></i></a>
-                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#" aria-label="Facebook">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" aria-label="Twitter">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" aria-label="Instagram">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                        <a href="#" aria-label="LinkedIn">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
                     </div>
                 </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="mb-3">Quick Links</h6>
-                    <div class="footer-links">
-                        <div class="mb-2"><a href="index.php">Home</a></div>
-                        <div class="mb-2"><a href="workers.php">Workers</a></div>
-                        <div class="mb-2"><a href="jobs.php">Jobs</a></div>
-                        <div class="mb-2"><a href="about.php">About Us</a></div>
-                    </div>
+                
+                <!-- Quick Links -->
+                <div class="col-lg-2 col-md-6 footer-section">
+                    <h6 class="footer-title">Quick Links</h6>
+                    <ul class="footer-links">
+                        <li><a href="index.php"><i class="fas fa-chevron-right me-1"></i>Home</a></li>
+                        <li><a href="workers.php"><i class="fas fa-chevron-right me-1"></i>Find Workers</a></li>
+                        <li><a href="jobs.php"><i class="fas fa-chevron-right me-1"></i>Browse Jobs</a></li>
+                        <li><a href="about.php"><i class="fas fa-chevron-right me-1"></i>About Us</a></li>
+                        <li><a href="dashboard.php"><i class="fas fa-chevron-right me-1"></i>Dashboard</a></li>
+                    </ul>
                 </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="mb-3">Services</h6>
-                    <div class="footer-links">
-                        <div class="mb-2"><a href="#services">Cleaning</a></div>
-                        <div class="mb-2"><a href="#services">Cooking</a></div>
-                        <div class="mb-2"><a href="#services">Childcare</a></div>
-                        <div class="mb-2"><a href="#services">Elder Care</a></div>
-                    </div>
+                
+                <!-- Services -->
+                <div class="col-lg-2 col-md-6 footer-section">
+                    <h6 class="footer-title">Services</h6>
+                    <ul class="footer-links">
+                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>House Cleaning</a></li>
+                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Cooking</a></li>
+                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Childcare</a></li>
+                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Elder Care</a></li>
+                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Gardening</a></li>
+                    </ul>
                 </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="mb-3">Support</h6>
-                    <div class="footer-links">
-                        <div class="mb-2"><a href="help.php">Help Center</a></div>
-                        <div class="mb-2"><a href="contact.php">Contact Us</a></div>
-                        <div class="mb-2"><a href="privacy.php">Privacy Policy</a></div>
-                        <div class="mb-2"><a href="terms.php">Terms of Service</a></div>
-                    </div>
+                
+                <!-- Support -->
+                <div class="col-lg-2 col-md-6 footer-section">
+                    <h6 class="footer-title">Support</h6>
+                    <ul class="footer-links">
+                        <li><a href="help.php"><i class="fas fa-chevron-right me-1"></i>Help Center</a></li>
+                        <li><a href="contact.php"><i class="fas fa-chevron-right me-1"></i>Contact Us</a></li>
+                        <li><a href="privacy.php"><i class="fas fa-chevron-right me-1"></i>Privacy Policy</a></li>
+                        <li><a href="terms.php"><i class="fas fa-chevron-right me-1"></i>Terms of Service</a></li>
+                        <li><a href="faq.php"><i class="fas fa-chevron-right me-1"></i>FAQ</a></li>
+                    </ul>
                 </div>
-                <div class="col-lg-2 col-md-6 mb-4">
-                    <h6 class="mb-3">Contact</h6>
-                    <div class="footer-links">
-                        <div class="mb-2"><i class="fas fa-phone me-2"></i>+250 788 123 456</div>
-                        <div class="mb-2"><i class="fas fa-envelope me-2"></i>info@household.rw</div>
-                        <div class="mb-2"><i class="fas fa-map-marker-alt me-2"></i>Kigali, Rwanda</div>
+                
+                <!-- Contact -->
+                <div class="col-lg-2 col-md-6 footer-section">
+                    <h6 class="footer-title">Get in Touch</h6>
+                    <div class="contact-item">
+                        <i class="fas fa-phone"></i>
+                        <span>+250 788 123 456</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>info@household.rw</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span>Kigali, Rwanda</span>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fas fa-clock"></i>
+                        <span>Mon-Fri: 8AM-6PM</span>
                     </div>
                 </div>
             </div>
-            <hr class="my-4" style="border-color: rgba(255,255,255,0.1);">
-            <div class="text-center">
-                <p class="mb-0">&copy; 2024 Household Connect. All rights reserved.</p>
+            
+            <!-- Bottom Section -->
+            <div class="footer-bottom">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <p class="mb-0 mb-md-0">
+                            &copy; 2024 Household Connect. All rights reserved.
+                        </p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p class="mb-0">
+                            Made with <span class="heart">&hearts;</span> in Kigali
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>
@@ -1198,13 +1168,18 @@
         }
 
         function displayPlaceholderWorkers() {
-            const placeholderWorkers = [
-                { name: 'Marie Uwimana', skills: 'Cleaning,Cooking' },
-                { name: 'Jean Mugisha', skills: 'Gardening,Driving' },
-                { name: 'Grace Mukamana', skills: 'Childcare,Cleaning' },
-                { name: 'Paul Niyonzima', skills: 'Cooking,Driving' }
-            ];
-            displayFeaturedWorkers(placeholderWorkers);
+            // Show no workers available message when database is empty
+            const container = document.getElementById('featured-workers');
+            if (container) {
+                container.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Workers Available Yet</h4>
+                        <p class="text-muted">Be the first to register as a worker and start finding jobs!</p>
+                        <a href="register.php" class="btn btn-primary mt-2">Register as Worker</a>
+                    </div>
+                `;
+            }
         }
 
         // Load workers when page loads

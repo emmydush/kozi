@@ -24,155 +24,331 @@ if ($user_role !== 'worker') {
     <title>Earnings - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 60px);
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             width: 250px;
             z-index: 1000;
             transition: all 0.3s;
+            transform: translateX(-100%);
+            border-radius: 0 20px 20px 0;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.15);
         }
-        
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border-radius: 12px;
             margin: 5px 10px;
             transition: all 0.3s;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
         }
-        
+
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            transform: translateX(5px);
         }
-        
+
         .sidebar .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
             width: 20px;
+            font-size: 1rem;
         }
-        
+
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
+            margin-left: 0;
+            padding: 15px;
+            min-height: calc(100vh - 60px);
+            margin-top: 60px;
             background: #f8f9fa;
         }
-        
+
+        body {
+            background: #f8f9fa;
+        }
+
         .sidebar-header {
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 20px 0 0;
         }
-        
+
         .sidebar-header h3 {
             color: white;
             margin: 0;
             font-size: 1.2rem;
         }
-        
-        .user-profile {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 24px;
-            color: #667eea;
-        }
-        
-        .user-name {
-            color: white;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .user-role {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-        
-        .mobile-menu-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-        }
-        
-        @media (max-width: 768px) {
+
+        @media (min-width: 992px) {
             .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
-                margin-left: 0;
-            }
-            
-            .mobile-menu-toggle {
-                display: block;
+                margin-left: 250px;
+                padding: 20px;
             }
         }
-        
-        .earnings-card {
-            transition: transform 0.2s;
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .sidebar {
+                width: 260px;
+            }
+        }
+
+        .card {
+            margin-bottom: 1rem;
             border: none;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 15px;
         }
-        
+
+        .btn {
+            min-height: 44px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #000000, #333333);
+            color: white;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #000000;
+            color: #000000;
+            background: white;
+        }
+
+        .btn-outline-primary:hover {
+            background: #000000;
+            color: white;
+        }
+
+        .btn-outline-secondary {
+            border: 2px solid #e9ecef;
+            color: var(--text-dark);
+            background: white;
+        }
+
+        .btn-outline-secondary:hover {
+            background: #f8f9fa;
+            border-color: #e9ecef;
+        }
+
+        .btn-sm {
+            min-height: 38px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .row > * {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .row {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table-responsive {
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #000000;
+            font-weight: 700;
+        }
+
+        h5 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        .earnings-card {
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 15px;
+        }
+
         .earnings-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
-        
+
         .chart-container {
             position: relative;
             height: 300px;
         }
-        
+
         .payment-status {
             font-size: 0.8rem;
+        }
+
+        .card.bg-success {
+            background: #000000 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-primary {
+            background: linear-gradient(135deg, #000000, #333333) !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-warning {
+            background: #000000 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-info {
+            background: #333333 !important;
+            color: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .card.bg-primary:hover, .card.bg-success:hover, .card.bg-info:hover, .card.bg-warning:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        .card.bg-primary .card-title,
+        .card.bg-success .card-title,
+        .card.bg-info .card-title,
+        .card.bg-warning .card-title {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .card.bg-primary h2,
+        .card.bg-success h2,
+        .card.bg-info h2,
+        .card.bg-warning h2 {
+            font-size: 2rem;
+            margin-bottom: 0;
+            font-weight: 700;
+            color: white !important;
+        }
+
+        .card.bg-primary h5,
+        .card.bg-success h5,
+        .card.bg-info h5,
+        .card.bg-warning h5 {
+            color: white !important;
+        }
+
+        @media (max-width: 768px) {
+            .row > * {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .row {
+                margin-left: -8px;
+                margin-right: -8px;
+            }
+
+            .card.bg-primary h2,
+            .card.bg-success h2,
+            .card.bg-info h2,
+            .card.bg-warning h2 {
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .row > * {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+
+            .row {
+                margin-left: -5px;
+                margin-right: -5px;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
+
+            .card.bg-primary h2,
+            .card.bg-success h2,
+            .card.bg-info h2,
+            .card.bg-warning h2 {
+                font-size: 1.3rem;
+            }
         }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-    
+    <?php include 'navbar.php'; ?>
+
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
-        <div class="user-profile">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-name"><?php echo htmlspecialchars($user_name); ?></div>
-            <div class="user-role"><?php echo ucfirst(htmlspecialchars($user_role)); ?></div>
         </div>
         
         <nav class="nav flex-column p-3">
@@ -339,71 +515,10 @@ if ($user_role !== 'worker') {
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody>
+                                <tbody id="earnings-tbody">
                                     <tr>
-                                        <td>Dec 1, 2024</td>
-                                        <td>John Mukiza</td>
-                                        <td>House Cleaning</td>
-                                        <td>40</td>
-                                        <td><strong>RWF 50,000</strong></td>
-                                        <td><span class="badge bg-success payment-status">Paid</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Dec 1, 2024</td>
-                                        <td>Grace Kantengwa</td>
-                                        <td>Gardening</td>
-                                        <td>8</td>
-                                        <td><strong>RWF 20,000</strong></td>
-                                        <td><span class="badge bg-success payment-status">Paid</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Nov 28, 2024</td>
-                                        <td>Marie Uwimana</td>
-                                        <td>Childcare</td>
-                                        <td>20</td>
-                                        <td><strong>RWF 35,000</strong></td>
-                                        <td><span class="badge bg-warning payment-status">Pending</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Nov 25, 2024</td>
-                                        <td>Joseph Niyonzima</td>
-                                        <td>Eldercare</td>
-                                        <td>35</td>
-                                        <td><strong>RWF 45,000</strong></td>
-                                        <td><span class="badge bg-success payment-status">Paid</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Nov 20, 2024</td>
-                                        <td>John Mukiza</td>
-                                        <td>House Cleaning</td>
-                                        <td>40</td>
-                                        <td><strong>RWF 50,000</strong></td>
-                                        <td><span class="badge bg-success payment-status">Paid</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">View</button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Nov 15, 2024</td>
-                                        <td>Grace Kantengwa</td>
-                                        <td>Gardening</td>
-                                        <td>8</td>
-                                        <td><strong>RWF 20,000</strong></td>
-                                        <td><span class="badge bg-warning payment-status">Pending</span></td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">View</button>
+                                        <td colspan="7" class="text-center text-muted">
+                                            <p>Loading earnings data...</p>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -423,20 +538,28 @@ if ($user_role !== 'worker') {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
         }
-        
+
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(event.target) && 
-                !toggle.contains(event.target) && 
+            const toggle = document.getElementById('mobile-menu-toggle');
+
+            if (window.innerWidth < 992 &&
+                !sidebar.contains(event.target) &&
+                !toggle?.contains(event.target) &&
                 sidebar.classList.contains('show')) {
                 sidebar.classList.remove('show');
             }
         });
-        
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 992) {
+                sidebar.classList.remove('show');
+            }
+        });
+
         // Earnings Chart
         const ctx = document.getElementById('earningsChart').getContext('2d');
         const earningsChart = new Chart(ctx, {
@@ -446,8 +569,8 @@ if ($user_role !== 'worker') {
                 datasets: [{
                     label: 'Monthly Earnings',
                     data: [220000, 245000, 280000, 265000, 290000, 280000],
-                    borderColor: 'rgb(102, 126, 234)',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: 'rgb(0, 0, 0)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.05)',
                     tension: 0.4,
                     fill: true
                 }]

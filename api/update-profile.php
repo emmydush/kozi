@@ -14,9 +14,18 @@ try {
     }
     
     $data = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$data) {
+        json_response(['success' => false, 'message' => 'Invalid JSON data'], 400);
+    }
+    
     $update_type = $data['type'] ?? 'personal';
     
     $user_id = $_SESSION['user_id'];
+    
+    if (!$user_id) {
+        json_response(['success' => false, 'message' => 'User not logged in'], 401);
+    }
     
     switch ($update_type) {
         case 'personal':
@@ -50,9 +59,9 @@ try {
                 }
             }
             
-            $sql = "UPDATE users SET name = ?, email = ?, phone = ?, location = ?, bio = ? WHERE id = ?";
+            $sql = "UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssi", $name, $email, $phone, $location, $bio, $user_id);
+            $stmt->bind_param("sssi", $name, $email, $phone, $user_id);
             
             if ($stmt->execute()) {
                 // Update session
@@ -112,7 +121,7 @@ try {
             
         case 'professional':
             // Only for workers
-            if ($user_role !== 'worker') {
+            if ($_SESSION['user_role'] !== 'worker') {
                 json_response(['success' => false, 'message' => 'Access denied'], 403);
             }
             
@@ -121,11 +130,27 @@ try {
             $expected_salary = sanitize_input($data['expected_salary'] ?? '');
             $availability = sanitize_input($data['availability'] ?? '');
             
-            // Update professional info
-            $sql = "UPDATE users SET skills = ?, experience = ?, expected_salary = ?, availability = ? WHERE id = ?";
-            $stmt = $conn->prepare($sql);
-            $skills_json = json_encode($skills);
-            $stmt->bind_param("ssisi", $skills_json, $experience, $expected_salary, $availability, $user_id);
+            // Check if worker record exists
+            $check_sql = "SELECT id FROM workers WHERE user_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("i", $user_id);
+            $check_stmt->execute();
+            $check_result = $check_stmt->get_result();
+            
+            if ($check_result->num_rows > 0) {
+                // Update existing worker record
+                $sql = "UPDATE workers SET experience_years = ?, skills = ?, availability = ? WHERE user_id = ?";
+                $stmt = $conn->prepare($sql);
+                $skills_json = json_encode($skills);
+                $stmt->bind_param("issi", $experience, $skills_json, $availability, $user_id);
+            } else {
+                // Create new worker record
+                $sql = "INSERT INTO workers (user_id, name, experience_years, skills, availability, status) VALUES (?, ?, ?, ?, ?, 'active')";
+                $stmt = $conn->prepare($sql);
+                $skills_json = json_encode($skills);
+                $user_name = $_SESSION['user_name'];
+                $stmt->bind_param("isiss", $user_id, $user_name, $experience, $skills_json, $availability);
+            }
             
             if ($stmt->execute()) {
                 json_response(['success' => true, 'message' => 'Professional information updated successfully']);

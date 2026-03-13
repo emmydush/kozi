@@ -10,6 +10,41 @@ if (!is_logged_in()) {
 $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
 $user_email = $_SESSION['user_email'];
+
+// Get current user profile data
+$user_id = $_SESSION['user_id'];
+
+// Get basic user info from users table
+$sql = "SELECT phone FROM users WHERE id = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$user_data = $result->fetch_assoc();
+
+$phone = $user_data['phone'] ?? '';
+
+// Initialize worker-specific variables
+$location = '';
+$bio = '';
+$skills = [];
+$experience = '';
+$expected_salary = '';
+$availability = '';
+
+// If user is a worker, get additional data from workers table
+if ($user_role === 'worker') {
+    $worker_sql = "SELECT experience_years, skills, availability FROM workers WHERE user_id = ?";
+    $worker_stmt = $conn->prepare($worker_sql);
+    $worker_stmt->bind_param("i", $user_id);
+    $worker_stmt->execute();
+    $worker_result = $worker_stmt->get_result();
+    $worker_data = $worker_result->fetch_assoc();
+    
+    $experience = $worker_data['experience_years'] ?? '';
+    $skills = $worker_data['skills'] ? json_decode($worker_data['skills'], true) : [];
+    $availability = $worker_data['availability'] ?? '';
+}
 ?>
 
 <!DOCTYPE html>
@@ -243,7 +278,7 @@ $user_email = $_SESSION['user_email'];
             </a>
             
             <?php if ($user_role === 'employer'): ?>
-            <a class="nav-link" href="#post-job">
+            <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
             <a class="nav-link" href="workers.php">
@@ -336,32 +371,21 @@ $user_email = $_SESSION['user_email'];
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Full Name</label>
-                                            <input type="text" class="form-control" value="<?php echo htmlspecialchars($user_name); ?>" required>
+                                            <input type="text" class="form-control" id="name" name="name" value="<?php echo htmlspecialchars($user_name); ?>" required>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Email</label>
-                                            <input type="email" class="form-control" value="<?php echo htmlspecialchars($user_email); ?>" required>
+                                            <input type="email" class="form-control" id="email" name="email" value="<?php echo htmlspecialchars($user_email); ?>" required>
                                         </div>
                                     </div>
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label">Phone Number</label>
-                                            <input type="tel" class="form-control" placeholder="+250 7XX XXX XXX">
+                                            <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($phone); ?>" placeholder="+250 7XX XXX XXX">
                                         </div>
                                         <div class="col-md-6 mb-3">
-                                            <label class="form-label">Location</label>
-                                            <select class="form-select">
-                                                <option value="">Select District</option>
-                                                <option value="kigali">Kigali</option>
-                                                <option value="gasabo">Gasabo</option>
-                                                <option value="kicukiro">Kicukiro</option>
-                                                <option value="nyarugenge">Nyarugenge</option>
-                                            </select>
+                                            <!-- Location field removed as it's not in database schema -->
                                         </div>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Bio</label>
-                                        <textarea class="form-control" rows="3" placeholder="Tell us about yourself..."></textarea>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Save Changes</button>
                                 </form>
@@ -395,31 +419,31 @@ $user_email = $_SESSION['user_email'];
                                         <div class="row">
                                             <div class="col-md-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="skill-cleaning">
+                                                    <input class="form-check-input" type="checkbox" name="skills[]" id="skill-cleaning" value="cleaning" <?php echo in_array('cleaning', $skills) ? 'checked' : ''; ?>>
                                                     <label class="form-check-label" for="skill-cleaning">Cleaning</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="skill-cooking">
+                                                    <input class="form-check-input" type="checkbox" name="skills[]" id="skill-cooking" value="cooking" <?php echo in_array('cooking', $skills) ? 'checked' : ''; ?>>
                                                     <label class="form-check-label" for="skill-cooking">Cooking</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="skill-childcare">
+                                                    <input class="form-check-input" type="checkbox" name="skills[]" id="skill-childcare" value="childcare" <?php echo in_array('childcare', $skills) ? 'checked' : ''; ?>>
                                                     <label class="form-check-label" for="skill-childcare">Childcare</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="skill-eldercare">
+                                                    <input class="form-check-input" type="checkbox" name="skills[]" id="skill-eldercare" value="eldercare" <?php echo in_array('eldercare', $skills) ? 'checked' : ''; ?>>
                                                     <label class="form-check-label" for="skill-eldercare">Eldercare</label>
                                                 </div>
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="form-check">
-                                                    <input class="form-check-input" type="checkbox" id="skill-gardening">
+                                                    <input class="form-check-input" type="checkbox" name="skills[]" id="skill-gardening" value="gardening" <?php echo in_array('gardening', $skills) ? 'checked' : ''; ?>>
                                                     <label class="form-check-label" for="skill-gardening">Gardening</label>
                                                 </div>
                                             </div>
@@ -427,19 +451,15 @@ $user_email = $_SESSION['user_email'];
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Experience (years)</label>
-                                        <input type="number" class="form-control" min="0" max="50">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Expected Salary (RWF/month)</label>
-                                        <input type="number" class="form-control" min="0">
+                                        <input type="number" class="form-control" id="experience" name="experience" min="0" max="50" value="<?php echo htmlspecialchars($experience); ?>">
                                     </div>
                                     <div class="mb-3">
                                         <label class="form-label">Availability</label>
-                                        <select class="form-select">
-                                            <option value="full-time">Full-time</option>
-                                            <option value="part-time">Part-time</option>
-                                            <option value="weekend">Weekend Only</option>
-                                            <option value="flexible">Flexible</option>
+                                        <select class="form-select" id="availability" name="availability">
+                                            <option value="full-time" <?php echo $availability === 'full-time' ? 'selected' : ''; ?>>Full-time</option>
+                                            <option value="part-time" <?php echo $availability === 'part-time' ? 'selected' : ''; ?>>Part-time</option>
+                                            <option value="weekend" <?php echo $availability === 'weekend' ? 'selected' : ''; ?>>Weekend Only</option>
+                                            <option value="flexible" <?php echo $availability === 'flexible' ? 'selected' : ''; ?>>Flexible</option>
                                         </select>
                                     </div>
                                     <button type="submit" class="btn btn-primary">Save Professional Info</button>
@@ -587,9 +607,7 @@ $user_email = $_SESSION['user_email'];
                 type: 'personal',
                 name: document.getElementById('name').value,
                 email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value,
-                location: document.getElementById('location').value,
-                bio: document.getElementById('bio').value
+                phone: document.getElementById('phone').value
             };
             
             try {
@@ -668,7 +686,6 @@ $user_email = $_SESSION['user_email'];
                 type: 'professional',
                 skills: skills,
                 experience: document.getElementById('experience').value,
-                expected_salary: document.getElementById('expected-salary').value,
                 availability: document.getElementById('availability').value
             };
             

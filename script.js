@@ -1,47 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
-    loadWorkers();
     setupJobForm();
 });
-
-function loadWorkers() {
-    fetch('api/workers.php')
-        .then(response => response.json())
-        .then(data => {
-            const container = document.getElementById('workers-container');
-            container.innerHTML = '';
-            
-            data.forEach(worker => {
-                const card = createWorkerCard(worker);
-                container.appendChild(card);
-            });
-        })
-        .catch(error => {
-            console.error('Error loading workers:', error);
-            showAlert('Error loading workers. Please try again.', 'danger');
-        });
-}
-
-function createWorkerCard(worker) {
-    const card = document.createElement('div');
-    card.className = 'col-md-4';
-    card.innerHTML = `
-        <div class="card worker-card">
-            <img src="https://picsum.photos/seed/${worker.id}/400/300.jpg" class="card-img-top" alt="${worker.name}">
-            <div class="card-body">
-                <h5 class="card-title">${worker.name}</h5>
-                <p class="card-text">${worker.description.substring(0, 100)}...</p>
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <span class="badge bg-primary">${worker.type}</span>
-                        <span class="badge bg-success">${worker.location}</span>
-                    </div>
-                    <a href="worker-details.php?id=${worker.id}" class="btn btn-sm btn-primary">View Profile</a>
-                </div>
-            </div>
-        </div>
-    `;
-    return card;
-}
 
 function setupJobForm() {
     const form = document.getElementById('job-form');

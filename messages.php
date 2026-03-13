@@ -19,143 +19,203 @@ $user_name = $_SESSION['user_name'];
     <title>Messages - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         .sidebar {
-            min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: calc(100vh - 60px);
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
             position: fixed;
-            top: 0;
+            top: 60px;
             left: 0;
             width: 250px;
             z-index: 1000;
             transition: all 0.3s;
+            transform: translateX(-100%);
+            border-radius: 0 20px 20px 0;
+            box-shadow: 4px 0 12px rgba(0,0,0,0.15);
         }
-        
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
         .sidebar .nav-link {
             color: rgba(255, 255, 255, 0.8);
-            padding: 12px 20px;
-            border-radius: 8px;
+            padding: 15px 20px;
+            border-radius: 12px;
             margin: 5px 10px;
             transition: all 0.3s;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            font-size: 0.95rem;
         }
-        
+
         .sidebar .nav-link:hover,
         .sidebar .nav-link.active {
             color: white;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            transform: translateX(5px);
         }
-        
+
         .sidebar .nav-link i {
-            margin-right: 10px;
+            margin-right: 12px;
             width: 20px;
+            font-size: 1rem;
         }
-        
+
         .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
+            margin-left: 0;
+            padding: 15px;
+            min-height: calc(100vh - 60px);
+            margin-top: 60px;
             background: #f8f9fa;
         }
-        
+
+        body {
+            background: #f8f9fa;
+        }
+
         .sidebar-header {
             padding: 20px;
             text-align: center;
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 0 20px 0 0;
         }
-        
+
         .sidebar-header h3 {
             color: white;
             margin: 0;
             font-size: 1.2rem;
         }
-        
-        .user-profile {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .user-avatar {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            background: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 10px;
-            font-size: 24px;
-            color: #667eea;
-        }
-        
-        .user-name {
-            color: white;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .user-role {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-        
-        .mobile-menu-toggle {
-            display: none;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1001;
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-        }
-        
-        @media (max-width: 768px) {
+
+        @media (min-width: 992px) {
             .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.show {
                 transform: translateX(0);
             }
-            
+
             .main-content {
-                margin-left: 0;
-            }
-            
-            .mobile-menu-toggle {
-                display: block;
+                margin-left: 250px;
+                padding: 20px;
             }
         }
-        
+
+        @media (min-width: 768px) and (max-width: 991px) {
+            .sidebar {
+                width: 260px;
+            }
+        }
+
+        .card {
+            margin-bottom: 1rem;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-radius: 15px;
+        }
+
+        .btn {
+            min-height: 44px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #000000, #333333);
+            color: white;
+        }
+
+        .btn-outline-primary {
+            border: 2px solid #000000;
+            color: #000000;
+            background: white;
+        }
+
+        .btn-outline-primary:hover {
+            background: #000000;
+            color: white;
+        }
+
+        .btn-sm {
+            min-height: 38px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+
+        .row > * {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .row {
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-header {
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #000000;
+            font-weight: 700;
+        }
+
+        h5 {
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+            color: #000000;
+            font-weight: 600;
+        }
+
+        h6 {
+            color: #000000;
+            font-weight: 600;
+        }
+
         .message-list {
             height: 500px;
             overflow-y: auto;
         }
-        
+
         .message-item {
             padding: 15px;
             border-bottom: 1px solid #dee2e6;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        
+
         .message-item:hover {
             background-color: #f8f9fa;
         }
-        
+
         .message-item.unread {
             background-color: #e3f2fd;
         }
-        
+
         .chat-window {
             height: 500px;
             display: flex;
             flex-direction: column;
         }
-        
+
         .chat-messages {
             flex: 1;
             overflow-y: auto;
@@ -163,60 +223,98 @@ $user_name = $_SESSION['user_name'];
             background: white;
             border: 1px solid #dee2e6;
         }
-        
+
         .message {
             margin-bottom: 15px;
             max-width: 70%;
         }
-        
+
         .message.sent {
             margin-left: auto;
         }
-        
+
         .message-bubble {
             padding: 10px 15px;
             border-radius: 18px;
             word-wrap: break-word;
         }
-        
+
         .message.sent .message-bubble {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #000000 0%, #333333 100%);
             color: white;
         }
-        
+
         .message.received .message-bubble {
             background: #e9ecef;
             color: #333;
         }
-        
+
         .message-time {
             font-size: 0.75rem;
             color: #6c757d;
             margin-top: 5px;
         }
-        
+
         .message.sent .message-time {
             text-align: right;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+        }
+
+        .form-control:focus {
+            border-color: #000000;
+            box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.25);
+        }
+
+        .input-group .btn {
+            min-height: auto;
+            padding: 12px 20px;
+        }
+
+        @media (max-width: 768px) {
+            .row > * {
+                padding-left: 8px;
+                padding-right: 8px;
+            }
+
+            .row {
+                margin-left: -8px;
+                margin-right: -8px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .row > * {
+                padding-left: 5px;
+                padding-right: 5px;
+            }
+
+            .row {
+                margin-left: -5px;
+                margin-right: -5px;
+            }
+
+            .card-body {
+                padding: 1rem;
+            }
+
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
         }
     </style>
 </head>
 <body>
-    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
-        <i class="fas fa-bars"></i>
-    </button>
-    
+    <?php include 'navbar.php'; ?>
+
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
             <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
-        <div class="user-profile">
-            <div class="user-avatar">
-                <i class="fas fa-user"></i>
-            </div>
-            <div class="user-name"><?php echo htmlspecialchars($user_name); ?></div>
-            <div class="user-role"><?php echo ucfirst(htmlspecialchars($user_role)); ?></div>
         </div>
         
         <nav class="nav flex-column p-3">
@@ -225,7 +323,7 @@ $user_name = $_SESSION['user_name'];
             </a>
             
             <?php if ($user_role === 'employer'): ?>
-            <a class="nav-link" href="#post-job">
+            <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
             <a class="nav-link" href="workers.php">
@@ -289,51 +387,8 @@ $user_name = $_SESSION['user_name'];
                         <h6 class="mb-0">Conversations</h6>
                     </div>
                     <div class="card-body p-0">
-                        <div class="message-list">
-                            <div class="message-item unread" onclick="selectConversation(1)">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>Marie Uwimana</strong>
-                                            <small class="text-muted">2 min ago</small>
-                                        </div>
-                                        <div class="text-truncate">Hi, I'm interested in your job posting...</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="message-item" onclick="selectConversation(2)">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle bg-success text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>John Mukiza</strong>
-                                            <small class="text-muted">1 hour ago</small>
-                                        </div>
-                                        <div class="text-truncate">Thank you for the opportunity!</div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="message-item" onclick="selectConversation(3)">
-                                <div class="d-flex align-items-center">
-                                    <div class="rounded-circle bg-warning text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="flex-grow-1">
-                                        <div class="d-flex justify-content-between">
-                                            <strong>Grace Kantengwa</strong>
-                                            <small class="text-muted">Yesterday</small>
-                                        </div>
-                                        <div class="text-truncate">Can we schedule an interview?</div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="message-list" id="message-list">
+                            <p class="text-muted p-3">Loading conversations...</p>
                         </div>
                     </div>
                 </div>
@@ -341,47 +396,23 @@ $user_name = $_SESSION['user_name'];
             
             <div class="col-md-8">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center" id="conversation-header">
                         <div class="d-flex align-items-center">
-                            <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                            <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
                                 <i class="fas fa-user"></i>
                             </div>
                             <div>
-                                <strong>Marie Uwimana</strong>
-                                <div class="text-muted small">Online</div>
+                                <strong>Select a conversation</strong>
+                                <div class="text-muted small">Choose from the list</div>
                             </div>
-                        </div>
-                        <div>
-                            <button class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-phone"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-primary">
-                                <i class="fas fa-video"></i>
-                            </button>
                         </div>
                     </div>
                     <div class="card-body p-0">
                         <div class="chat-window">
-                            <div class="chat-messages">
-                                <div class="message received">
-                                    <div class="message-bubble">
-                                        Hi, I'm interested in your job posting for a house cleaner. I have 3 years of experience.
-                                    </div>
-                                    <div class="message-time">10:30 AM</div>
-                                </div>
-                                
-                                <div class="message sent">
-                                    <div class="message-bubble">
-                                        Hello Marie! Thank you for your interest. Can you tell me more about your availability?
-                                    </div>
-                                    <div class="message-time">10:35 AM</div>
-                                </div>
-                                
-                                <div class="message received">
-                                    <div class="message-bubble">
-                                        I'm available full-time from Monday to Friday. I can also work weekends if needed.
-                                    </div>
-                                    <div class="message-time">10:38 AM</div>
+                            <div class="chat-messages" id="chat-messages">
+                                <div class="text-center text-muted p-4">
+                                    <i class="fas fa-comments fa-3x mb-3"></i>
+                                    <p>Select a conversation to start messaging</p>
                                 </div>
                             </div>
                             
@@ -407,16 +438,24 @@ $user_name = $_SESSION['user_name'];
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
         }
-        
+
         // Close sidebar when clicking outside on mobile
         document.addEventListener('click', function(event) {
             const sidebar = document.getElementById('sidebar');
-            const toggle = document.querySelector('.mobile-menu-toggle');
-            
-            if (window.innerWidth <= 768 && 
-                !sidebar.contains(event.target) && 
-                !toggle.contains(event.target) && 
+            const toggle = document.getElementById('mobile-menu-toggle');
+
+            if (window.innerWidth < 992 &&
+                !sidebar.contains(event.target) &&
+                !toggle?.contains(event.target) &&
                 sidebar.classList.contains('show')) {
+                sidebar.classList.remove('show');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth >= 992) {
                 sidebar.classList.remove('show');
             }
         });

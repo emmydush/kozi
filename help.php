@@ -196,7 +196,7 @@ $user_name = $_SESSION['user_name'];
             </a>
             
             <?php if ($user_role === 'employer'): ?>
-            <a class="nav-link" href="#post-job">
+            <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
             <a class="nav-link" href="workers.php">

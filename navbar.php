@@ -2,6 +2,36 @@
 // Get user session data
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Guest';
 $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : '';
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+
+// Get user profile image from database
+$profile_image = null;
+if ($user_id) {
+    $query = "SELECT profile_image FROM users WHERE id = ?";
+    $stmt = $conn->prepare($query);
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    if ($row = $result->fetch_assoc()) {
+        $profile_image = $row['profile_image'];
+    }
+    $stmt->close();
+}
+
+// Determine profile image source
+$image_src = 'uploads/profiles/user_1_1773319465.png'; // Default fallback
+if (!empty($profile_image)) {
+    if (strpos($profile_image, 'http') === 0) {
+        // Full URL provided
+        $image_src = $profile_image;
+    } elseif (file_exists('uploads/profiles/' . $profile_image)) {
+        // Local file exists
+        $image_src = 'uploads/profiles/' . $profile_image;
+    }
+}
+
+// Get user initial for fallback
+$user_initial = strtoupper(substr($user_name, 0, 1));
 ?>
 
 <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: linear-gradient(135deg, #000000 0%, #333333 100%); box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
@@ -43,8 +73,14 @@ $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : '';
             <!-- User Profile Dropdown - Mobile Optimized -->
             <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex align-items-center text-white p-2 p-sm-1" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 1.1rem;">
-                    <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px;">
-                        <i class="fas fa-user"></i>
+                    <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px; background: white;">
+                        <?php if (!empty($profile_image) && file_exists($image_src)): ?>
+                            <img src="<?php echo htmlspecialchars($image_src); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                        <?php else: ?>
+                            <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white">
+                                <?php echo htmlspecialchars($user_initial); ?>
+                            </div>
+                        <?php endif; ?>
                     </div>
                     <span class="d-none d-md-block ms-2">
                         <div class="small"><?php echo htmlspecialchars($user_name); ?></div>
@@ -52,7 +88,23 @@ $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : '';
                     </span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><h6 class="dropdown-header"><?php echo htmlspecialchars($user_name); ?></h6></li>
+                    <li class="px-3 py-2">
+                        <div class="d-flex align-items-center">
+                            <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: white;">
+                                <?php if (!empty($profile_image) && file_exists($image_src)): ?>
+                                    <img src="<?php echo htmlspecialchars($image_src); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
+                                <?php else: ?>
+                                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white">
+                                        <?php echo htmlspecialchars($user_initial); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <div>
+                                <div class="fw-bold"><?php echo htmlspecialchars($user_name); ?></div>
+                                <div class="small text-muted"><?php echo ucfirst(htmlspecialchars($user_role)); ?></div>
+                            </div>
+                        </div>
+                    </li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="profile.php">
                         <i class="fas fa-user-cog me-2"></i> Profile Settings
@@ -69,7 +121,7 @@ $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : '';
                         <i class="fas fa-question-circle me-2"></i> Help & Support
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item text-danger" href="api/logout.php">
+                    <li><a class="dropdown-item text-danger" href="#" onclick="confirmLogout(event)">
                         <i class="fas fa-sign-out-alt me-2"></i> Logout
                     </a></li>
                 </ul>
@@ -160,6 +212,111 @@ $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : '';
 document.getElementById('mobile-menu-toggle')?.addEventListener('click', function() {
     toggleSidebar();
 });
+
+// Logout confirmation function
+function confirmLogout(event) {
+    event.preventDefault();
+    
+    // Create confirmation modal
+    const modalHtml = `
+        <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="logoutModalLabel">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Logout
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="text-center mb-3">
+                            <i class="fas fa-sign-out-alt fa-3x text-danger mb-3"></i>
+                        </div>
+                        <h6 class="text-center">Are you sure you want to logout?</h6>
+                        <p class="text-muted text-center mb-0">You will be redirected to the homepage and will need to login again to access your account.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </button>
+                        <button type="button" class="btn btn-danger" onclick="performLogout()">
+                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Remove existing modal if present
+    const existingModal = document.getElementById('logoutModal');
+    if (existingModal) {
+        existingModal.remove();
+    }
+    
+    // Add modal to body
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('logoutModal'));
+    modal.show();
+}
+
+// Perform logout function
+function performLogout() {
+    // Close modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById('logoutModal'));
+    modal.hide();
+    
+    // Show loading indicator
+    const loadingHtml = `
+        <div class="modal fade" id="logoutLoadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center py-4">
+                        <div class="spinner-border text-primary mb-3" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <h6>Logging out...</h6>
+                        <p class="text-muted mb-0">Please wait while we secure your session.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // Add loading modal
+    document.body.insertAdjacentHTML('beforeend', loadingHtml);
+    const loadingModal = new bootstrap.Modal(document.getElementById('logoutLoadingModal'));
+    loadingModal.show();
+    
+    // Perform logout via AJAX
+    fetch('./api/logout.php', {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        if (response.ok) {
+            // Show success message briefly
+            setTimeout(() => {
+                loadingModal.hide();
+                // Redirect to homepage
+                window.location.href = './index.php';
+            }, 1000);
+        } else {
+            throw new Error('Logout failed');
+        }
+    })
+    .catch(error => {
+        console.error('Logout error:', error);
+        loadingModal.hide();
+        // Fallback: redirect anyway
+        window.location.href = './index.php';
+    });
+}
 
 // Close sidebar when clicking outside on mobile
 document.addEventListener('click', function(event) {

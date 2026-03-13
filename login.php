@@ -12,7 +12,7 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Household Connect | Kigali</title>
+    <title>Login | Kigali</title>
     <meta name="description" content="Login to your Household Connect account and find trusted household workers in Kigali">
     
     <!-- Bootstrap CSS -->
@@ -184,77 +184,6 @@ if (isset($_SESSION['user_id'])) {
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .social-login {
-            margin-top: 2rem;
-        }
-
-        .social-login-title {
-            text-align: center;
-            color: var(--text-light);
-            margin-bottom: 1rem;
-            position: relative;
-        }
-
-        .social-login-title::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: #e9ecef;
-        }
-
-        .social-login-title span {
-            background: white;
-            padding: 0 1rem;
-            position: relative;
-        }
-
-        .social-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        @media (max-width: 480px) {
-            .social-buttons {
-                flex-direction: row;
-            }
-        }
-
-        .btn-social {
-            flex: 1;
-            padding: 0.75rem;
-            border: 2px solid #e9ecef;
-            background: white;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 0.5rem;
-            text-decoration: none;
-            color: var(--text-dark);
-            font-weight: 500;
-        }
-
-        .btn-social:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-        }
-
-        .btn-google:hover {
-            border-color: #e9ecef;
-            color: var(--text-dark);
-            background: #f8f9fa;
-        }
-
-        .btn-facebook:hover {
-            border-color: #e9ecef;
-            color: var(--text-dark);
-            background: #f8f9fa;
-        }
-
         .divider {
             text-align: center;
             margin: 2rem 0;
@@ -323,12 +252,8 @@ if (isset($_SESSION['user_id'])) {
                 font-size: 0.9rem;
             }
 
-            .social-buttons {
-                /* Keep horizontal layout */
-            }
-
             .form-control {
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size:16px; /* Prevents zoom on iOS */
             }
 
             .btn-login {
@@ -434,8 +359,6 @@ if (isset($_SESSION['user_id'])) {
             <div class="login-right">
                 <div class="text-center mb-4">
                     <div class="login-logo justify-content-center">
-                        <i class="fas fa-home"></i>
-                        Household Connect
                     </div>
                     <h1 class="login-title">Login</h1>
                     <p class="login-subtitle">Enter your credentials to access your account</p>
@@ -472,22 +395,6 @@ if (isset($_SESSION['user_id'])) {
                         <div class="loading-spinner"></div>
                     </button>
                 </form>
-
-                <div class="social-login">
-                    <div class="social-login-title">
-                        <span>Or continue with</span>
-                    </div>
-                    <div class="social-buttons">
-                        <a href="#" class="btn-social btn-google">
-                            <i class="fab fa-google"></i>
-                            Google
-                        </a>
-                        <a href="#" class="btn-social btn-facebook">
-                            <i class="fab fa-facebook-f"></i>
-                            Facebook
-                        </a>
-                    </div>
-                </div>
 
                 <div class="divider">
                     Don't have an account? <a href="register.php" style="color: #000000; text-decoration: none; font-weight: 600;">Sign up</a>
@@ -585,17 +492,6 @@ if (isset($_SESSION['user_id'])) {
             } finally {
                 setLoading(false);
             }
-        });
-
-        // Social login handlers (placeholder)
-        document.querySelector('.btn-google').addEventListener('click', function(e) {
-            e.preventDefault();
-            showAlert('Google login coming soon!');
-        });
-
-        document.querySelector('.btn-facebook').addEventListener('click', function(e) {
-            e.preventDefault();
-            showAlert('Facebook login coming soon!');
         });
 
         // Forgot password handler

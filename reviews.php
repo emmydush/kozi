@@ -182,7 +182,7 @@ $user_name = $_SESSION['user_name'];
             </a>
             
             <?php if ($user_role === 'employer'): ?>
-            <a class="nav-link" href="#post-job">
+            <a class="nav-link" href="post-job.php">
                 <i class="fas fa-plus-circle"></i> Post Job
             </a>
             <a class="nav-link" href="workers.php">
@@ -288,9 +288,6 @@ $user_name = $_SESSION['user_name'];
                                 <label class="form-label">Select Worker</label>
                                 <select class="form-select" id="worker-select" required>
                                     <option value="">Choose a worker to review</option>
-                                    <option value="1">Marie Uwimana - House Cleaner</option>
-                                    <option value="2">John Mukiza - Childcare Provider</option>
-                                    <option value="3">Grace Kantengwa - Gardener</option>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -320,79 +317,8 @@ $user_name = $_SESSION['user_name'];
             <div class="col-12">
                 <h5 class="mb-3">Recent Reviews</h5>
                 
-                <div class="review-card card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <h6 class="mb-1">John Mukiza</h6>
-                                <div class="star-rating mb-1">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                </div>
-                            </div>
-                            <small class="text-muted">2 days ago</small>
-                        </div>
-                        <p class="mb-2">Excellent house cleaner! Very thorough and reliable. Always on time and does a fantastic job. Highly recommend!</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-primary">House Cleaning</span>
-                            <?php if ($user_role === 'worker'): ?>
-                            <button class="btn btn-sm btn-outline-primary">Respond</button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="review-card card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <h6 class="mb-1">Marie Uwimana</h6>
-                                <div class="star-rating mb-1">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="far fa-star"></i>
-                                </div>
-                            </div>
-                            <small class="text-muted">1 week ago</small>
-                        </div>
-                        <p class="mb-2">Very good with children. Patient and caring. My kids love her! Only suggestion is to be more proactive with activities.</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-success">Childcare</span>
-                            <?php if ($user_role === 'worker'): ?>
-                            <button class="btn btn-sm btn-outline-primary">Respond</button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="review-card card mb-3">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <h6 class="mb-1">Grace Kantengwa</h6>
-                                <div class="star-rating mb-1">
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star"></i>
-                                    <i class="fas fa-star-half-alt"></i>
-                                </div>
-                            </div>
-                            <small class="text-muted">2 weeks ago</small>
-                        </div>
-                        <p class="mb-2">Great work on the garden! Transformed our outdoor space. Very knowledgeable about plants and landscaping.</p>
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span class="badge bg-info">Gardening</span>
-                            <?php if ($user_role === 'worker'): ?>
-                            <button class="btn btn-sm btn-outline-primary">Respond</button>
-                            <?php endif; ?>
-                        </div>
-                    </div>
+                <div id="reviews-container">
+                    <p class="text-muted">Loading reviews...</p>
                 </div>
             </div>
         </div>

@@ -12,8 +12,8 @@ if (isset($_SESSION['user_id'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - Household Connect | Kigali</title>
-    <meta name="description" content="Create your Household Connect account and find trusted household workers in Kigali">
+    <title>Register | Kigali</title>
+    <meta name="description" content="Create your account and find trusted household workers in Kigali">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -946,8 +946,6 @@ if (isset($_SESSION['user_id'])) {
         <div class="register-card">
             <div class="register-header">
                 <div class="register-logo">
-                    <i class="fas fa-home"></i>
-                    Household Connect
                 </div>
                 <h2 class="register-title">Create Account</h2>
                 <p class="register-subtitle">Join thousands of families and workers in Kigali</p>
@@ -1071,7 +1069,7 @@ if (isset($_SESSION['user_id'])) {
                     <!-- Step 3: Role Selection -->
                     <div class="form-step" data-step="3">
                         <h3 class="step-heading">Choose Your Role</h3>
-                        <p class="step-description">How will you use Household Connect?</p>
+                        <p class="step-description">How will you use our platform?</p>
                         
                         <div class="role-cards">
                             <label class="role-card">
@@ -1222,6 +1220,9 @@ if (isset($_SESSION['user_id'])) {
             const firstName = document.getElementById('firstName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
             const email = document.getElementById('email').value.trim();
+            
+            if (!firstName || !lastName || !email) {
+                showAlert('Please fill in all required fields');
                 return;
             }
             
@@ -1274,22 +1275,13 @@ if (isset($_SESSION['user_id'])) {
 
         // Real-time password strength checking
         document.getElementById('password').addEventListener('input', function() {
-            checkPasswordStrength(this.value);
+            validatePassword(this.value);
         });
 
         // Clear validation on input
         document.querySelectorAll('.form-control').forEach(input => {
             input.addEventListener('input', function() {
                 this.classList.remove('is-invalid');
-            });
-        });
-
-        // Role card selection
-        document.querySelectorAll('.role-card').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
-                this.classList.add('selected');
-                this.querySelector('input[type="radio"]').checked = true;
             });
         });
 
