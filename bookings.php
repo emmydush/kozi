@@ -6,14 +6,45 @@ if (!is_logged_in()) {
     redirect('login.php');
 }
 
-// Get user role
+// Get user role and ID
 $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
+$user_id = $_SESSION['user_id'];
 
 // Only employers should access this page
 if ($user_role !== 'employer') {
     redirect('dashboard.php');
 }
+
+// Fetch bookings from database
+$bookings = [];
+$sql = "SELECT b.*, u.name as worker_name, u.email as worker_email, u.phone as worker_phone,
+               w.profile_image, w.hourly_rate, w.skills
+        FROM bookings b
+        JOIN users u ON b.worker_id = u.id
+        LEFT JOIN workers w ON b.worker_id = w.user_id
+        WHERE b.user_id = ?
+        ORDER BY b.start_date ASC, b.created_at DESC";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param('i', $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $bookings[] = $row;
+}
+
+// Calculate statistics
+$total_bookings = count($bookings);
+$active_bookings = count(array_filter($bookings, fn($b) => in_array($b['status'], ['confirmed', 'in_progress'])));
+$pending_bookings = count(array_filter($bookings, fn($b) => $b['status'] === 'pending'));
+$completed_bookings = count(array_filter($bookings, fn($b) => $b['status'] === 'completed'));
+
+// This month's bookings
+$current_month = date('Y-m');
+$this_month_bookings = count(array_filter($bookings, fn($b) => date('Y-m', strtotime($b['start_date'])) === $current_month));
+
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -354,7 +385,7 @@ if ($user_role !== 'employer') {
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">Active Bookings</h5>
-                        <h2>5</h2>
+                        <h2><?php echo $active_bookings; ?></h2>
                     </div>
                 </div>
             </div>
@@ -362,7 +393,7 @@ if ($user_role !== 'employer') {
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">This Month</h5>
-                        <h2>12</h2>
+                        <h2><?php echo $this_month_bookings; ?></h2>
                     </div>
                 </div>
             </div>
@@ -372,7 +403,7 @@ if ($user_role !== 'employer') {
             <!-- Calendar -->
             <div class="col-md-4 mb-4">
                 <div class="calendar-container">
-                    <h5 class="mb-3">December 2024</h5>
+                    <h5 class="mb-3"><?php echo date('F Y'); ?></h5>
                     <div class="table-responsive">
                         <table class="table table-sm">
                             <thead>
@@ -387,51 +418,58 @@ if ($user_role !== 'employer') {
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>1</td>
-                                    <td>2</td>
-                                    <td>3</td>
-                                    <td>4</td>
-                                    <td>5</td>
-                                    <td>6</td>
-                                    <td>7</td>
-                                </tr>
-                                <tr>
-                                    <td>8</td>
-                                    <td class="bg-success text-white">9</td>
-                                    <td>10</td>
-                                    <td>11</td>
-                                    <td class="bg-success text-white">12</td>
-                                    <td>13</td>
-                                    <td>14</td>
-                                </tr>
-                                <tr>
-                                    <td>15</td>
-                                    <td class="bg-success text-white">16</td>
-                                    <td>17</td>
-                                    <td>18</td>
-                                    <td class="bg-success text-white">19</td>
-                                    <td>20</td>
-                                    <td>21</td>
-                                </tr>
-                                <tr>
-                                    <td>22</td>
-                                    <td class="bg-success text-white">23</td>
-                                    <td>24</td>
-                                    <td>25</td>
-                                    <td class="bg-success text-white">26</td>
-                                    <td>27</td>
-                                    <td>28</td>
-                                </tr>
-                                <tr>
-                                    <td>29</td>
-                                    <td class="bg-success text-white">30</td>
-                                    <td>31</td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                    <td></td>
-                                </tr>
+                                <?php
+                                // Generate calendar for current month
+                                $current_month = date('n');
+                                $current_year = date('Y');
+                                $days_in_month = cal_days_in_month(CAL_GREGORIAN, $current_month, $current_year);
+                                $first_day_of_month = date('w', strtotime("$current_year-$current_month-01"));
+                                
+                                // Create array of booked dates for highlighting
+                                $booked_dates = [];
+                                foreach ($bookings as $booking) {
+                                    if (date('n', strtotime($booking['start_date'])) == $current_month && 
+                                        date('Y', strtotime($booking['start_date'])) == $current_year) {
+                                        $booked_dates[] = date('j', strtotime($booking['start_date']));
+                                    }
+                                }
+                                
+                                $day_counter = 1;
+                                $week_started = false;
+                                
+                                // Empty cells before month starts
+                                for ($i = 0; $i < $first_day_of_month; $i++) {
+                                    echo '<td></td>';
+                                    $week_started = true;
+                                }
+                                
+                                // Days of the month
+                                for ($day = 1; $day <= $days_in_month; $day++) {
+                                    if ($day > 1 && $day_counter == 1) {
+                                        echo '<tr>';
+                                    }
+                                    
+                                    $is_booked = in_array($day, $booked_dates);
+                                    $cell_class = $is_booked ? 'bg-success text-white' : '';
+                                    
+                                    echo "<td class='$cell_class'>$day</td>";
+                                    $day_counter++;
+                                    
+                                    if ($day_counter > 7) {
+                                        echo '</tr>';
+                                        $day_counter = 1;
+                                    }
+                                }
+                                
+                                // Empty cells after month ends
+                                if ($day_counter > 1) {
+                                    while ($day_counter <= 7) {
+                                        echo '<td></td>';
+                                        $day_counter++;
+                                    }
+                                    echo '</tr>';
+                                }
+                                ?>
                             </tbody>
                         </table>
                     </div>
@@ -448,100 +486,99 @@ if ($user_role !== 'employer') {
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Upcoming Bookings</h5>
-                        <button class="btn btn-primary btn-sm">New Booking</button>
+                        <button class="btn btn-primary btn-sm" onclick="window.location.href='post-job.php'">New Booking</button>
                     </div>
                     <div class="card-body">
-                        <div class="booking-card card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1">House Cleaning - Marie Uwimana</h6>
-                                        <div class="text-muted small">
-                                            <i class="fas fa-calendar"></i> Dec 9, 2024 - 9:00 AM
-                                            <i class="fas fa-clock ms-2"></i> 4 hours
+                        <?php if (empty($bookings)): ?>
+                            <div class="text-center py-5">
+                                <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                                <h4 class="text-muted">No Bookings Yet</h4>
+                                <p class="text-muted">When you create bookings with workers, they will appear here.</p>
+                                <a href="workers.php" class="btn btn-primary mt-3">
+                                    <i class="fas fa-search me-2"></i>Find Workers
+                                </a>
+                            </div>
+                        <?php else: ?>
+                            <?php foreach ($bookings as $booking): ?>
+                                <div class="booking-card card mb-3">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    <?php 
+                                                    $service_icons = [
+                                                        'cleaning' => 'fa-broom',
+                                                        'cooking' => 'fa-utensils',
+                                                        'childcare' => 'fa-child',
+                                                        'eldercare' => 'fa-user-nurse',
+                                                        'gardening' => 'fa-seedling',
+                                                        'other' => 'fa-briefcase'
+                                                    ];
+                                                    $icon = isset($service_icons[$booking['service_type']]) ? $service_icons[$booking['service_type']] : 'fa-briefcase';
+                                                    $service_name = ucfirst(str_replace('_', ' ', $booking['service_type']));
+                                                    ?>
+                                                    <i class="fas <?php echo $icon; ?> me-2"></i>
+                                                    <?php echo $service_name; ?> - <?php echo htmlspecialchars($booking['worker_name']); ?>
+                                                </h6>
+                                                <div class="text-muted small">
+                                                    <i class="fas fa-calendar"></i> <?php echo date('M j, Y', strtotime($booking['start_date'])); ?>
+                                                    <?php if ($booking['end_date'] && $booking['end_date'] != $booking['start_date']): ?>
+                                                        - <?php echo date('M j, Y', strtotime($booking['end_date'])); ?>
+                                                    <?php endif; ?>
+                                                    <i class="fas fa-clock ms-2"></i> 
+                                                    <?php 
+                                                    $duration = $booking['end_date'] ? 
+                                                        (strtotime($booking['end_date']) - strtotime($booking['start_date'])) / 86400 + 1 : 
+                                                        1;
+                                                    echo $duration . ' day' . ($duration > 1 ? 's' : '');
+                                                    ?>
+                                                    <?php if (!empty($booking['hourly_rate'])): ?>
+                                                        <i class="fas fa-money-bill ms-2"></i> RWF <?php echo number_format($booking['hourly_rate']); ?>/hr
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                            <span class="badge bg-<?php echo $booking['status'] === 'confirmed' ? 'success' : ($booking['status'] === 'pending' ? 'warning' : 'secondary'); ?> status-badge">
+                                                <?php echo ucfirst(htmlspecialchars($booking['status'])); ?>
+                                            </span>
+                                        </div>
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <span class="text-muted">
+                                                    <?php if (!empty($booking['worker_email'])): ?>
+                                                        <i class="fas fa-envelope"></i> <?php echo htmlspecialchars($booking['worker_email']); ?>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($booking['worker_phone'])): ?>
+                                                        <i class="fas fa-phone ms-2"></i> <?php echo htmlspecialchars($booking['worker_phone']); ?>
+                                                    <?php endif; ?>
+                                                </span>
+                                                <?php if (!empty($booking['notes'])): ?>
+                                                    <div class="text-muted small mt-1">
+                                                        <i class="fas fa-sticky-note"></i> <?php echo htmlspecialchars(substr($booking['notes'], 0, 100)) . (strlen($booking['notes']) > 100 ? '...' : ''); ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="btn-group btn-group-sm">
+                                                <button class="btn btn-outline-primary" onclick="viewBookingDetails(<?php echo $booking['id']; ?>)">
+                                                    <i class="fas fa-eye"></i> View
+                                                </button>
+                                                <button class="btn btn-outline-secondary" onclick="messageWorker(<?php echo $booking['worker_id']; ?>, '<?php echo htmlspecialchars($booking['worker_name']); ?>')">
+                                                    <i class="fas fa-envelope"></i> Message
+                                                </button>
+                                                <?php if ($booking['status'] === 'pending'): ?>
+                                                    <button class="btn btn-outline-success" onclick="updateBookingStatus(<?php echo $booking['id']; ?>, 'confirmed')">
+                                                        <i class="fas fa-check"></i> Confirm
+                                                    </button>
+                                                <?php elseif ($booking['status'] === 'confirmed'): ?>
+                                                    <button class="btn btn-outline-warning" onclick="updateBookingStatus(<?php echo $booking['id']; ?>, 'cancelled')">
+                                                        <i class="fas fa-times"></i> Cancel
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </div>
-                                    <span class="badge bg-success status-badge">Confirmed</span>
                                 </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Kigali - Home Address</span>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary">View</button>
-                                        <button class="btn btn-outline-secondary">Message</button>
-                                        <button class="btn btn-outline-warning">Reschedule</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="booking-card card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1">Childcare - John Mukiza</h6>
-                                        <div class="text-muted small">
-                                            <i class="fas fa-calendar"></i> Dec 12, 2024 - 2:00 PM
-                                            <i class="fas fa-clock ms-2"></i> 3 hours
-                                        </div>
-                                    </div>
-                                    <span class="badge bg-success status-badge">Confirmed</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Kicukiro - Family Home</span>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary">View</button>
-                                        <button class="btn btn-outline-secondary">Message</button>
-                                        <button class="btn btn-outline-warning">Reschedule</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="booking-card card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1">Gardening - Grace Kantengwa</h6>
-                                        <div class="text-muted small">
-                                            <i class="fas fa-calendar"></i> Dec 16, 2024 - 8:00 AM
-                                            <i class="fas fa-clock ms-2"></i> 5 hours
-                                        </div>
-                                    </div>
-                                    <span class="badge bg-warning status-badge">Pending</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Gasabo - Garden Maintenance</span>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary">View</button>
-                                        <button class="btn btn-outline-secondary">Message</button>
-                                        <button class="btn btn-outline-success">Confirm</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="booking-card card mb-3">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1">Eldercare - Joseph Niyonzima</h6>
-                                        <div class="text-muted small">
-                                            <i class="fas fa-calendar"></i> Dec 19, 2024 - 10:00 AM
-                                            <i class="fas fa-clock ms-2"></i> 6 hours
-                                        </div>
-                                    </div>
-                                    <span class="badge bg-success status-badge">Confirmed</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Nyarugenge - Elder Care</span>
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-outline-primary">View</button>
-                                        <button class="btn btn-outline-secondary">Message</button>
-                                        <button class="btn btn-outline-warning">Reschedule</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -554,6 +591,50 @@ if ($user_role !== 'employer') {
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
+        }
+        
+        // View booking details
+        function viewBookingDetails(bookingId) {
+            // You can implement a modal or redirect to details page
+            alert('Booking details feature coming soon! Booking ID: ' + bookingId);
+        }
+        
+        // Message worker
+        function messageWorker(workerId, workerName) {
+            if (confirm('Would you like to send a message to ' + workerName + '?')) {
+                // Redirect to messages page with worker context
+                window.location.href = 'messages.php?worker_id=' + workerId;
+            }
+        }
+        
+        // Update booking status
+        function updateBookingStatus(bookingId, newStatus) {
+            if (confirm('Are you sure you want to ' + newStatus + ' this booking?')) {
+                // Create form data
+                const formData = new FormData();
+                formData.append('booking_id', bookingId);
+                formData.append('status', newStatus);
+                
+                // Send AJAX request to update status
+                fetch('api/update-booking-status.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Show success message and reload page
+                        alert('Booking status updated successfully!');
+                        window.location.reload();
+                    } else {
+                        alert('Error updating booking: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error updating booking. Please try again.');
+                });
+            }
         }
         
         // Close sidebar when clicking outside on mobile

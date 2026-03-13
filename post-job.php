@@ -236,10 +236,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
         <nav class="nav flex-column p-3">
             <a class="nav-link" href="dashboard.php">
                 <i class="fas fa-tachometer-alt"></i> Dashboard

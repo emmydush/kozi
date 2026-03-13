@@ -41,6 +41,8 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
         </button>
         
         <a class="navbar-brand d-flex align-items-center" href="dashboard.php" style="font-size: 1.1rem;">
+            <img src="Logo.png" alt="KOZI CONNECT" style="height: 35px; margin-right: 10px;">
+            <span>KOZI CONNECT</span>
         </a>
         
         <div class="navbar-nav ms-auto d-flex flex-row align-items-center">

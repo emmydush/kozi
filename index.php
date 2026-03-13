@@ -623,7 +623,8 @@
         <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background: rgba(0,0,0,0.1); backdrop-filter: blur(10px);">
             <div class="container">
                 <a class="navbar-brand fw-bold" href="index.php">
-                    <i class="fas fa-home"></i> Household Connect
+                    <img src="Logo.png" alt="KOZI CONNECT" style="height: 30px; margin-right: 8px;">
+                    KOZI CONNECT
                 </a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                     <span class="navbar-toggler-icon"></span>

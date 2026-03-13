@@ -466,7 +466,7 @@ if (isset($_SESSION['user_id'])) {
             setLoading(true);
             
             try {
-                const response = await fetch('api/login.php', {
+                const response = await fetch('api/login-debug.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

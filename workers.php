@@ -9,6 +9,31 @@ if (!is_logged_in()) {
 // Get user role
 $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
+
+// Fetch all workers from database
+$workers = [];
+$sql = "SELECT u.*, w.profile_image, w.national_id, w.national_id_photo, w.skills, 
+               w.experience_years, w.education, w.languages, w.certifications, 
+               w.description as worker_description, w.type as worker_type, 
+               w.hourly_rate, w.availability, w.status as worker_status
+        FROM users u
+        LEFT JOIN workers w ON u.id = w.user_id
+        WHERE u.role = 'worker' 
+        AND (w.status IS NULL OR w.status = 'active')
+        ORDER BY w.created_at DESC";
+$stmt = $conn->prepare($sql);
+$stmt->execute();
+$result = $stmt->get_result();
+
+while ($row = $result->fetch_assoc()) {
+    $workers[] = $row;
+}
+
+$stmt->close();
+
+// Calculate statistics
+$total_workers = count($workers);
+$active_workers = count(array_filter($workers, fn($w) => $w['worker_status'] === 'active'));
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -315,10 +340,6 @@ $user_name = $_SESSION['user_name'];
     
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <h3><i class="fas fa-home"></i> Household Connect</h3>
-        </div>
-        
         <nav class="nav flex-column p-3">
             <a class="nav-link" href="dashboard.php">
                 <i class="fas fa-tachometer-alt"></i> Dashboard
@@ -379,7 +400,7 @@ $user_name = $_SESSION['user_name'];
                             <div class="text-center">
                                 <i class="fas fa-users fa-4x mb-3 opacity-75"></i>
                                 <div class="h5">Verified Workers</div>
-                                <div class="h3 fw-bold">5+ Available</div>
+                                <div class="h3 fw-bold"><?php echo $active_workers; ?>+ Available</div>
                             </div>
                         </div>
                     </div>
@@ -479,7 +500,101 @@ $user_name = $_SESSION['user_name'];
                         
                         <!-- Workers Container -->
                         <div id="workers-container" class="row g-4">
-                            <!-- Workers will be loaded here -->
+                            <?php if (empty($workers)): ?>
+                                <div class="col-12">
+                                    <div class="text-center py-5">
+                                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                                        <h4 class="text-muted">No Workers Available</h4>
+                                        <p class="text-muted">There are currently no workers available. Please check back later.</p>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <?php foreach ($workers as $worker): ?>
+                                    <div class="col-lg-4 col-md-6">
+                                        <div class="card worker-card h-100">
+                                            <div class="position-relative">
+                                                <?php 
+                                                $profile_image = '';
+                                                if (!empty($worker['profile_image']) && file_exists('uploads/profiles/' . $worker['profile_image'])) {
+                                                    $profile_image = 'uploads/profiles/' . htmlspecialchars($worker['profile_image']);
+                                                }
+                                                ?>
+                                                <img src="<?php echo $profile_image ?: 'https://picsum.photos/seed/worker-' . $worker['id'] . '/400/300.jpg'; ?>" 
+                                                     class="card-img-top" 
+                                                     alt="<?php echo htmlspecialchars($worker['name']); ?>"
+                                                     style="height: 200px; object-fit: cover;">
+                                                <div class="position-absolute top-0 end-0 m-2">
+                                                    <span class="badge bg-success">Available</span>
+                                                </div>
+                                            </div>
+                                            <div class="card-body d-flex flex-column">
+                                                <div class="mb-2">
+                                                    <h5 class="card-title"><?php echo htmlspecialchars($worker['name']); ?></h5>
+                                                    <div class="d-flex align-items-center mb-2">
+                                                        <div class="rating-stars me-2">
+                                                            <?php
+                                                            // Generate random rating for demo (in real app, this would come from reviews table)
+                                                            $rating = rand(4, 5);
+                                                            for ($i = 1; $i <= 5; $i++) {
+                                                                echo $i <= $rating ? '⭐' : '☆';
+                                                            }
+                                                            ?>
+                                                        </div>
+                                                        <small class="text-muted">(<?php echo $rating; ?>.0)</small>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="mb-2">
+                                                    <span class="badge bg-primary me-1"><?php echo ucfirst(htmlspecialchars($worker['worker_type'] ?? 'General')); ?></span>
+                                                    <?php if (!empty($worker['experience_years'])): ?>
+                                                        <span class="badge bg-info me-1"><?php echo $worker['experience_years']; ?>+ years</span>
+                                                    <?php endif; ?>
+                                                    <?php if (!empty($worker['hourly_rate'])): ?>
+                                                        <span class="badge bg-success">RWF <?php echo number_format($worker['hourly_rate']); ?>/hr</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                                
+                                                <?php if (!empty($worker['skills'])): ?>
+                                                    <div class="mb-2">
+                                                        <?php 
+                                                        $skills = explode(',', $worker['skills']);
+                                                        foreach (array_slice($skills, 0, 3) as $skill): 
+                                                        ?>
+                                                            <span class="skills-badge me-1"><?php echo htmlspecialchars(trim($skill)); ?></span>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                                
+                                                <?php if (!empty($worker['worker_description'])): ?>
+                                                    <p class="card-text text-muted small">
+                                                        <?php echo htmlspecialchars(substr($worker['worker_description'], 0, 100)) . (strlen($worker['worker_description']) > 100 ? '...' : ''); ?>
+                                                    </p>
+                                                <?php endif; ?>
+                                                
+                                                <?php if (!empty($worker['location'])): ?>
+                                                    <div class="mb-2">
+                                                        <small class="text-muted">
+                                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                                            <?php echo htmlspecialchars($worker['location']); ?>
+                                                        </small>
+                                                    </div>
+                                                <?php endif; ?>
+                                                
+                                                <div class="mt-auto">
+                                                    <div class="d-grid gap-2">
+                                                        <button class="btn btn-primary" onclick="viewWorkerProfile(<?php echo $worker['id']; ?>)">
+                                                            <i class="fas fa-eye me-2"></i>View Profile
+                                                        </button>
+                                                        <button class="btn btn-outline-secondary" onclick="messageWorker(<?php echo $worker['id']; ?>, '<?php echo htmlspecialchars($worker['name']); ?>')">
+                                                            <i class="fas fa-envelope me-2"></i>Message
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
                         
                         <!-- Load More Button -->
@@ -575,6 +690,23 @@ $user_name = $_SESSION['user_name'];
                 }
             }
         }
+        
+        // View worker profile
+        function viewWorkerProfile(workerId) {
+            window.location.href = 'worker-details.php?id=' + workerId;
+        }
+        
+        // Message worker
+        function messageWorker(workerId, workerName) {
+            if (confirm('Would you like to send a message to ' + workerName + '?')) {
+                window.location.href = 'messages.php?worker_id=' + workerId;
+            }
+        }
+        
+        // Initialize results count
+        document.addEventListener('DOMContentLoaded', function() {
+            updateResultsCount(<?php echo count($workers); ?>, <?php echo count($workers); ?>);
+        });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="script.js"></script>
