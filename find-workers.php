@@ -79,37 +79,35 @@ switch ($sort_by) {
 
 // Fetch workers with filters
 $workers = [];
-$sql = "SELECT u.*, w.profile_image, w.national_id, w.national_id_photo, w.skills, 
+$sql = "SELECT u.*, u.profile_image as user_profile_image, w.profile_image, w.skills, 
                w.experience_years, w.education, w.languages, w.certifications, 
                w.description as worker_description, w.type as worker_type, 
                w.hourly_rate, w.availability, w.status as worker_status,
-               COALESCE(avg_rating, 0) as avg_rating,
-               total_reviews
+               COALESCE(review_stats.avg_rating, 0) as avg_rating,
+               COALESCE(review_stats.total_reviews, 0) as total_reviews
         FROM users u
         LEFT JOIN workers w ON u.id = w.user_id
         LEFT JOIN (
-            SELECT r.reviewee_id, 
+            SELECT worker_id, 
                    AVG(rating) as avg_rating, 
                    COUNT(*) as total_reviews
             FROM reviews 
-            GROUP BY reviewee_id
-        ) r ON u.id = r.reviewee_id
+            GROUP BY worker_id
+        ) review_stats ON u.id = review_stats.worker_id
         WHERE " . implode(' AND ', $where_conditions) . "
         AND (w.status IS NULL OR w.status = 'active')
         $order_by";
 
 $stmt = $conn->prepare($sql);
 if (!empty($params)) {
-    $stmt->bind_param($param_types, ...$params);
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key + 1, $value);
+    }
 }
 $stmt->execute();
-$result = $stmt->get_result();
+$workers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-while ($row = $result->fetch_assoc()) {
-    $workers[] = $row;
-}
-
-$stmt->close();
+$stmt = null;
 
 // Calculate statistics
 $total_workers = count($workers);
@@ -486,6 +484,34 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+
+        /* Smartphone layout for worker cards */
+        @media (max-width: 576px) {
+            .row .col-6 {
+                padding-left: 5px !important;
+                padding-right: 5px !important;
+            }
+            
+            .row .col-6 .worker-card {
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .card.worker-card {
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .worker-card .worker-image {
+                height: 150px;
+            }
+            
+            .row .col-6 .worker-card .worker-name {
+                font-size: 1rem;
+            }
+            
+            .row .col-6 .worker-card .worker-type {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -643,7 +669,7 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
             <!-- Workers Grid -->
             <div class="col-lg-9">
                 <!-- Results Header -->
-                <div class="d-flex justify-content-between align-items-center mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-4 sticky-search-header">
                     <div>
                         <h2 class="mb-1">Available Workers</h2>
                         <p class="text-muted mb-0">
@@ -681,13 +707,21 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
                         </div>
                     <?php else: ?>
                         <?php foreach ($workers as $worker): ?>
-                            <div class="col-lg-4 col-md-6">
+                            <div class="col-lg-4 col-md-6 col-sm-6 col-6">
                                 <div class="worker-card">
                                     <div class="position-relative">
                                         <?php 
                                         $profile_image = '';
-                                        if (!empty($worker['profile_image']) && file_exists('uploads/profiles/' . $worker['profile_image'])) {
-                                            $profile_image = 'uploads/profiles/' . htmlspecialchars($worker['profile_image']);
+                                        // Check user profile image first, then worker profile image
+                                        $image_to_check = '';
+                                        if (!empty($worker['user_profile_image'])) {
+                                            $image_to_check = $worker['user_profile_image'];
+                                        } elseif (!empty($worker['profile_image'])) {
+                                            $image_to_check = $worker['profile_image'];
+                                        }
+                                        
+                                        if (!empty($image_to_check) && file_exists($image_to_check)) {
+                                            $profile_image = htmlspecialchars($image_to_check);
                                         }
                                         ?>
                                         <div class="worker-image">

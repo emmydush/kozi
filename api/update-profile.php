@@ -5,18 +5,24 @@ header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    json_response(['success' => false, 'message' => 'Unauthorized'], 401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit();
 }
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        json_response(['success' => false, 'message' => 'Method not allowed'], 405);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+        exit();
     }
     
     $data = json_decode(file_get_contents('php://input'), true);
     
     if (!$data) {
-        json_response(['success' => false, 'message' => 'Invalid JSON data'], 400);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+        exit();
     }
     
     $update_type = $data['type'] ?? 'personal';
@@ -24,7 +30,9 @@ try {
     $user_id = $_SESSION['user_id'];
     
     if (!$user_id) {
-        json_response(['success' => false, 'message' => 'User not logged in'], 401);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'User not logged in']);
+        exit();
     }
     
     switch ($update_type) {
@@ -33,7 +41,9 @@ try {
             $errors = validate_required($required_fields, $data);
             
             if (!empty($errors)) {
-                json_response(['success' => false, 'message' => 'Validation failed', 'errors' => $errors], 400);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Validation failed', 'errors' => $errors]);
+                exit();
             }
             
             $name = sanitize_input($data['name']);
@@ -43,34 +53,82 @@ try {
             $bio = sanitize_input($data['bio'] ?? '');
             
             if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                json_response(['success' => false, 'message' => 'Invalid email format'], 400);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Invalid email format']);
+                exit();
             }
             
             // Check if email is taken by another user
             if ($email !== $_SESSION['user_email']) {
-                $check_sql = "SELECT id FROM users WHERE email = ? AND id != ?";
+                $check_sql = "SELECT id FROM users WHERE email = :email AND id != :user_id";
                 $check_stmt = $conn->prepare($check_sql);
-                $check_stmt->bind_param("si", $email, $user_id);
+                $check_stmt->bindParam(':email', $email);
+                $check_stmt->bindParam(':user_id', $user_id);
                 $check_stmt->execute();
-                $check_result = $check_stmt->get_result();
+                $existing_user = $check_stmt->fetch(PDO::FETCH_ASSOC);
                 
-                if ($check_result->num_rows > 0) {
-                    json_response(['success' => false, 'message' => 'Email already exists'], 400);
+                if ($existing_user) {
+                    header('Content-Type: application/json');
+                    echo json_encode(['success' => false, 'message' => 'Email already exists']);
+                    exit();
                 }
             }
             
-            $sql = "UPDATE users SET name = ?, email = ?, phone = ? WHERE id = ?";
+            // Update users table
+            $sql = "UPDATE users SET name = :name, email = :email, phone = :phone WHERE id = :user_id";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssi", $name, $email, $phone, $user_id);
+            $stmt->bindParam(':name', $name);
+            $stmt->bindParam(':email', $email);
+            $stmt->bindParam(':phone', $phone);
+            $stmt->bindParam(':user_id', $user_id);
             
             if ($stmt->execute()) {
                 // Update session
                 $_SESSION['user_name'] = $name;
                 $_SESSION['user_email'] = $email;
                 
-                json_response(['success' => true, 'message' => 'Personal information updated successfully']);
+                // Update national ID if worker and provided
+                if ($_SESSION['user_role'] === 'worker' && isset($data['national_id'])) {
+                    $national_id = sanitize_input($data['national_id']);
+                    
+                    // Check if national_id column exists
+                    $check_columns = "SELECT column_name FROM information_schema.columns 
+                                     WHERE table_name = 'workers' AND column_name = 'national_id'";
+                    $column_check = $conn->query($check_columns);
+                    $has_national_id = $column_check->fetch(PDO::FETCH_ASSOC);
+                    
+                    if ($has_national_id) {
+                        // Check if worker record exists
+                        $worker_check_sql = "SELECT id FROM workers WHERE user_id = :user_id";
+                        $worker_check_stmt = $conn->prepare($worker_check_sql);
+                        $worker_check_stmt->bindParam(':user_id', $user_id);
+                        $worker_check_stmt->execute();
+                        $existing_worker = $worker_check_stmt->fetch(PDO::FETCH_ASSOC);
+                        
+                        if ($existing_worker) {
+                            // Update existing worker record
+                            $worker_sql = "UPDATE workers SET national_id = :national_id WHERE user_id = :user_id";
+                            $worker_stmt = $conn->prepare($worker_sql);
+                            $worker_stmt->bindParam(':national_id', $national_id);
+                            $worker_stmt->bindParam(':user_id', $user_id);
+                            $worker_stmt->execute();
+                        } else {
+                            // Create worker record if it doesn't exist
+                            $worker_sql = "INSERT INTO workers (user_id, name, national_id, status) VALUES (:user_id, :name, :national_id, 'active')";
+                            $worker_stmt = $conn->prepare($worker_sql);
+                            $worker_stmt->bindParam(':user_id', $user_id);
+                            $worker_stmt->bindParam(':name', $name);
+                            $worker_stmt->bindParam(':national_id', $national_id);
+                            $worker_stmt->execute();
+                        }
+                    }
+                }
+                
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Personal information updated successfully']);
             } else {
-                json_response(['success' => false, 'message' => 'Update failed'], 500);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Update failed']);
             }
             break;
             
@@ -87,42 +145,52 @@ try {
             $confirm_password = $data['confirm_password'];
             
             if ($new_password !== $confirm_password) {
-                json_response(['success' => false, 'message' => 'Passwords do not match'], 400);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Passwords do not match']);
+                exit();
             }
             
             if (strlen($new_password) < 6) {
-                json_response(['success' => false, 'message' => 'Password must be at least 6 characters'], 400);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Password must be at least 6 characters']);
+                exit();
             }
             
             // Get current password hash
-            $sql = "SELECT password FROM users WHERE id = ?";
+            $sql = "SELECT password FROM users WHERE id = :user_id";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
+            $stmt->bindParam(':user_id', $user_id);
             $stmt->execute();
-            $result = $stmt->get_result();
-            $user = $result->fetch_assoc();
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if (!password_verify($current_password, $user['password'])) {
-                json_response(['success' => false, 'message' => 'Current password is incorrect'], 400);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Current password is incorrect']);
+                exit();
             }
             
             // Update password
             $hashed_password = password_hash($new_password, HASH_ALGO);
-            $sql = "UPDATE users SET password = ? WHERE id = ?";
+            $sql = "UPDATE users SET password = :password WHERE id = :user_id";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("si", $hashed_password, $user_id);
+            $stmt->bindParam(':password', $hashed_password);
+            $stmt->bindParam(':user_id', $user_id);
             
             if ($stmt->execute()) {
-                json_response(['success' => true, 'message' => 'Password updated successfully']);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Password updated successfully']);
             } else {
-                json_response(['success' => false, 'message' => 'Password update failed'], 500);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Password update failed']);
             }
             break;
             
         case 'professional':
             // Only for workers
             if ($_SESSION['user_role'] !== 'worker') {
-                json_response(['success' => false, 'message' => 'Access denied'], 403);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Access denied']);
+                exit();
             }
             
             $skills = $data['skills'] ?? [];
@@ -131,41 +199,52 @@ try {
             $availability = sanitize_input($data['availability'] ?? '');
             
             // Check if worker record exists
-            $check_sql = "SELECT id FROM workers WHERE user_id = ?";
+            $check_sql = "SELECT id FROM workers WHERE user_id = :user_id";
             $check_stmt = $conn->prepare($check_sql);
-            $check_stmt->bind_param("i", $user_id);
+            $check_stmt->bindParam(':user_id', $user_id);
             $check_stmt->execute();
-            $check_result = $check_stmt->get_result();
+            $existing_worker = $check_stmt->fetch(PDO::FETCH_ASSOC);
             
-            if ($check_result->num_rows > 0) {
+            if ($existing_worker) {
                 // Update existing worker record
-                $sql = "UPDATE workers SET experience_years = ?, skills = ?, availability = ? WHERE user_id = ?";
+                $sql = "UPDATE workers SET experience_years = :experience, skills = :skills, availability = :availability WHERE user_id = :user_id";
                 $stmt = $conn->prepare($sql);
                 $skills_json = json_encode($skills);
-                $stmt->bind_param("issi", $experience, $skills_json, $availability, $user_id);
+                $stmt->bindParam(':experience', $experience);
+                $stmt->bindParam(':skills', $skills_json);
+                $stmt->bindParam(':availability', $availability);
+                $stmt->bindParam(':user_id', $user_id);
             } else {
                 // Create new worker record
-                $sql = "INSERT INTO workers (user_id, name, experience_years, skills, availability, status) VALUES (?, ?, ?, ?, ?, 'active')";
+                $sql = "INSERT INTO workers (user_id, name, experience_years, skills, availability, status) VALUES (:user_id, :name, :experience, :skills, :availability, 'active')";
                 $stmt = $conn->prepare($sql);
                 $skills_json = json_encode($skills);
                 $user_name = $_SESSION['user_name'];
-                $stmt->bind_param("isiss", $user_id, $user_name, $experience, $skills_json, $availability);
+                $stmt->bindParam(':user_id', $user_id);
+                $stmt->bindParam(':name', $user_name);
+                $stmt->bindParam(':experience', $experience);
+                $stmt->bindParam(':skills', $skills_json);
+                $stmt->bindParam(':availability', $availability);
             }
             
             if ($stmt->execute()) {
-                json_response(['success' => true, 'message' => 'Professional information updated successfully']);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => true, 'message' => 'Professional information updated successfully']);
             } else {
-                json_response(['success' => false, 'message' => 'Update failed'], 500);
+                header('Content-Type: application/json');
+                echo json_encode(['success' => false, 'message' => 'Update failed']);
             }
             break;
             
         default:
-            json_response(['success' => false, 'message' => 'Invalid update type'], 400);
+            header('Content-Type: application/json');
+            echo json_encode(['success' => false, 'message' => 'Invalid update type']);
+            exit();
     }
     
 } catch (Exception $e) {
-    json_response(['success' => false, 'message' => $e->getMessage()], 500);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
-$conn->close();
 ?>

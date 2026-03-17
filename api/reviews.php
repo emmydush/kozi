@@ -29,18 +29,21 @@ try {
         }
         
         $sql = "INSERT INTO reviews (worker_id, user_id, rating, comment, created_at) 
-                VALUES (?, ?, ?, ?, NOW())";
+                VALUES (:worker_id, :user_id, :rating, :comment, NOW())";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiis", $worker_id, $user_id, $rating, $comment);
+        $result = $stmt->execute([
+            ':worker_id' => $worker_id,
+            ':user_id' => $user_id,
+            ':rating' => $rating,
+            ':comment' => $comment
+        ]);
         
-        if ($stmt->execute()) {
+        if ($result) {
             json_response(['success' => true, 'message' => 'Review posted successfully']);
         } else {
             json_response(['success' => false, 'message' => 'Failed to post review'], 500);
         }
-        
-        $stmt->close();
         
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Get reviews for a worker
@@ -53,18 +56,17 @@ try {
         $sql = "SELECT r.*, u.name as reviewer_name 
                 FROM reviews r 
                 LEFT JOIN users u ON r.user_id = u.id 
-                WHERE r.worker_id = ? 
+                WHERE r.worker_id = :worker_id
                 ORDER BY r.created_at DESC 
                 LIMIT 10";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("i", $worker_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([':worker_id' => $worker_id]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $reviews = [];
-        while ($row = $result->fetch_assoc()) {
-            $reviews[] = $row;
+        if ($result && count($result) > 0) {
+            $reviews = $result;
         }
         
         json_response(['success' => true, 'data' => $reviews]);
@@ -74,8 +76,7 @@ try {
     }
     
 } catch (Exception $e) {
+    error_log("Reviews API Error: " . $e->getMessage());
     json_response(['success' => false, 'message' => $e->getMessage()], 500);
 }
-
-$conn->close();
 ?>

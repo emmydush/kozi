@@ -7,26 +7,25 @@ $user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
 // Get user profile image from database
 $profile_image = null;
 if ($user_id) {
-    $query = "SELECT profile_image FROM users WHERE id = ?";
+    $query = "SELECT profile_image FROM users WHERE id = :user_id";
     $stmt = $conn->prepare($query);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
-    if ($row = $result->fetch_assoc()) {
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($row) {
         $profile_image = $row['profile_image'];
     }
-    $stmt->close();
 }
 
 // Determine profile image source
-$image_src = 'uploads/profiles/user_1_1773319465.png'; // Default fallback
+$image_src = null; // No default fallback image
 if (!empty($profile_image)) {
     if (strpos($profile_image, 'http') === 0) {
         // Full URL provided
         $image_src = $profile_image;
-    } elseif (file_exists('uploads/profiles/' . $profile_image)) {
-        // Local file exists
-        $image_src = 'uploads/profiles/' . $profile_image;
+    } elseif (file_exists($profile_image)) {
+        // Local file exists (profile_image already contains full path)
+        $image_src = $profile_image . '?t=' . time(); // Add cache-busting
     }
 }
 
@@ -74,7 +73,7 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
             <div class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle d-flex align-items-center text-white p-2 p-sm-1" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 1.1rem;">
                     <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center" style="width: 32px; height: 32px; font-size: 14px; background: white;">
-                        <?php if (!empty($profile_image) && file_exists($image_src)): ?>
+                        <?php if ($image_src): ?>
                             <img src="<?php echo htmlspecialchars($image_src); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
                         <?php else: ?>
                             <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white">
@@ -91,7 +90,7 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                     <li class="px-3 py-2">
                         <div class="d-flex align-items-center">
                             <div class="rounded-circle overflow-hidden d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; background: white;">
-                                <?php if (!empty($profile_image) && file_exists($image_src)): ?>
+                                <?php if ($image_src): ?>
                                     <img src="<?php echo htmlspecialchars($image_src); ?>" alt="Profile" style="width: 100%; height: 100%; object-fit: cover;">
                                 <?php else: ?>
                                     <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-dark text-white">

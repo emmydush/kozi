@@ -12,7 +12,7 @@ $user_name = $_SESSION['user_name'];
 
 // Fetch all workers from database
 $workers = [];
-$sql = "SELECT u.*, w.profile_image, w.national_id, w.national_id_photo, w.skills, 
+$sql = "SELECT u.*, u.profile_image as user_profile_image, w.profile_image, w.skills, 
                w.experience_years, w.education, w.languages, w.certifications, 
                w.description as worker_description, w.type as worker_type, 
                w.hourly_rate, w.availability, w.status as worker_status
@@ -23,13 +23,7 @@ $sql = "SELECT u.*, w.profile_image, w.national_id, w.national_id_photo, w.skill
         ORDER BY w.created_at DESC";
 $stmt = $conn->prepare($sql);
 $stmt->execute();
-$result = $stmt->get_result();
-
-while ($row = $result->fetch_assoc()) {
-    $workers[] = $row;
-}
-
-$stmt->close();
+$workers = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate statistics
 $total_workers = count($workers);
@@ -333,6 +327,34 @@ $active_workers = count(array_filter($workers, fn($w) => $w['worker_status'] ===
                 height: 200px;
             }
         }
+
+        /* Smartphone layout for worker cards */
+        @media (max-width: 576px) {
+            .row .col-6 {
+                padding-left: 5px !important;
+                padding-right: 5px !important;
+            }
+            
+            .row .col-6 .worker-card {
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .card.worker-card {
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .worker-card .card-img-top {
+                height: 150px;
+            }
+            
+            .row .col-6 .worker-card .card-title {
+                font-size: 1rem;
+            }
+            
+            .row .col-6 .worker-card .text-muted {
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -510,13 +532,21 @@ $active_workers = count(array_filter($workers, fn($w) => $w['worker_status'] ===
                                 </div>
                             <?php else: ?>
                                 <?php foreach ($workers as $worker): ?>
-                                    <div class="col-lg-4 col-md-6">
+                                    <div class="col-lg-4 col-md-6 col-sm-6 col-6">
                                         <div class="card worker-card h-100">
                                             <div class="position-relative">
                                                 <?php 
                                                 $profile_image = '';
-                                                if (!empty($worker['profile_image']) && file_exists('uploads/profiles/' . $worker['profile_image'])) {
-                                                    $profile_image = 'uploads/profiles/' . htmlspecialchars($worker['profile_image']);
+                                                // Check user profile image first, then worker profile image
+                                                $image_to_check = '';
+                                                if (!empty($worker['user_profile_image'])) {
+                                                    $image_to_check = $worker['user_profile_image'];
+                                                } elseif (!empty($worker['profile_image'])) {
+                                                    $image_to_check = $worker['profile_image'];
+                                                }
+                                                
+                                                if (!empty($image_to_check) && file_exists($image_to_check)) {
+                                                    $profile_image = htmlspecialchars($image_to_check);
                                                 }
                                                 ?>
                                                 <img src="<?php echo $profile_image ?: 'https://picsum.photos/seed/worker-' . $worker['id'] . '/400/300.jpg'; ?>" 

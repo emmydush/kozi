@@ -14,13 +14,18 @@ $user_id = $_SESSION['user_id'];
 // Check if worker has a profile (only for workers)
 $has_worker_profile = false;
 if ($user_role === 'worker') {
-    $check_sql = "SELECT id FROM workers WHERE user_id = ?";
+    $check_sql = "SELECT id FROM workers WHERE user_id = :user_id";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $user_id);
+    $check_stmt->bindParam(':user_id', $user_id);
     $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
-    $has_worker_profile = $check_result->num_rows > 0;
-    $check_stmt->close();
+    $result = $check_stmt->fetch(PDO::FETCH_ASSOC);
+    $has_worker_profile = $result !== false;
+    
+    // Force workers to complete profile before accessing dashboard
+    if (!$has_worker_profile) {
+        redirect('create-worker-profile.php');
+        exit();
+    }
 }
 ?>
 
@@ -720,6 +725,52 @@ if ($user_role === 'worker') {
             background-color: #000000;
             border-color: #000000;
         }
+        
+        .pagination .page-item.btn-outline-primary:hover {
+            background-color: #000000;
+            border-color: #000000;
+        }
+
+        /* Smartphone layout for dashboard cards */
+        @media (max-width: 576px) {
+            .row .col-6 {
+                padding-left: 5px !important;
+                padding-right: 5px !important;
+            }
+            
+            .row .col-6 .card {
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .card .card-body {
+                padding: 15px;
+            }
+            
+            .row .col-6 .card h5 {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .card h2 {
+                font-size: 1.5rem;
+                margin-bottom: 0;
+            }
+        }
+
+        /* Sticky search header styles */
+        .sticky-search-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background-color: white;
+            border-bottom: 1px solid rgba(0,0,0,.125);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .sticky-search-header:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
     </style>
 </head>
 <body>
@@ -827,7 +878,7 @@ if ($user_role === 'worker') {
         <?php if ($user_role === 'employer'): ?>
         <!-- Employer Dashboard -->
         <div class="row mt-4">
-            <div class="col-lg-6 col-md-12 mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">Posted Jobs</h5>
@@ -835,7 +886,7 @@ if ($user_role === 'worker') {
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12 mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">Active Bookings</h5>
@@ -848,7 +899,7 @@ if ($user_role === 'worker') {
         <div class="row mt-4">
             <div class="col-lg-8 col-md-12 mb-4">
                 <div class="card h-100">
-                    <div class="card-header d-flex justify-content-between align-items-center">
+                    <div class="card-header d-flex justify-content-between align-items-center sticky-search-header">
                         <h5>Available Workers</h5>
                         <div class="d-flex gap-2">
                             <input type="text" id="worker-search" class="form-control form-control-sm" placeholder="Search workers..." style="width: 200px;">
@@ -889,7 +940,7 @@ if ($user_role === 'worker') {
         <?php else: ?>
         <!-- Worker Dashboard -->
         <div class="row mt-4">
-            <div class="col-lg-6 col-md-12 mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">Jobs Applied</h5>
@@ -897,7 +948,7 @@ if ($user_role === 'worker') {
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12 mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">Active Jobs</h5>
@@ -1071,8 +1122,19 @@ if ($user_role === 'worker') {
         
         // Load dashboard data
         document.addEventListener('DOMContentLoaded', function() {
-            const userRole = '<?php echo $user_role; ?>';
+            const userRole = '<?php echo isset($user_role) ? $user_role : 'unknown'; ?>';
             console.log('Dashboard loaded for user role:', userRole);
+            console.log('Session variables available:', {
+                userRole: userRole,
+                userName: '<?php echo isset($user_name) ? $user_name : 'unknown'; ?>',
+                userId: '<?php echo isset($user_id) ? $user_id : 'unknown'; ?>'
+            });
+            
+            if (userRole === 'unknown') {
+                console.error('User role not detected - redirecting to login');
+                window.location.href = 'login.php';
+                return;
+            }
             
             // Show loading state
             const loadingElements = ['posted-jobs-count', 'active-bookings-count', 'jobs-applied-count', 'active-jobs-count'];
@@ -1080,6 +1142,8 @@ if ($user_role === 'worker') {
                 const element = document.getElementById(id);
                 if (element) {
                     element.textContent = 'Loading...';
+                    element.style.display = 'block';
+                    element.style.visibility = 'visible';
                     console.log('Set loading for element:', id);
                 }
             });
@@ -1090,12 +1154,16 @@ if ($user_role === 'worker') {
                 if (userRole === 'employer') {
                     loadEmployerData(null); // Force empty state
                     loadWorkers(); // Load workers for employers
-                } else {
+                } else if (userRole === 'worker') {
                     loadWorkerData(null); // Force empty state
+                } else {
+                    console.error('Unknown user role:', userRole);
+                    showErrorMessage('Invalid user role detected. Please log in again.');
                 }
-            }, 500); // Reduced timeout for faster display
+            }, 300); // Faster timeout for better UX
             
             // Fetch real data from API
+            console.log('Fetching data from API...');
             fetch('./api/dashboard-data-simple.php', {
                 method: 'GET',
                 credentials: 'include',
@@ -1106,50 +1174,73 @@ if ($user_role === 'worker') {
             })
             .then(response => {
                 console.log('API Response Status:', response.status);
+                console.log('Response Headers:', response.headers);
+                
                 if (response.status === 401) {
-                    throw new Error('Session expired. Please log in again.');
+                    console.error('Session expired - redirecting to login');
+                    window.location.href = 'login.php';
+                    return;
                 } else if (!response.ok) {
+                    console.error('HTTP Error:', response.status, response.statusText);
                     throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                 }
+                
                 return response.json();
             })
             .then(result => {
-                console.log('API Response:', result);
+                console.log('API Response received:', result);
+                console.log('Result type:', typeof result);
+                console.log('Success:', result.success);
+                console.log('Data:', result.data);
+                
                 if (result.success) {
+                    console.log('Successfully loaded data:', result.data);
+                    console.log('User role check:', userRole, '===', 'worker');
+                    
                     if (userRole === 'employer') {
+                        console.log('Loading employer data...');
                         loadEmployerData(result.data);
                         loadWorkers(); // Load workers for employers
-                    } else {
+                    } else if (userRole === 'worker') {
+                        console.log('Loading worker data...');
                         loadWorkerData(result.data);
+                    } else {
+                        console.error('Invalid user role in response:', userRole);
+                        showErrorMessage('Invalid user role detected. Please log in again.');
                     }
                 } else {
-                    console.error('API Error:', result.message);
-                    if (result.message.includes('Unauthorized') || result.message.includes('Session')) {
-                        showErrorMessage('Session expired. <a href="login.php" class="alert-link">Please log in again</a>.');
+                    console.error('API returned error:', result.message);
+                    console.error('Full error response:', result);
+                    
+                    // Use fallback data if provided
+                    if (result.data) {
+                        console.log('Using fallback data:', result.data);
+                        if (userRole === 'employer') {
+                            loadEmployerData(result.data);
+                        } else if (userRole === 'worker') {
+                            loadWorkerData(result.data);
+                        }
                     } else {
-                        showErrorMessage('Failed to load dashboard data: ' + result.message);
-                    }
-                    // Fallback to empty state data
-                    if (userRole === 'employer') {
-                        loadEmployerData();
-                        loadWorkers(); // Load workers for employers
-                    } else {
-                        loadWorkerData();
+                        console.log('No fallback data available, using empty state');
+                        // Fallback to empty state data
+                        if (userRole === 'employer') {
+                            loadEmployerData();
+                        } else if (userRole === 'worker') {
+                            loadWorkerData();
+                        }
                     }
                 }
             })
             .catch(error => {
-                console.error('Network Error:', error);
-                if (error.message.includes('Session expired')) {
-                    showErrorMessage('Session expired. <a href="login.php" class="alert-link">Please log in again</a>.');
-                } else {
-                    showErrorMessage('Network error. Please check your connection and try again.');
-                }
+                console.error('Network or fetch error:', error);
+                console.error('Error details:', error.message, error.stack);
+                showErrorMessage('Network error. Please check your connection and try again.');
+                
                 // Fallback to empty state data
+                console.log('Using fallback empty state due to network error');
                 if (userRole === 'employer') {
                     loadEmployerData();
-                    loadWorkers(); // Load workers for employers
-                } else {
+                } else if (userRole === 'worker') {
                     loadWorkerData();
                 }
             });
@@ -1230,10 +1321,10 @@ if ($user_role === 'worker') {
                     active_jobs: { active: 0 },
                     available_jobs: []
                 };
-                console.log('Using empty worker data:', data);
+                console.log('Using empty worker data fallback:', data);
             }
             
-            // Update statistics with fallback values - ensure numbers are visible
+            // Always update statistics - ensure numbers are visible
             const jobsAppliedEl = document.getElementById('jobs-applied-count');
             if (jobsAppliedEl) {
                 const count = data.jobs_applied?.total || 0;
@@ -1252,21 +1343,46 @@ if ($user_role === 'worker') {
                 console.log('Set active jobs count:', count);
             }
             
-            // Update available jobs
+            // Always update available jobs - ensure jobs list is visible
             const availableJobsContainer = document.getElementById('available-jobs');
             if (availableJobsContainer) {
                 if (data.available_jobs && data.available_jobs.length > 0) {
-                    availableJobsContainer.innerHTML = data.available_jobs.map(job => `
-                        <div class="list-group-item">
-                            <h6>${job.title}</h6>
-                            <small class="text-muted">
-                                ${job.employer_name} - ${job.location} - 
-                                ${formatCurrency(job.salary)}
-                            </small>
-                            <button class="btn btn-sm btn-primary mt-2" onclick="applyForJob(${job.id})">Apply Now</button>
-                        </div>
-                    `).join('');
+                    console.log('Displaying', data.available_jobs.length, 'available jobs');
+                    availableJobsContainer.innerHTML = data.available_jobs.map(job => {
+                        let statusBadge = '';
+                        let actionButton = '';
+                        
+                        switch(job.status) {
+                            case 'active':
+                                statusBadge = '<span class="badge bg-success">Available</span>';
+                                actionButton = `<button class="btn btn-sm btn-primary mt-2" onclick="applyForJob(${job.id})">Apply Now</button>`;
+                                break;
+                            case 'applied':
+                                statusBadge = '<span class="badge bg-warning">Applied</span>';
+                                actionButton = `<button class="btn btn-sm btn-secondary mt-2" disabled>Already Applied</button>`;
+                                break;
+                            default:
+                                statusBadge = '<span class="badge bg-secondary">Unknown</span>';
+                                actionButton = `<button class="btn btn-sm btn-secondary mt-2" disabled>Not Available</button>`;
+                        }
+                        
+                        return `
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6>${job.title} ${statusBadge}</h6>
+                                        <small class="text-muted">
+                                            ${job.employer_name} - ${job.location} - 
+                                            ${formatCurrency(job.salary)}
+                                        </small>
+                                    </div>
+                                </div>
+                                ${actionButton}
+                            </div>
+                        `;
+                    }).join('');
                 } else {
+                    console.log('No available jobs - showing empty message');
                     availableJobsContainer.innerHTML = '<p class="text-muted">No available jobs at the moment</p>';
                 }
             }
@@ -1785,7 +1901,7 @@ if ($user_role === 'worker') {
                                             ${worker.national_id_photo ? `
                                                 <div class="id-photo">
                                                     <small class="text-muted d-block mb-2">National ID Document</small>
-                                                    <img src="uploads/profiles/${worker.national_id_photo}" 
+                                                    <img src="uploads/${worker.national_id_photo}" 
                                                          alt="National ID" 
                                                          class="img-thumbnail rounded" 
                                                          style="max-width: 200px; cursor: pointer;"
@@ -2104,7 +2220,7 @@ if ($user_role === 'worker') {
             const imageElement = document.getElementById('nationalIdImage');
             const nameElement = document.getElementById('nationalIdWorkerName');
             
-            imageElement.src = 'uploads/profiles/' + photoFilename;
+            imageElement.src = 'uploads/' + photoFilename;
             nameElement.textContent = workerName;
             modal.show();
         }

@@ -15,14 +15,14 @@ $user_email = $_SESSION['user_email'];
 $user_id = $_SESSION['user_id'];
 
 // Get basic user info from users table
-$sql = "SELECT phone FROM users WHERE id = ?";
+$sql = "SELECT phone, profile_image FROM users WHERE id = :user_id";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $user_id);
+$stmt->bindParam(':user_id', $user_id);
 $stmt->execute();
-$result = $stmt->get_result();
-$user_data = $result->fetch_assoc();
+$user_data = $stmt->fetch(PDO::FETCH_ASSOC);
 
 $phone = $user_data['phone'] ?? '';
+$profile_image = $user_data['profile_image'] ?? '';
 
 // Initialize worker-specific variables
 $location = '';
@@ -34,16 +34,35 @@ $availability = '';
 
 // If user is a worker, get additional data from workers table
 if ($user_role === 'worker') {
-    $worker_sql = "SELECT experience_years, skills, availability FROM workers WHERE user_id = ?";
+    // Check if national_id columns exist
+    $check_columns = "SELECT column_name FROM information_schema.columns 
+                     WHERE table_name = 'workers' AND column_name IN ('national_id', 'national_id_photo')";
+    $column_check = $conn->query($check_columns);
+    $columns = [];
+    while ($row = $column_check->fetch(PDO::FETCH_ASSOC)) {
+        $columns[] = $row['column_name'];
+    }
+    
+    // Build dynamic query based on available columns
+    $worker_sql = "SELECT experience_years, skills, availability";
+    if (in_array('national_id', $columns)) {
+        $worker_sql .= ", national_id";
+    }
+    if (in_array('national_id_photo', $columns)) {
+        $worker_sql .= ", national_id_photo";
+    }
+    $worker_sql .= " FROM workers WHERE user_id = :user_id";
+    
     $worker_stmt = $conn->prepare($worker_sql);
-    $worker_stmt->bind_param("i", $user_id);
+    $worker_stmt->bindParam(':user_id', $user_id);
     $worker_stmt->execute();
-    $worker_result = $worker_stmt->get_result();
-    $worker_data = $worker_result->fetch_assoc();
+    $worker_data = $worker_stmt->fetch(PDO::FETCH_ASSOC);
     
     $experience = $worker_data['experience_years'] ?? '';
     $skills = $worker_data['skills'] ? json_decode($worker_data['skills'], true) : [];
     $availability = $worker_data['availability'] ?? '';
+    $national_id = $worker_data['national_id'] ?? '';
+    $national_id_photo = $worker_data['national_id_photo'] ?? '';
 }
 ?>
 
@@ -314,6 +333,9 @@ if ($user_role === 'worker') {
             <a class="nav-link" href="help.php">
                 <i class="fas fa-question-circle"></i> Help & Support
             </a>
+            <a class="nav-link" href="api/logout.php">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
         </nav>
     </div>
 
@@ -332,7 +354,11 @@ if ($user_role === 'worker') {
                     <div class="card-body">
                         <div class="profile-avatar-container mb-3">
                             <div class="profile-avatar" id="profile-avatar">
-                                <i class="fas fa-user"></i>
+                                <?php if ($profile_image): ?>
+                                    <img src="<?php echo htmlspecialchars($profile_image); ?>?t=<?php echo time(); ?>" alt="Profile picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
+                                <?php else: ?>
+                                    <i class="fas fa-user"></i>
+                                <?php endif; ?>
                             </div>
                             <div class="upload-overlay" id="upload-overlay">
                                 <i class="fas fa-camera"></i>
@@ -383,10 +409,37 @@ if ($user_role === 'worker') {
                                             <label class="form-label">Phone Number</label>
                                             <input type="tel" class="form-control" id="phone" name="phone" value="<?php echo htmlspecialchars($phone); ?>" placeholder="+250 7XX XXX XXX">
                                         </div>
+                                        <?php if ($user_role === 'worker'): ?>
                                         <div class="col-md-6 mb-3">
-                                            <!-- Location field removed as it's not in database schema -->
+                                            <label class="form-label">National ID Number</label>
+                                            <input type="text" class="form-control" id="national_id" name="national_id" value="<?php echo htmlspecialchars($national_id); ?>" placeholder="Enter your national ID number">
+                                        </div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <?php if ($user_role === 'worker'): ?>
+                                    <div class="row">
+                                        <div class="col-md-12 mb-3">
+                                            <label class="form-label">National ID Photo</label>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <div>
+                                                    <input type="file" id="national-id-photo-input" accept="image/*" style="display: none;">
+                                                    <button type="button" class="btn btn-outline-secondary" id="upload-id-btn">
+                                                        <i class="fas fa-camera me-2"></i>Upload ID Photo
+                                                    </button>
+                                                </div>
+                                                <div id="id-photo-preview">
+                                                    <?php if ($national_id_photo): ?>
+                                                        <img src="uploads/<?php echo htmlspecialchars($national_id_photo); ?>" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">
+                                                        <small class="text-success ms-2"><i class="fas fa-check-circle"></i> ID photo uploaded</small>
+                                                    <?php else: ?>
+                                                        <small class="text-muted"><i class="fas fa-info-circle"></i> No ID photo uploaded</small>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                            <div class="mt-2" id="id-upload-status"></div>
                                         </div>
                                     </div>
+                                    <?php endif; ?>
                                     <button type="submit" class="btn btn-primary">Save Changes</button>
                                 </form>
                             </div>
@@ -473,9 +526,46 @@ if ($user_role === 'worker') {
         </div>
     </div>
 
+    <!-- Toast Notification Container -->
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 11">
+        <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-bell me-2"></i>
+                <strong class="me-auto" id="toastTitle">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body" id="toastMessage">
+                Message here
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
     <script>
+        // Toast notification function
+        function showNotification(title, message, type = 'success') {
+            const toastElement = document.getElementById('notificationToast');
+            const toastTitle = document.getElementById('toastTitle');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            // Update toast content
+            toastTitle.textContent = title;
+            toastMessage.textContent = message;
+            
+            // Update toast styling based on type
+            toastElement.className = 'toast';
+            toastElement.classList.add(type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info');
+            toastElement.classList.add('text-white');
+            
+            // Show toast
+            const toast = new bootstrap.Toast(toastElement, {
+                autohide: true,
+                delay: 3000
+            });
+            toast.show();
+        }
+        
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
@@ -497,6 +587,95 @@ if ($user_role === 'worker') {
         document.addEventListener('DOMContentLoaded', function() {
             // Load current profile picture
             loadCurrentProfilePicture();
+            
+            <?php if ($user_role === 'worker'): ?>
+            // National ID photo upload functionality
+            const uploadIdBtn = document.getElementById('upload-id-btn');
+            const nationalIdPhotoInput = document.getElementById('national-id-photo-input');
+            const idPhotoPreview = document.getElementById('id-photo-preview');
+            const idUploadStatus = document.getElementById('id-upload-status');
+            
+            // Click handlers
+            uploadIdBtn.addEventListener('click', () => nationalIdPhotoInput.click());
+            
+            // File change handler
+            nationalIdPhotoInput.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validate file
+                    if (!file.type.startsWith('image/')) {
+                        showIdUploadStatus('Please select an image file', 'error');
+                        return;
+                    }
+                    
+                    if (file.size > 5 * 1024 * 1024) {
+                        showIdUploadStatus('File size must be less than 5MB', 'error');
+                        return;
+                    }
+                    
+                    // Show preview
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        idPhotoPreview.innerHTML = `<img src="${e.target.result}" alt="ID preview" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                    };
+                    reader.readAsDataURL(file);
+                    
+                    // Upload file
+                    uploadNationalIdPhoto(file);
+                }
+            });
+            
+            function uploadNationalIdPhoto(file) {
+                const formData = new FormData();
+                formData.append('national_id_photo', file);
+                
+                showIdUploadStatus('<span class="upload-loading"></span>Uploading...', 'loading');
+                
+                fetch('api/upload-national-id.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(result => {
+                    if (result.success) {
+                        showIdUploadStatus('✅ ID photo uploaded successfully!', 'success');
+                        // Update preview with uploaded file
+                        setTimeout(() => {
+                            idPhotoPreview.innerHTML = `<img src="uploads/${result.filename}" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                        }, 1000);
+                    } else {
+                        showIdUploadStatus('❌ ' + result.message, 'error');
+                        // Reset preview on error
+                        <?php if ($national_id_photo): ?>
+                        idPhotoPreview.innerHTML = `<img src="uploads/<?php echo htmlspecialchars($national_id_photo); ?>" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                        <?php else: ?>
+                        idPhotoPreview.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle"></i> No ID photo uploaded</small>';
+                        <?php endif; ?>
+                    }
+                })
+                .catch(error => {
+                    console.error('Upload error:', error);
+                    showIdUploadStatus('❌ Upload failed. Please try again.', 'error');
+                    // Reset preview on error
+                    <?php if ($national_id_photo): ?>
+                    idPhotoPreview.innerHTML = `<img src="uploads/<?php echo htmlspecialchars($national_id_photo); ?>" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                    <?php else: ?>
+                    idPhotoPreview.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle"></i> No ID photo uploaded</small>';
+                    <?php endif; ?>
+                });
+            }
+            
+            function showIdUploadStatus(message, type) {
+                idUploadStatus.innerHTML = message;
+                idUploadStatus.className = `mt-2 text-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'muted'}`;
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        idUploadStatus.innerHTML = '';
+                    }, 3000);
+                }
+            }
+            <?php endif; ?>
             
             // Profile picture upload functionality
             const changePhotoBtn = document.getElementById('change-photo-btn');
@@ -549,8 +728,13 @@ if ($user_role === 'worker') {
                 .then(result => {
                     if (result.success) {
                         showUploadStatus('✅ Profile picture updated successfully!', 'success');
+                        // Add timestamp to prevent caching
+                        const timestamp = Date.now();
+                        const imageUrl = result.profile_image + '?t=' + timestamp;
+                        // Update profile page avatar
+                        profileAvatar.innerHTML = `<img src="${imageUrl}" alt="Profile picture" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                         // Update navbar profile picture
-                        updateNavbarProfilePicture(result.profile_image);
+                        updateNavbarProfilePicture(imageUrl);
                     } else {
                         showUploadStatus('❌ ' + result.message, 'error');
                         // Reset to default on error
@@ -610,26 +794,39 @@ if ($user_role === 'worker') {
                 phone: document.getElementById('phone').value
             };
             
+            // Add national ID if worker
+            <?php if ($user_role === 'worker'): ?>
+            formData.national_id = document.getElementById('national_id').value;
+            <?php endif; ?>
+            
             try {
+                console.log('Submitting form data:', formData);
+                
                 const response = await fetch('api/update-profile.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
+                    credentials: 'include',
                     body: JSON.stringify(formData)
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                
                 const result = await response.json();
+                console.log('API Response:', result);
                 
                 if (result.success) {
-                    alert(result.message);
+                    showNotification('Success', result.message, 'success');
                     // Update navbar if name changed
-                    location.reload();
+                    setTimeout(() => location.reload(), 1500);
                 } else {
-                    alert(result.message || 'Update failed');
+                    showNotification('Error', result.message || 'Update failed', 'error');
                 }
             } catch (error) {
-                alert('An error occurred. Please try again.');
+                console.error('Form submission error:', error);
+                showNotification('Error', 'An error occurred. Please try again.', 'error');
             }
         });
         
@@ -641,7 +838,7 @@ if ($user_role === 'worker') {
             const confirmPassword = document.getElementById('confirm-password').value;
             
             if (newPassword !== confirmPassword) {
-                alert('Passwords do not match!');
+                showNotification('Error', 'Passwords do not match!', 'error');
                 return;
             }
             
@@ -664,17 +861,19 @@ if ($user_role === 'worker') {
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert(result.message);
+                    showNotification('Success', result.message, 'success');
                     this.reset();
                 } else {
-                    alert(result.message || 'Password update failed');
+                    showNotification('Error', result.message || 'Password update failed', 'error');
                 }
             } catch (error) {
-                alert('An error occurred. Please try again.');
+                showNotification('Error', 'An error occurred. Please try again.', 'error');
             }
         });
         
-        document.getElementById('professional-form')?.addEventListener('submit', async function(e) {
+        const professionalForm = document.getElementById('professional-form');
+        if (professionalForm) {
+            professionalForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const skills = [];
@@ -701,14 +900,15 @@ if ($user_role === 'worker') {
                 const result = await response.json();
                 
                 if (result.success) {
-                    alert(result.message);
+                    showNotification('Success', result.message, 'success');
                 } else {
-                    alert(result.message || 'Update failed');
+                    showNotification('Error', result.message || 'Update failed', 'error');
                 }
             } catch (error) {
-                alert('An error occurred. Please try again.');
+                showNotification('Error', 'An error occurred. Please try again.', 'error');
             }
         });
+        }
     </script>
 </body>
 </html>

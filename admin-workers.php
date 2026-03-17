@@ -251,7 +251,7 @@ $total_workers = $total_result->fetch_assoc()['total'];
 $total_pages = ceil($total_workers / $per_page);
 
 // Get workers
-$sql = "SELECT w.*, u.email, u.phone, u.address, u.created_at as user_created_at 
+$sql = "SELECT w.*, u.email, u.phone, u.address, u.created_at as user_created_at, u.profile_image as user_profile_image
         FROM workers w 
         JOIN users u ON w.user_id = u.id 
         $where_clause 
@@ -786,8 +786,22 @@ while ($row = $types_result->fetch_assoc()) {
                                         <div class="row align-items-center">
                                             <div class="col-md-2 text-center">
                                                 <div class="worker-avatar mx-auto mb-2">
-                                                    <?php if (!empty($worker['profile_image'])): ?>
-                                                        <img src="uploads/<?php echo htmlspecialchars($worker['profile_image']); ?>" alt="<?php echo htmlspecialchars($worker['name']); ?>">
+                                                    <?php 
+                                                    $profile_image = '';
+                                                    // Check user profile image first, then worker profile image
+                                                    $image_to_check = '';
+                                                    if (!empty($worker['user_profile_image'])) {
+                                                        $image_to_check = $worker['user_profile_image'];
+                                                    } elseif (!empty($worker['profile_image'])) {
+                                                        $image_to_check = 'uploads/' . $worker['profile_image'];
+                                                    }
+                                                    
+                                                    if (!empty($image_to_check) && file_exists($image_to_check)) {
+                                                        $profile_image = htmlspecialchars($image_to_check);
+                                                    }
+                                                    ?>
+                                                    <?php if ($profile_image): ?>
+                                                        <img src="<?php echo $profile_image; ?>" alt="<?php echo htmlspecialchars($worker['name']); ?>">
                                                     <?php else: ?>
                                                         <?php echo strtoupper(substr($worker['name'], 0, 1)); ?>
                                                     <?php endif; ?>

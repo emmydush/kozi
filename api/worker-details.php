@@ -15,19 +15,17 @@ try {
             FROM workers w 
             LEFT JOIN users u ON w.user_id = u.id 
             LEFT JOIN reviews r ON w.id = r.worker_id 
-            WHERE w.id = ? AND w.status = 'active' 
+            WHERE w.id = :worker_id AND w.status = 'active' 
             GROUP BY w.id";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $worker_id);
+    $stmt->bindParam(':worker_id', $worker_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
+    $worker = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($result->num_rows === 0) {
+    if (!$worker) {
         json_response(['success' => false, 'message' => 'Worker not found'], 404);
     }
-    
-    $worker = $result->fetch_assoc();
     
     $worker['formatted_rate'] = isset($worker['hourly_rate']) ? format_currency($worker['hourly_rate']) : 'RWF 0';
     $worker['avg_rating'] = $worker['avg_rating'] ?: 0;
@@ -38,19 +36,14 @@ try {
     $reviews_sql = "SELECT r.*, u.name as reviewer_name 
                     FROM reviews r 
                     LEFT JOIN users u ON r.user_id = u.id 
-                    WHERE r.worker_id = ? 
+                    WHERE r.worker_id = :worker_id 
                     ORDER BY r.created_at DESC 
                     LIMIT 10";
     
     $reviews_stmt = $conn->prepare($reviews_sql);
-    $reviews_stmt->bind_param("i", $worker_id);
+    $reviews_stmt->bindParam(':worker_id', $worker_id, PDO::PARAM_INT);
     $reviews_stmt->execute();
-    $reviews_result = $reviews_stmt->get_result();
-    
-    $reviews = [];
-    while ($review = $reviews_result->fetch_assoc()) {
-        $reviews[] = $review;
-    }
+    $reviews = $reviews_stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $worker['reviews'] = $reviews;
     
@@ -60,5 +53,4 @@ try {
     json_response(['success' => false, 'message' => $e->getMessage()], 500);
 }
 
-$conn->close();
 ?>

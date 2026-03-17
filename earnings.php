@@ -6,14 +6,160 @@ if (!is_logged_in()) {
     redirect('login.php');
 }
 
-// Get user role
+// Get user role and ID
 $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
+$user_id = $_SESSION['user_id'];
 
 // Only workers should access this page
 if ($user_role !== 'worker') {
     redirect('dashboard.php');
 }
+
+// Calculate real earnings data
+$current_month = date('Y-m');
+$last_month = date('Y-m', strtotime('-1 month'));
+
+// This month's earnings (from accepted applications)
+$this_month_sql = "SELECT COALESCE(SUM(j.salary), 0) as total 
+                   FROM job_applications ja 
+                   JOIN jobs j ON ja.job_id = j.id 
+                   WHERE ja.worker_id = ? AND ja.status = 'accepted' 
+                   AND TO_CHAR(ja.updated_at, 'YYYY-MM') = ?";
+$stmt = $conn->prepare($this_month_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->bindParam(2, $current_month, PDO::PARAM_STR);
+$stmt->execute();
+$this_month_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$this_month_earnings = $this_month_result['total'];
+
+// Last month's earnings (for comparison)
+$last_month_sql = "SELECT COALESCE(SUM(j.salary), 0) as total 
+                   FROM job_applications ja 
+                   JOIN jobs j ON ja.job_id = j.id 
+                   WHERE ja.worker_id = ? AND ja.status = 'accepted' 
+                   AND TO_CHAR(ja.updated_at, 'YYYY-MM') = ?";
+$stmt = $conn->prepare($last_month_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->bindParam(2, $last_month, PDO::PARAM_STR);
+$stmt->execute();
+$last_month_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$last_month_earnings = $last_month_result['total'];
+
+// Total earnings all time
+$total_earnings_sql = "SELECT COALESCE(SUM(j.salary), 0) as total 
+                       FROM job_applications ja 
+                       JOIN jobs j ON ja.job_id = j.id 
+                       WHERE ja.worker_id = ? AND ja.status = 'accepted'";
+$stmt = $conn->prepare($total_earnings_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$total_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$total_earnings = $total_result['total'];
+
+// Pending earnings (applications accepted but not paid)
+$pending_earnings_sql = "SELECT COALESCE(SUM(j.salary), 0) as total 
+                         FROM job_applications ja 
+                         JOIN jobs j ON ja.job_id = j.id 
+                         WHERE ja.worker_id = ? AND ja.status = 'accepted' 
+                         AND ja.id NOT IN (
+                             SELECT DISTINCT job_id FROM earnings WHERE worker_id = ? AND payment_status = 'paid'
+                         )";
+$stmt = $conn->prepare($pending_earnings_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->bindParam(2, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$pending_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$pending_earnings = $pending_result['total'];
+
+// Calculate monthly average (last 6 months)
+$avg_monthly_sql = "SELECT AVG(monthly_total) as avg_total 
+                   FROM (
+                       SELECT COALESCE(SUM(j.salary), 0) as monthly_total
+                       FROM job_applications ja 
+                       JOIN jobs j ON ja.job_id = j.id 
+                       WHERE ja.worker_id = ? AND ja.status = 'accepted' 
+                       AND ja.updated_at >= CURRENT_DATE - INTERVAL '6 months'
+                       GROUP BY TO_CHAR(ja.updated_at, 'YYYY-MM')
+                   ) as monthly_data";
+$stmt = $conn->prepare($avg_monthly_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$avg_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$avg_monthly = $avg_result['avg_total'] ?? 0;
+
+// Job statistics
+$jobs_completed_sql = "SELECT COUNT(*) as count 
+                        FROM job_applications ja 
+                        WHERE ja.worker_id = ? AND ja.status = 'accepted'";
+$stmt = $conn->prepare($jobs_completed_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$jobs_completed_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$jobs_completed = $jobs_completed_result['count'];
+
+$active_jobs_sql = "SELECT COUNT(*) as count 
+                    FROM job_applications ja 
+                    WHERE ja.worker_id = ? AND ja.status = 'accepted'";
+$stmt = $conn->prepare($active_jobs_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$active_jobs_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$active_jobs = $active_jobs_result['count'];
+
+// Best month earnings
+$best_month_sql = "SELECT TO_CHAR(ja.updated_at, 'YYYY-MM') as month, SUM(j.salary) as total
+                   FROM job_applications ja 
+                   JOIN jobs j ON ja.job_id = j.id 
+                   WHERE ja.worker_id = ? AND ja.status = 'accepted'
+                   GROUP BY TO_CHAR(ja.updated_at, 'YYYY-MM')
+                   ORDER BY total DESC
+                   LIMIT 1";
+$stmt = $conn->prepare($best_month_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$best_month_result = $stmt->fetch(PDO::FETCH_ASSOC);
+$best_month_earnings = $best_month_result['total'] ?? 0;
+
+// Get monthly data for chart (last 6 months)
+$chart_data_sql = "SELECT TO_CHAR(ja.updated_at, 'YYYY-MM') as month, SUM(j.salary) as total
+                   FROM job_applications ja 
+                   JOIN jobs j ON ja.job_id = j.id 
+                   WHERE ja.worker_id = ? AND ja.status = 'accepted' 
+                   AND ja.updated_at >= CURRENT_DATE - INTERVAL '6 months'
+                   GROUP BY TO_CHAR(ja.updated_at, 'YYYY-MM')
+                   ORDER BY month";
+$stmt = $conn->prepare($chart_data_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$chart_data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$chart_labels = [];
+$chart_values = [];
+foreach ($chart_data as $row) {
+    $chart_labels[] = date('M Y', strtotime($row['month'] . '-01'));
+    $chart_values[] = floatval($row['total']);
+}
+
+// Get payment history
+$payment_history_sql = "SELECT ja.updated_at as date, u.name as employer_name, j.type, 
+                               j.work_hours, j.salary, 
+                               CASE 
+                                   WHEN e.payment_status = 'paid' THEN 'Paid'
+                                   WHEN e.payment_status = 'pending' THEN 'Pending'
+                                   ELSE 'Pending'
+                               END as payment_status,
+                               ja.id as application_id
+                        FROM job_applications ja 
+                        JOIN jobs j ON ja.job_id = j.id 
+                        JOIN users u ON j.employer_id = u.id 
+                        LEFT JOIN earnings e ON ja.job_id = e.job_id AND ja.worker_id = e.worker_id
+                        WHERE ja.worker_id = ? AND ja.status = 'accepted'
+                        ORDER BY ja.updated_at DESC";
+$stmt = $conn->prepare($payment_history_sql);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+$stmt->execute();
+$payment_history = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -404,8 +550,18 @@ if ($user_role !== 'worker') {
                 <div class="card earnings-card bg-success text-white">
                     <div class="card-body">
                         <h5 class="card-title">This Month</h5>
-                        <h2>RWF 280,000</h2>
-                        <small><i class="fas fa-arrow-up"></i> 15% from last month</small>
+                        <h2><?php echo format_currency($this_month_earnings); ?></h2>
+                        <small>
+                            <?php 
+                            if ($last_month_earnings > 0) {
+                                $change = (($this_month_earnings - $last_month_earnings) / $last_month_earnings) * 100;
+                                $arrow = $change >= 0 ? 'up' : 'down';
+                                echo "<i class='fas fa-arrow-$arrow'></i> " . abs(round($change)) . "% from last month";
+                            } else {
+                                echo "<i class='fas fa-info-circle'></i> No previous data";
+                            }
+                            ?>
+                        </small>
                     </div>
                 </div>
             </div>
@@ -413,7 +569,7 @@ if ($user_role !== 'worker') {
                 <div class="card earnings-card bg-primary text-white">
                     <div class="card-body">
                         <h5 class="card-title">Total Earnings</h5>
-                        <h2>RWF 1,850,000</h2>
+                        <h2><?php echo format_currency($total_earnings); ?></h2>
                         <small>All time earnings</small>
                     </div>
                 </div>
@@ -422,7 +578,7 @@ if ($user_role !== 'worker') {
                 <div class="card earnings-card bg-warning text-white">
                     <div class="card-body">
                         <h5 class="card-title">Pending</h5>
-                        <h2>RWF 75,000</h2>
+                        <h2><?php echo format_currency($pending_earnings); ?></h2>
                         <small>Awaiting payment</small>
                     </div>
                 </div>
@@ -431,7 +587,7 @@ if ($user_role !== 'worker') {
                 <div class="card earnings-card bg-info text-white">
                     <div class="card-body">
                         <h5 class="card-title">Avg. Monthly</h5>
-                        <h2>RWF 246,667</h2>
+                        <h2><?php echo format_currency($avg_monthly); ?></h2>
                         <small>Last 6 months</small>
                     </div>
                 </div>
@@ -462,28 +618,32 @@ if ($user_role !== 'worker') {
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>Jobs Completed</span>
-                                <strong>28</strong>
+                                <strong><?php echo $jobs_completed; ?></strong>
                             </div>
                         </div>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>Active Jobs</span>
-                                <strong>3</strong>
+                                <strong><?php echo $active_jobs; ?></strong>
                             </div>
                         </div>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>Best Month</span>
-                                <strong>RWF 320,000</strong>
+                                <strong><?php echo format_currency($best_month_earnings); ?></strong>
                             </div>
                         </div>
                         <div class="mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span>Total Hours</span>
-                                <strong>624</strong>
+                                <strong><?php 
+                                    // Estimate hours based on work patterns (this could be enhanced with actual hours data)
+                                    $estimated_hours = $jobs_completed * 8; // Assuming 8 hours per job average
+                                    echo $estimated_hours;
+                                ?></strong>
                             </div>
                         </div>
-                        <button class="btn btn-primary btn-sm w-100">Download Report</button>
+                        <button class="btn btn-primary btn-sm w-100" onclick="downloadReport()">Download Report</button>
                     </div>
                 </div>
             </div>
@@ -516,11 +676,34 @@ if ($user_role !== 'worker') {
                                     </tr>
                                 </thead>
                                 <tbody id="earnings-tbody">
-                                    <tr>
-                                        <td colspan="7" class="text-center text-muted">
-                                            <p>Loading earnings data...</p>
-                                        </td>
-                                    </tr>
+                                    <?php if (!empty($payment_history)): ?>
+                                        <?php foreach ($payment_history as $row): ?>
+                                            <tr>
+                                                <td><?php echo format_date($row['date']); ?></td>
+                                                <td><?php echo htmlspecialchars($row['employer_name']); ?></td>
+                                                <td><?php echo ucfirst(htmlspecialchars($row['type'])); ?></td>
+                                                <td><?php echo htmlspecialchars($row['work_hours']); ?></td>
+                                                <td><strong><?php echo format_currency($row['salary']); ?></strong></td>
+                                                <td>
+                                                    <span class="badge bg-<?php echo $row['payment_status'] === 'Paid' ? 'success' : 'warning'; ?> payment-status">
+                                                        <?php echo $row['payment_status']; ?>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-outline-primary" onclick="viewDetails(<?php echo $row['application_id']; ?>)">
+                                                        <i class="fas fa-eye"></i> View
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    <?php else: ?>
+                                        <tr>
+                                            <td colspan="7" class="text-center text-muted">
+                                                <i class="fas fa-info-circle me-2"></i>
+                                                No payment history found. Start accepting jobs to see your earnings here.
+                                            </td>
+                                        </tr>
+                                    <?php endif; ?>
                                 </tbody>
                             </table>
                         </div>
@@ -562,13 +745,16 @@ if ($user_role !== 'worker') {
 
         // Earnings Chart
         const ctx = document.getElementById('earningsChart').getContext('2d');
+        const chartLabels = <?php echo json_encode($chart_labels); ?>;
+        const chartValues = <?php echo json_encode($chart_values); ?>;
+        
         const earningsChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['July', 'August', 'September', 'October', 'November', 'December'],
+                labels: chartLabels.length > 0 ? chartLabels : ['No Data'],
                 datasets: [{
                     label: 'Monthly Earnings',
-                    data: [220000, 245000, 280000, 265000, 290000, 280000],
+                    data: chartValues.length > 0 ? chartValues : [0],
                     borderColor: 'rgb(0, 0, 0)',
                     backgroundColor: 'rgba(0, 0, 0, 0.05)',
                     tension: 0.4,
@@ -594,6 +780,65 @@ if ($user_role !== 'worker') {
                     }
                 }
             }
+        });
+
+        // Filter payment history
+        function filterPaymentHistory(status) {
+            const rows = document.querySelectorAll('#earnings-tbody tr');
+            rows.forEach(row => {
+                if (status === 'all') {
+                    row.style.display = '';
+                } else {
+                    const statusBadge = row.querySelector('.badge');
+                    const rowStatus = statusBadge ? statusBadge.textContent.trim() : '';
+                    row.style.display = rowStatus === status ? '' : 'none';
+                }
+            });
+            
+            // Update active button
+            document.querySelectorAll('.btn-group .btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        // View job details
+        function viewDetails(applicationId) {
+            // You can implement a modal or redirect to job details
+            alert('View details for application ID: ' + applicationId);
+        }
+
+        // Download report
+        function downloadReport() {
+            // Simple CSV download for now
+            const data = [
+                ['Date', 'Employer', 'Job Type', 'Hours', 'Amount', 'Status'],
+                // Add real data here
+            ];
+            
+            // Create CSV content
+            let csvContent = data.map(row => row.join(',')).join('\n');
+            
+            // Create download link
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('hidden', '');
+            a.setAttribute('href', url);
+            a.setAttribute('download', 'earnings_report.csv');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        // Add event listeners for filter buttons
+        document.addEventListener('DOMContentLoaded', function() {
+            const filterButtons = document.querySelectorAll('.btn-group .btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    filterPaymentHistory(this.textContent.trim());
+                });
+            });
         });
     </script>
 </body>

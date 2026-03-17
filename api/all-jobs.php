@@ -9,11 +9,14 @@ try {
             WHERE status = 'active' 
             ORDER BY created_at DESC 
             LIMIT 20";
-    $result = $conn->query($sql);
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $jobs = [];
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
+    if ($result && count($result) > 0) {
+        foreach ($result as $row) {
             $row['formatted_salary'] = format_currency($row['salary']);
             $row['formatted_date'] = format_date($row['created_at']);
             $jobs[] = $row;
@@ -23,8 +26,7 @@ try {
     echo json_encode(['success' => true, 'data' => $jobs]);
     
 } catch (Exception $e) {
+    error_log("All jobs API Error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-
-$conn->close();
 ?>

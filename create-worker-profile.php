@@ -17,13 +17,13 @@ if ($user_role !== 'worker') {
 }
 
 // Check if worker profile already exists
-$check_sql = "SELECT id FROM workers WHERE user_id = ?";
+$check_sql = "SELECT id FROM workers WHERE user_id = :user_id";
 $check_stmt = $conn->prepare($check_sql);
-$check_stmt->bind_param("i", $user_id);
+$check_stmt->bindParam(':user_id', $user_id);
 $check_stmt->execute();
-$check_result = $check_stmt->get_result();
+$existing_profile = $check_stmt->fetch(PDO::FETCH_ASSOC);
 
-if ($check_result->num_rows > 0) {
+if ($existing_profile) {
     // Profile already exists, redirect to profile view/edit
     redirect('profile.php');
 }
@@ -53,10 +53,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         // Insert worker profile
         $sql = "INSERT INTO workers (user_id, name, description, type, experience_years, hourly_rate, location, availability, skills, education, languages, certifications, status, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())";
+                VALUES (:user_id, :name, :description, :type, :experience_years, :hourly_rate, :location, :availability, :skills, :education, :languages, :certifications, 'active', NOW(), NOW())";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('issidsssssss', $user_id, $name, $description, $type, $experience_years, $hourly_rate, $location, $availability, $skills, $education, $languages, $certifications);
+        $stmt->bindParam(':user_id', $user_id);
+        $stmt->bindParam(':name', $name);
+        $stmt->bindParam(':description', $description);
+        $stmt->bindParam(':type', $type);
+        $stmt->bindParam(':experience_years', $experience_years);
+        $stmt->bindParam(':hourly_rate', $hourly_rate);
+        $stmt->bindParam(':location', $location);
+        $stmt->bindParam(':availability', $availability);
+        $stmt->bindParam(':skills', $skills);
+        $stmt->bindParam(':education', $education);
+        $stmt->bindParam(':languages', $languages);
+        $stmt->bindParam(':certifications', $certifications);
         
         if ($stmt->execute()) {
             $success_message = "Worker profile created successfully! You can now find jobs.";

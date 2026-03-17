@@ -207,7 +207,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-lg-3 text-center">
-                    <img id="profile-image" src="https://picsum.photos/seed/1/300/300.jpg" class="rounded-circle mb-3" alt="Worker" style="width: 200px; height: 200px; object-fit: cover;">
+                    <img id="profile-image" src="" class="rounded-circle mb-3" alt="Worker" style="width: 200px; height: 200px; object-fit: cover; background: #f0f0f0;">
                 </div>
                 <div class="col-lg-6">
                     <h1 class="display-4 fw-bold mb-3" id="worker-name">Loading...</h1>

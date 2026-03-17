@@ -38,11 +38,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($errors)) {
         // Insert job into database
-        $sql = "INSERT INTO jobs (employer_id, title, description, job_type, salary, location, work_hours, requirements, status, created_at, updated_at) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', NOW(), NOW())";
+        $sql = "INSERT INTO jobs (employer_id, title, description, type, salary, location, work_hours, requirements, status, created_at, updated_at) 
+                VALUES (:employer_id, :title, :description, :type, :salary, :location, :work_hours, :requirements, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('isssdsss', $user_id, $title, $description, $job_type, $salary, $location, $work_hours, $requirements);
+        $stmt->bindParam(':employer_id', $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(':title', $title, PDO::PARAM_STR);
+        $stmt->bindParam(':description', $description, PDO::PARAM_STR);
+        $stmt->bindParam(':type', $job_type, PDO::PARAM_STR);
+        $stmt->bindParam(':salary', $salary, PDO::PARAM_STR);
+        $stmt->bindParam(':location', $location, PDO::PARAM_STR);
+        $stmt->bindParam(':work_hours', $work_hours, PDO::PARAM_STR);
+        $stmt->bindParam(':requirements', $requirements, PDO::PARAM_STR);
         
         if ($stmt->execute()) {
             $success_message = "Job posted successfully! Workers can now apply for your position.";
@@ -51,7 +58,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error_message = "Failed to post job. Please try again.";
         }
-        $stmt->close();
     } else {
         $error_message = implode(', ', $errors);
     }

@@ -18,7 +18,7 @@ if ($user_role !== 'worker') {
 
 // Fetch applications from database
 $applications = [];
-$sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.job_type,
+$sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.type,
                u.name as employer_name, u.email as employer_email
         FROM job_applications ja
         JOIN jobs j ON ja.job_id = j.id
@@ -26,15 +26,9 @@ $sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours,
         WHERE ja.worker_id = ?
         ORDER BY ja.applied_at DESC";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param('i', $user_id);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
 $stmt->execute();
-$result = $stmt->get_result();
-
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $applications[] = $row;
-    }
-}
+$applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate statistics
 $total_applications = count($applications);
@@ -357,7 +351,7 @@ foreach ($applications as $app) {
                                                     'gardening' => 'fa-seedling',
                                                     'other' => 'fa-briefcase'
                                                 ];
-                                                $icon = isset($icons[$application['job_type']]) ? $icons[$application['job_type']] : 'fa-briefcase';
+                                                $icon = isset($icons[$application['type']]) ? $icons[$application['type']] : 'fa-briefcase';
                                                 ?>
                                                 <i class="fas <?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($application['title']); ?>
                                             </h5>
@@ -449,6 +443,298 @@ foreach ($applications as $app) {
                 sidebar.classList.remove('show');
             }
         });
+        
+        // Load accepted applications data
+        document.addEventListener('DOMContentLoaded', function() {
+            loadAcceptedApplications();
+            loadPendingApplications();
+            loadUnderReviewApplications();
+            loadRejectedApplications();
+        });
+        
+        function loadAcceptedApplications() {
+            const acceptedContainer = document.getElementById('accepted-applications');
+            if (acceptedContainer) {
+                <?php
+                $accepted_apps = array_filter($applications, fn($a) => $a['status'] === 'accepted');
+                if (!empty($accepted_apps)):
+                ?>
+                    acceptedContainer.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-check-circle fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Accepted Applications</h4>
+                            <p class="text-muted">You haven't been accepted for any jobs yet.</p>
+                        </div>
+                    `;
+                <?php else: ?>
+                    acceptedContainer.innerHTML = `
+                        <?php foreach ($accepted_apps as $app): ?>
+                            <div class="application-card">
+                                <div class="row align-items-start">
+                                    <div class="col-md-8">
+                                        <div class="application-header">
+                                            <h5 class="application-title"><?php echo htmlspecialchars($app['title']); ?></h5>
+                                            <div class="application-meta">
+                                                <span class="employer"><?php echo htmlspecialchars($app['employer_name']); ?></span>
+                                                <span class="date"><?php echo date('M j, Y', strtotime($app['applied_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="application-description">
+                                            <p><?php echo htmlspecialchars($app['description'] ?? 'No description provided'); ?></p>
+                                        </div>
+                                        <div class="application-details">
+                                            <div class="detail-item">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span><?php echo htmlspecialchars($app['location']); ?></span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="fas fa-money-bill"></i>
+                                                <span><?php echo htmlspecialchars($app['salary']); ?></span>
+                                            </div>
+                                            <?php if (!empty($app['work_hours'])): ?>
+                                            <div class="detail-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span><?php echo htmlspecialchars($app['work_hours']); ?></span>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="application-status">
+                                            <span class="status-badge status-accepted">Accepted</span>
+                                            <div class="status-date">
+                                                <small>Accepted on: <?php echo date('M j, Y', strtotime($app['updated_at'])); ?></small>
+                                            </div>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-primary btn-sm" onclick="viewApplicationDetails(<?php echo $app['id']; ?>)">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                            <button class="btn btn-success btn-sm" onclick="messageEmployer(<?php echo $app['job_id']; ?>, '<?php echo addslashes($app['employer_name']); ?>')">
+                                                <i class="fas fa-envelope me-1"></i>Message Employer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    `;
+                <?php endif; ?>
+            }
+        }
+        
+        function loadPendingApplications() {
+            const pendingContainer = document.getElementById('pending-applications');
+            if (pendingContainer) {
+                <?php
+                $pending_apps = array_filter($applications, fn($a) => $a['status'] === 'pending');
+                if (!empty($pending_apps)):
+                ?>
+                    pendingContainer.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Pending Applications</h4>
+                            <p class="text-muted">You don't have any pending applications.</p>
+                        </div>
+                    `;
+                <?php else: ?>
+                    pendingContainer.innerHTML = `
+                        <?php foreach ($pending_apps as $app): ?>
+                            <div class="application-card">
+                                <div class="row align-items-start">
+                                    <div class="col-md-8">
+                                        <div class="application-header">
+                                            <h5 class="application-title"><?php echo htmlspecialchars($app['title']); ?></h5>
+                                            <div class="application-meta">
+                                                <span class="employer"><?php echo htmlspecialchars($app['employer_name']); ?></span>
+                                                <span class="date"><?php echo date('M j, Y', strtotime($app['applied_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="application-description">
+                                            <p><?php echo htmlspecialchars($app['description'] ?? 'No description provided'); ?></p>
+                                        </div>
+                                        <div class="application-details">
+                                            <div class="detail-item">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span><?php echo htmlspecialchars($app['location']); ?></span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="fas fa-money-bill"></i>
+                                                <span><?php echo htmlspecialchars($app['salary']); ?></span>
+                                            </div>
+                                            <?php if (!empty($app['work_hours'])): ?>
+                                            <div class="detail-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span><?php echo htmlspecialchars($app['work_hours']); ?></span>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="application-status">
+                                            <span class="status-badge status-pending">Pending</span>
+                                            <div class="status-date">
+                                                <small>Applied on: <?php echo date('M j, Y', strtotime($app['applied_at'])); ?></small>
+                                            </div>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-primary btn-sm" onclick="viewApplicationDetails(<?php echo $app['id']; ?>)">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                            <button class="btn btn-info btn-sm" onclick="messageEmployer(<?php echo $app['job_id']; ?>, '<?php echo addslashes($app['employer_name']); ?>')">
+                                                <i class="fas fa-envelope me-1"></i>Message Employer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    `;
+                <?php endif; ?>
+            }
+        }
+        
+        function loadUnderReviewApplications() {
+            const reviewContainer = document.getElementById('review-applications');
+            if (reviewContainer) {
+                <?php
+                $review_apps = array_filter($applications, fn($a) => $a['status'] === 'under_review');
+                if (!empty($review_apps)):
+                ?>
+                    reviewContainer.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Applications Under Review</h4>
+                            <p class="text-muted">You don't have any applications under review.</p>
+                        </div>
+                    `;
+                <?php else: ?>
+                    reviewContainer.innerHTML = `
+                        <?php foreach ($review_apps as $app): ?>
+                            <div class="application-card">
+                                <div class="row align-items-start">
+                                    <div class="col-md-8">
+                                        <div class="application-header">
+                                            <h5 class="application-title"><?php echo htmlspecialchars($app['title']); ?></h5>
+                                            <div class="application-meta">
+                                                <span class="employer"><?php echo htmlspecialchars($app['employer_name']); ?></span>
+                                                <span class="date"><?php echo date('M j, Y', strtotime($app['applied_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="application-description">
+                                            <p><?php echo htmlspecialchars($app['description'] ?? 'No description provided'); ?></p>
+                                        </div>
+                                        <div class="application-details">
+                                            <div class="detail-item">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span><?php echo htmlspecialchars($app['location']); ?></span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="fas fa-money-bill"></i>
+                                                <span><?php echo htmlspecialchars($app['salary']); ?></span>
+                                            </div>
+                                            <?php if (!empty($app['work_hours'])): ?>
+                                            <div class="detail-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span><?php echo htmlspecialchars($app['work_hours']); ?></span>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="application-status">
+                                            <span class="status-badge status-under_review">Under Review</span>
+                                            <div class="status-date">
+                                                <small>Under Review Since: <?php echo date('M j, Y', strtotime($app['updated_at'])); ?></small>
+                                            </div>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-primary btn-sm" onclick="viewApplicationDetails(<?php echo $app['id']; ?>)">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                            <button class="btn btn-info btn-sm" onclick="messageEmployer(<?php echo $app['job_id']; ?>, '<?php echo addslashes($app['employer_name']); ?>')">
+                                                <i class="fas fa-envelope me-1"></i>Message Employer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    `;
+                <?php endif; ?>
+            }
+        }
+        
+        function loadRejectedApplications() {
+            const rejectedContainer = document.getElementById('rejected-applications');
+            if (rejectedContainer) {
+                <?php
+                $rejected_apps = array_filter($applications, fn($a) => $a['status'] === 'rejected');
+                if (!empty($rejected_apps)):
+                ?>
+                    rejectedContainer.innerHTML = `
+                        <div class="text-center py-5">
+                            <i class="fas fa-times-circle fa-3x text-muted mb-3"></i>
+                            <h4 class="text-muted">No Rejected Applications</h4>
+                            <p class="text-muted">You don't have any rejected applications.</p>
+                        </div>
+                    `;
+                <?php else: ?>
+                    rejectedContainer.innerHTML = `
+                        <?php foreach ($rejected_apps as $app): ?>
+                            <div class="application-card">
+                                <div class="row align-items-start">
+                                    <div class="col-md-8">
+                                        <div class="application-header">
+                                            <h5 class="application-title"><?php echo htmlspecialchars($app['title']); ?></h5>
+                                            <div class="application-meta">
+                                                <span class="employer"><?php echo htmlspecialchars($app['employer_name']); ?></span>
+                                                <span class="date"><?php echo date('M j, Y', strtotime($app['applied_at'])); ?></span>
+                                            </div>
+                                        </div>
+                                        <div class="application-description">
+                                            <p><?php echo htmlspecialchars($app['description'] ?? 'No description provided'); ?></p>
+                                        </div>
+                                        <div class="application-details">
+                                            <div class="detail-item">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                <span><?php echo htmlspecialchars($app['location']); ?></span>
+                                            </div>
+                                            <div class="detail-item">
+                                                <i class="fas fa-money-bill"></i>
+                                                <span><?php echo htmlspecialchars($app['salary']); ?></span>
+                                            </div>
+                                            <?php if (!empty($app['work_hours'])): ?>
+                                            <div class="detail-item">
+                                                <i class="fas fa-clock"></i>
+                                                <span><?php echo htmlspecialchars($app['work_hours']); ?></span>
+                                            </div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="application-status">
+                                            <span class="status-badge status-rejected">Rejected</span>
+                                            <div class="status-date">
+                                                <small>Rejected on: <?php echo date('M j, Y', strtotime($app['updated_at'])); ?></small>
+                                            </div>
+                                        </div>
+                                        <div class="action-buttons">
+                                            <button class="btn btn-primary btn-sm" onclick="viewApplicationDetails(<?php echo $app['id']; ?>)">
+                                                <i class="fas fa-eye me-1"></i>View Details
+                                            </button>
+                                            <button class="btn btn-info btn-sm" onclick="messageEmployer(<?php echo $app['job_id']; ?>, '<?php echo addslashes($app['employer_name']); ?>')">
+                                                <i class="fas fa-envelope me-1"></i>Message Employer
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    `;
+                <?php endif; ?>
+            }
+        }
         
         // Handle window resize
         window.addEventListener('resize', function() {

@@ -24,42 +24,47 @@ if (!isset($data['job_id']) || empty($data['job_id'])) {
 
 $job_id = intval($data['job_id']);
 
-// Check if job exists and is active
-$job_check_sql = "SELECT id, employer_id FROM jobs WHERE id = ? AND status = 'active'";
-$stmt = $conn->prepare($job_check_sql);
-$stmt->bind_param('i', $job_id);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows === 0) {
-    json_response(['success' => false, 'message' => 'Job not found or not active'], 404);
+try {
+    // Check if job exists and is active
+    $job_check_sql = "SELECT id, employer_id FROM jobs WHERE id = :job_id AND status = 'active'";
+    $stmt = $conn->prepare($job_check_sql);
+    $stmt->execute([':job_id' => $job_id]);
+    $job = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if (!$job) {
+        json_response(['success' => false, 'message' => 'Job not found or not active'], 404);
+    }
+    
+    // Check if user already applied
+    $application_check_sql = "SELECT id FROM job_applications WHERE job_id = :job_id AND worker_id = :worker_id";
+    $stmt = $conn->prepare($application_check_sql);
+    $stmt->execute([
+        ':job_id' => $job_id,
+        ':worker_id' => $user_id
+    ]);
+    $existing_app = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existing_app) {
+        json_response(['success' => false, 'message' => 'You have already applied for this job'], 409);
+    }
+    
+    // Create application
+    $application_sql = "INSERT INTO job_applications (job_id, worker_id, status, applied_at) 
+                       VALUES (:job_id, :worker_id, 'pending', NOW())";
+    $stmt = $conn->prepare($application_sql);
+    $result = $stmt->execute([
+        ':job_id' => $job_id,
+        ':worker_id' => $user_id
+    ]);
+    
+    if ($result) {
+        json_response(['success' => true, 'message' => 'Application submitted successfully!']);
+    } else {
+        json_response(['success' => false, 'message' => 'Failed to submit application. Please try again.'], 500);
+    }
+    
+} catch (Exception $e) {
+    error_log("Apply Job Error: " . $e->getMessage());
+    json_response(['success' => false, 'message' => $e->getMessage()], 500);
 }
-
-$job = $result->fetch_assoc();
-
-// Check if user already applied
-$application_check_sql = "SELECT id FROM job_applications WHERE job_id = ? AND worker_id = ?";
-$stmt = $conn->prepare($application_check_sql);
-$stmt->bind_param('ii', $job_id, $user_id);
-$stmt->execute();
-$app_result = $stmt->get_result();
-
-if ($app_result->num_rows > 0) {
-    json_response(['success' => false, 'message' => 'You have already applied for this job'], 409);
-}
-
-// Create application
-$application_sql = "INSERT INTO job_applications (job_id, worker_id, status) VALUES (?, ?, 'pending')";
-$stmt = $conn->prepare($application_sql);
-$stmt->bind_param('ii', $job_id, $user_id);
-
-if ($stmt->execute()) {
-    // Create notification for employer (optional - you can implement this later)
-    json_response(['success' => true, 'message' => 'Application submitted successfully!']);
-} else {
-    json_response(['success' => false, 'message' => 'Failed to submit application. Please try again.'], 500);
-}
-
-$stmt->close();
-$conn->close();
 ?>

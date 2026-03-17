@@ -5,7 +5,9 @@ header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    json_response(['success' => false, 'message' => 'Unauthorized'], 401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit();
 }
 
 $user_id = $_SESSION['user_id'];
@@ -34,13 +36,13 @@ try {
         ];
     }
     
-    json_response(['success' => true, 'data' => $data]);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'data' => $data]);
     
 } catch (Exception $e) {
-    json_response(['success' => false, 'message' => $e->getMessage()], 500);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-
-$conn->close();
 
 // Helper functions
 function getEmployerJobStats($user_id) {
@@ -50,14 +52,13 @@ function getEmployerJobStats($user_id) {
                 COUNT(*) as total,
                 SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active,
                 SUM(CASE WHEN status = 'filled' THEN 1 ELSE 0 END) as filled
-            FROM jobs WHERE employer_id = ?";
+            FROM jobs WHERE employer_id = :user_id";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    return $result->fetch_assoc();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 function getEmployerBookingStats($user_id) {
@@ -65,30 +66,28 @@ function getEmployerBookingStats($user_id) {
     
     $sql = "SELECT COUNT(*) as active
             FROM bookings 
-            WHERE employer_id = ? AND status = 'confirmed'";
+            WHERE employer_id = :user_id AND status = 'confirmed'";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    $row = $result->fetch_assoc();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row['active'] ?? 0;
 }
 
 function getEmployerSpending($user_id) {
     global $conn;
     
-    $sql = "SELECT SUM(total_amount) as total
+    $sql = "SELECT COALESCE(SUM(amount), 0) as total
             FROM bookings 
-            WHERE employer_id = ? AND status = 'completed'";
+            WHERE employer_id = :user_id AND status = 'completed'";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    $row = $result->fetch_assoc();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row['total'] ?? 0;
 }
 
@@ -97,14 +96,13 @@ function getEmployerHiredWorkers($user_id) {
     
     $sql = "SELECT COUNT(DISTINCT worker_id) as workers
             FROM bookings 
-            WHERE employer_id = ? AND status IN ('confirmed', 'completed')";
+            WHERE employer_id = :user_id AND status IN ('confirmed', 'completed')";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    $row = $result->fetch_assoc();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row['workers'] ?? 0;
 }
 
@@ -114,17 +112,16 @@ function getEmployerRecentJobs($user_id) {
     $sql = "SELECT j.*, COUNT(ja.id) as application_count
             FROM jobs j
             LEFT JOIN job_applications ja ON j.id = ja.job_id
-            WHERE j.employer_id = ?
+            WHERE j.employer_id = :user_id
             ORDER BY j.created_at DESC
             LIMIT 5";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
     $jobs = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $jobs[] = [
             'id' => $row['id'],
             'title' => $row['title'],
@@ -148,14 +145,13 @@ function getWorkerApplicationStats($user_id) {
                 SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending,
                 SUM(CASE WHEN status = 'under_review' THEN 1 ELSE 0 END) as under_review,
                 SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted
-            FROM job_applications WHERE worker_id = ?";
+            FROM job_applications WHERE worker_id = :user_id";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    return $result->fetch_assoc();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 function getWorkerActiveJobs($user_id) {
@@ -163,14 +159,13 @@ function getWorkerActiveJobs($user_id) {
     
     $sql = "SELECT COUNT(*) as active
             FROM bookings 
-            WHERE worker_id = ? AND status = 'confirmed'";
+            WHERE worker_id = :user_id AND status = 'confirmed'";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    $row = $result->fetch_assoc();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
     return $row['active'] ?? 0;
 }
 
@@ -181,14 +176,13 @@ function getWorkerEarnings($user_id) {
                 SUM(CASE WHEN payment_status = 'paid' THEN amount ELSE 0 END) as total_earned,
                 SUM(CASE WHEN payment_status = 'pending' THEN amount ELSE 0 END) as pending,
                 SUM(CASE WHEN payment_status = 'paid' AND MONTH(work_date) = MONTH(CURRENT_DATE) THEN amount ELSE 0 END) as this_month
-            FROM earnings WHERE worker_id = ?";
+            FROM earnings WHERE worker_id = :user_id";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    return $result->fetch_assoc();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 function getWorkerReviewStats($user_id) {
@@ -196,14 +190,13 @@ function getWorkerReviewStats($user_id) {
     
     $sql = "SELECT COUNT(*) as total, AVG(rating) as average_rating
             FROM reviews 
-            WHERE reviewee_id = ?";
+            WHERE reviewee_id = :user_id";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
+    $stmt->bindParam(':user_id', $user_id);
     $stmt->execute();
-    $result = $stmt->get_result();
     
-    return $result->fetch_assoc();
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
 
 function getAvailableJobs() {
@@ -216,10 +209,10 @@ function getAvailableJobs() {
             ORDER BY j.created_at DESC
             LIMIT 10";
     
-    $result = $conn->query($sql);
+    $stmt = $conn->query($sql);
     
     $jobs = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $jobs[] = [
             'id' => $row['id'],
             'title' => $row['title'],
@@ -235,4 +228,3 @@ function getAvailableJobs() {
     
     return $jobs;
 }
-?>

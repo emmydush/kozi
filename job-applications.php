@@ -18,27 +18,22 @@ if ($user_role !== 'employer') {
 
 // Fetch job applications from database
 $applications = [];
-$sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.job_type,
+$sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.type as job_type,
                u.name as worker_name, u.email as worker_email, u.phone as worker_phone,
-               w.profile_image, w.national_id, w.national_id_photo, w.skills, w.experience_years,
+               w.profile_image, w.skills, w.experience_years,
                w.education, w.languages, w.certifications, w.description as worker_description,
                w.type as worker_type, w.hourly_rate, w.availability
         FROM job_applications ja
         JOIN jobs j ON ja.job_id = j.id
         JOIN users u ON ja.worker_id = u.id
         LEFT JOIN workers w ON ja.worker_id = w.user_id
-        WHERE j.employer_id = ?
+        WHERE j.employer_id = :user_id
         ORDER BY ja.applied_at DESC";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param('i', $user_id);
+$stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
 $stmt->execute();
-$result = $stmt->get_result();
+$applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-while ($row = $result->fetch_assoc()) {
-    $applications[] = $row;
-}
-
-$stmt->close();
 // Don't close the connection here - navbar needs it
 // $conn->close();
 ?>
@@ -433,7 +428,7 @@ $stmt->close();
                                                     <div class="mb-2">
                                                         <strong class="text-muted small">National ID:</strong>
                                                         <span class="text-success fw-bold"><?php echo htmlspecialchars($app['national_id']); ?></span>
-                                                        <?php if (!empty($app['national_id_photo']) && file_exists('uploads/profiles/' . $app['national_id_photo'])): ?>
+                                                        <?php if (!empty($app['national_id_photo']) && file_exists('uploads/' . $app['national_id_photo'])): ?>
                                                             <button class="btn btn-sm btn-outline-primary ms-2" onclick="viewNationalId('<?php echo htmlspecialchars($app['national_id_photo']); ?>', '<?php echo htmlspecialchars($app['worker_name']); ?>')">
                                                                 <i class="fas fa-id-card me-1"></i>View ID
                                                             </button>
@@ -586,7 +581,7 @@ $stmt->close();
                                                     <div class="mb-2">
                                                         <strong class="text-muted small">National ID:</strong>
                                                         <span class="text-success fw-bold"><?php echo htmlspecialchars($app['national_id']); ?></span>
-                                                        <?php if (!empty($app['national_id_photo']) && file_exists('uploads/profiles/' . $app['national_id_photo'])): ?>
+                                                        <?php if (!empty($app['national_id_photo']) && file_exists('uploads/' . $app['national_id_photo'])): ?>
                                                             <button class="btn btn-sm btn-outline-primary ms-2" onclick="viewNationalId('<?php echo htmlspecialchars($app['national_id_photo']); ?>', '<?php echo htmlspecialchars($app['worker_name']); ?>')">
                                                                 <i class="fas fa-id-card me-1"></i>View ID
                                                             </button>
@@ -791,7 +786,7 @@ $stmt->close();
             const imageElement = document.getElementById('nationalIdImage');
             const nameElement = document.getElementById('nationalIdWorkerName');
             
-            imageElement.src = 'uploads/profiles/' + photoFilename;
+            imageElement.src = 'uploads/' + photoFilename;
             nameElement.textContent = workerName;
             modal.show();
         }

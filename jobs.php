@@ -13,17 +13,23 @@ $user_name = $_SESSION['user_name'];
 
 // Fetch jobs from database
 $jobs = [];
-$sql = "SELECT j.*, u.name as employer_name, u.email as employer_email 
-        FROM jobs j 
-        JOIN users u ON j.employer_id = u.id 
-        WHERE j.status = 'active' 
+$sql = "SELECT j.*, u.name as employer_name, u.email as employer_email
+        FROM jobs j
+        JOIN users u ON j.employer_id = u.id
+        WHERE j.status = 'active'
         ORDER BY j.created_at DESC";
-$result = $conn->query($sql);
 
-if ($result && $result->num_rows > 0) {
-    while ($row = $result->fetch_assoc()) {
-        $jobs[] = $row;
+try {
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    if ($result && count($result) > 0) {
+        $jobs = $result;
     }
+} catch (Exception $e) {
+    error_log("Error fetching jobs: " . $e->getMessage());
+    $jobs = [];
 }
 
 // Get job statistics for filters
@@ -32,7 +38,7 @@ $job_types = [];
 $locations = [];
 
 foreach ($jobs as $job) {
-    $job_types[] = $job['job_type'];
+    $job_types[] = $job['type'];
     $locations[] = $job['location'];
 }
 $unique_job_types = array_unique($job_types);
@@ -196,6 +202,124 @@ $unique_locations = array_unique($locations);
         
         .job-badge {
             font-size: 0.8rem;
+        }
+        
+        /* Custom Confirmation Dialog Styles */
+        .custom-confirm-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            backdrop-filter: blur(5px);
+        }
+        
+        .confirm-dialog-content {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .confirm-icon {
+            font-size: 3rem;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        
+        .confirm-dialog-content h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+            font-weight: 600;
+        }
+        
+        .confirm-dialog-content p {
+            margin: 0 0 25px 0;
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .confirm-buttons .btn {
+            min-width: 120px;
+            border-radius: 25px;
+            font-weight: 500;
+        }
+        
+        /* Custom Toast Notifications */
+        .success-toast, .error-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 10px;
+            padding: 15px 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 300px;
+            animation: slideInRight 0.3s ease-out;
+        }
+        
+        .success-toast {
+            border-left: 4px solid #28a745;
+        }
+        
+        .error-toast {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .success-toast i {
+            color: #28a745;
+            font-size: 1.2rem;
+        }
+        
+        .error-toast i {
+            color: #dc3545;
+            font-size: 1.2rem;
+        }
+        
+        .success-toast span, .error-toast span {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        @keyframes slideInRight {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -389,7 +513,7 @@ $unique_locations = array_unique($locations);
                                             'gardening' => 'fa-seedling',
                                             'other' => 'fa-briefcase'
                                         ];
-                                        $icon = isset($icons[$job['job_type']]) ? $icons[$job['job_type']] : 'fa-briefcase';
+                                        $icon = isset($icons[$job['type']]) ? $icons[$job['type']] : 'fa-briefcase';
                                         ?>
                                         <i class="fas <?php echo $icon; ?> me-2"></i><?php echo htmlspecialchars($job['title']); ?>
                                     </h5>
@@ -398,7 +522,7 @@ $unique_locations = array_unique($locations);
                                 <p class="card-text"><?php echo htmlspecialchars(substr($job['description'], 0, 150)) . '...'; ?></p>
                                 <div class="mb-2">
                                     <span class="badge bg-dark">
-                                        <i class="fas fa-briefcase me-1"></i><?php echo ucfirst(htmlspecialchars($job['job_type'])); ?>
+                                        <i class="fas fa-briefcase me-1"></i><?php echo ucfirst(htmlspecialchars($job['type'])); ?>
                                     </span>
                                     <span class="badge bg-secondary">
                                         <i class="fas fa-map-marker-alt me-1"></i><?php echo htmlspecialchars($job['location']); ?>
@@ -418,6 +542,21 @@ $unique_locations = array_unique($locations);
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Custom Confirmation Dialog -->
+    <div id="customConfirmDialog" class="custom-confirm-dialog" style="display: none;">
+        <div class="confirm-dialog-content">
+            <div class="confirm-icon">
+                <i class="fas fa-question-circle"></i>
+            </div>
+            <h3>Apply for Job</h3>
+            <p>Are you sure you want to apply for this job?</p>
+            <div class="confirm-buttons">
+                <button class="btn btn-secondary" onclick="closeCustomConfirm()">Cancel</button>
+                <button class="btn btn-primary" onclick="confirmApplication()">Apply Now</button>
+            </div>
         </div>
     </div>
 
@@ -458,29 +597,36 @@ $unique_locations = array_unique($locations);
             }
         });
         
+        // Store all jobs data for client-side filtering
+        const allJobs = <?php echo json_encode($jobs); ?>;
+        
         // Filter selection functions
         function selectJobType(type) {
             currentFilters.jobType = type;
             updateButtonText('jobTypeDropdown', getJobTypeText(type));
             updateActiveFilters();
+            filterJobs();
         }
         
         function selectLocation(location) {
             currentFilters.location = location;
             updateButtonText('locationDropdown', getLocationText(location));
             updateActiveFilters();
+            filterJobs();
         }
         
         function selectSalary(salary) {
             currentFilters.salary = salary;
             updateButtonText('salaryDropdown', getSalaryText(salary));
             updateActiveFilters();
+            filterJobs();
         }
         
         function selectHours(hours) {
             currentFilters.hours = hours;
             updateButtonText('hoursDropdown', getHoursText(hours));
             updateActiveFilters();
+            filterJobs();
         }
         
         // Helper functions to get display text
@@ -563,20 +709,118 @@ $unique_locations = array_unique($locations);
             container.innerHTML = filters.length > 0 ? filters.join('') : '<small class="text-muted">No filters selected</small>';
         }
         
-        // Apply filters
-        function applyFilters() {
-            console.log('Applying filters:', currentFilters);
-            
-            // Show loading state
+        // Filter jobs on client side
+        function filterJobs() {
             const container = document.getElementById('jobs-container');
-            container.innerHTML = '<div class="col-12"><p class="text-center"><i class="fas fa-spinner fa-spin me-2"></i>Filtering jobs...</p></div>';
+            const filteredJobs = allJobs.filter(job => {
+                // Filter by job type
+                if (currentFilters.jobType !== 'all' && job.type !== currentFilters.jobType) {
+                    return false;
+                }
+                
+                // Filter by location
+                if (currentFilters.location !== 'all' && job.location !== currentFilters.location) {
+                    return false;
+                }
+                
+                // Filter by salary
+                if (currentFilters.salary !== 'all') {
+                    const salary = parseFloat(job.salary);
+                    switch (currentFilters.salary) {
+                        case '0-50000':
+                            if (salary >= 50000) return false;
+                            break;
+                        case '50000-100000':
+                            if (salary < 50000 || salary >= 100000) return false;
+                            break;
+                        case '100000-150000':
+                            if (salary < 100000 || salary >= 150000) return false;
+                            break;
+                        case '150000+':
+                            if (salary < 150000) return false;
+                            break;
+                    }
+                }
+                
+                // Filter by work hours
+                if (currentFilters.hours !== 'all' && job.work_hours !== currentFilters.hours) {
+                    return false;
+                }
+                
+                return true;
+            });
             
-            // Simulate API call
-            setTimeout(() => {
-                // For demo purposes, just reload the page
-                // In a real application, you would make an API call here
-                location.reload();
-            }, 1000);
+            // Clear container
+            container.innerHTML = '';
+            
+            if (filteredJobs.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle me-2"></i>
+                            No jobs found matching your filters. Try adjusting your criteria.
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Render filtered jobs
+            filteredJobs.forEach(job => {
+                const jobCard = createJobCard(job);
+                container.innerHTML += jobCard;
+            });
+        }
+        
+        // Create job card HTML
+        function createJobCard(job) {
+            const icons = {
+                'cleaning': 'fa-broom',
+                'cooking': 'fa-utensils',
+                'childcare': 'fa-child',
+                'eldercare': 'fa-user-nurse',
+                'gardening': 'fa-seedling',
+                'other': 'fa-briefcase'
+            };
+            const icon = icons[job.type] || 'fa-briefcase';
+            const salarySuffix = job.work_hours && job.work_hours.includes('weekend') ? '/weekend' : '/month';
+            
+            return `
+                <div class="col-md-6 mb-4">
+                    <div class="card job-card">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title">
+                                    <i class="fas ${icon} me-2"></i>${job.title}
+                                </h5>
+                                <span class="badge bg-dark job-badge">${job.work_hours}</span>
+                            </div>
+                            <p class="card-text">${job.description.substring(0, 150)}...</p>
+                            <div class="mb-2">
+                                <span class="badge bg-dark">
+                                    <i class="fas fa-briefcase me-1"></i>${job.type.charAt(0).toUpperCase() + job.type.slice(1)}
+                                </span>
+                                <span class="badge bg-secondary">
+                                    <i class="fas fa-map-marker-alt me-1"></i>${job.location}
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong class="text-dark">
+                                    <i class="fas fa-money-bill-wave me-1"></i>${formatCurrency(job.salary)}${salarySuffix}
+                                </strong>
+                                <button class="btn btn-dark btn-sm" onclick="applyForJob(${job.id})">
+                                    <i class="fas fa-paper-plane me-1"></i>Apply Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Format currency function for JavaScript
+        function formatCurrency(amount) {
+            return 'RWF ' + parseInt(amount).toLocaleString();
         }
         
         // Clear all filters
@@ -595,36 +839,84 @@ $unique_locations = array_unique($locations);
             updateButtonText('hoursDropdown', 'Work Hours');
             
             updateActiveFilters();
+            filterJobs();
         }
         
         // Apply for job function
+        let currentJobId = null;
+        
         function applyForJob(jobId) {
             <?php if ($user_role === 'worker'): ?>
-            if (confirm('Are you sure you want to apply for this job?')) {
+            currentJobId = jobId;
+            showCustomConfirm();
+            <?php else: ?>
+            alert('Only workers can apply for jobs. Please switch to worker account.');
+            <?php endif; ?>
+        }
+        
+        function showCustomConfirm() {
+            document.getElementById('customConfirmDialog').style.display = 'flex';
+        }
+        
+        function closeCustomConfirm() {
+            document.getElementById('customConfirmDialog').style.display = 'none';
+        }
+        
+        function confirmApplication() {
+            if (currentJobId) {
+                closeCustomConfirm();
+                
                 fetch('api/apply-job.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ job_id: jobId })
+                    body: JSON.stringify({ job_id: currentJobId })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
-                        alert('Application submitted successfully!');
-                        location.reload();
+                        showSuccessMessage('Application submitted successfully!');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 2000);
                     } else {
-                        alert(data.message || 'Application failed. Please try again.');
+                        showErrorMessage(data.message || 'Application failed. Please try again.');
                     }
                 })
                 .catch(error => {
                     console.error('Error:', error);
-                    alert('Network error. Please try again.');
+                    showErrorMessage('Network error. Please try again.');
                 });
             }
-            <?php else: ?>
-            alert('Only workers can apply for jobs. Please switch to worker account.');
-            <?php endif; ?>
+        }
+        
+        function showSuccessMessage(message) {
+            const successDiv = document.createElement('div');
+            successDiv.className = 'success-toast';
+            successDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(successDiv);
+            
+            setTimeout(() => {
+                successDiv.remove();
+            }, 3000);
+        }
+        
+        function showErrorMessage(message) {
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-toast';
+            errorDiv.innerHTML = `
+                <i class="fas fa-exclamation-circle"></i>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(errorDiv);
+            
+            setTimeout(() => {
+                errorDiv.remove();
+            }, 3000);
         }
         
         // Initialize

@@ -5,7 +5,9 @@ header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    json_response(['success' => false, 'message' => 'Unauthorized'], 401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit();
 }
 
 $user_id = $_SESSION['user_id'];
@@ -13,7 +15,9 @@ $user_id = $_SESSION['user_id'];
 try {
     // Check if file was uploaded
     if (!isset($_FILES['profile_image']) || $_FILES['profile_image']['error'] !== UPLOAD_ERR_OK) {
-        json_response(['success' => false, 'message' => 'No file uploaded or upload error'], 400);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'No file uploaded or upload error']);
+        exit();
     }
     
     $file = $_FILES['profile_image'];
@@ -25,12 +29,16 @@ try {
     finfo_close($finfo);
     
     if (!in_array($mimeType, $allowedTypes)) {
-        json_response(['success' => false, 'message' => 'Invalid file type. Only JPG, PNG, and GIF are allowed'], 400);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Invalid file type. Only JPG, PNG, and GIF are allowed']);
+        exit();
     }
     
     // Validate file size (max 5MB)
     if ($file['size'] > 5 * 1024 * 1024) {
-        json_response(['success' => false, 'message' => 'File too large. Maximum size is 5MB'], 400);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'File too large. Maximum size is 5MB']);
+        exit();
     }
     
     // Create uploads directory if it doesn't exist
@@ -46,26 +54,33 @@ try {
     
     // Move uploaded file
     if (!move_uploaded_file($file['tmp_name'], $filepath)) {
-        json_response(['success' => false, 'message' => 'Failed to save file'], 500);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Failed to save file']);
+        exit();
     }
     
     // Delete old profile picture if exists
-    $conn->select_db("household_connect");
-    $result = $conn->query("SELECT profile_image FROM users WHERE id = $user_id");
-    if ($result && $row = $result->fetch_assoc()) {
-        if ($row['profile_image'] && file_exists(__DIR__ . '/../' . $row['profile_image'])) {
-            unlink(__DIR__ . '/../' . $row['profile_image']);
-        }
+    // PostgreSQL doesn't need select_db - connection is already to the correct database
+    $sql = "SELECT profile_image FROM users WHERE id = :user_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':user_id', $user_id);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($row && $row['profile_image'] && file_exists(__DIR__ . '/../' . $row['profile_image'])) {
+        unlink(__DIR__ . '/../' . $row['profile_image']);
     }
     
     // Update database
     $relativePath = 'uploads/profiles/' . $filename;
-    $sql = "UPDATE users SET profile_image = ? WHERE id = ?";
+    $sql = "UPDATE users SET profile_image = :profile_image WHERE id = :user_id";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("si", $relativePath, $user_id);
+    $stmt->bindParam(':profile_image', $relativePath);
+    $stmt->bindParam(':user_id', $user_id);
     
     if ($stmt->execute()) {
-        json_response([
+        header('Content-Type: application/json');
+        echo json_encode([
             'success' => true, 
             'message' => 'Profile picture updated successfully',
             'profile_image' => $relativePath
@@ -73,12 +88,13 @@ try {
     } else {
         // Clean up uploaded file if database update fails
         unlink($filepath);
-        json_response(['success' => false, 'message' => 'Failed to update database'], 500);
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'Failed to update database']);
     }
     
 } catch (Exception $e) {
-    json_response(['success' => false, 'message' => $e->getMessage()], 500);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
-$conn->close();
 ?>

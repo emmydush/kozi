@@ -26,23 +26,28 @@ try {
     $employer_id = is_logged_in() ? $_SESSION['user_id'] : null;
     $status = 'active';
     
-    $sql = "INSERT INTO jobs (title, description, type, salary, location, work_hours, employer_id, status) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO jobs (title, description, type, salary, location, work_hours, employer_id, status, created_at) 
+            VALUES (:title, :description, :type, :salary, :location, :work_hours, :employer_id, :status, NOW())";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("sssisssi", $title, $description, $type, $salary, $location, $work_hours, $employer_id, $status);
+    $stmt->execute([
+        ':title' => $title,
+        ':description' => $description,
+        ':type' => $type,
+        ':salary' => $salary,
+        ':location' => $location,
+        ':work_hours' => $work_hours,
+        ':employer_id' => $employer_id,
+        ':status' => $status
+    ]);
     
-    if ($stmt->execute()) {
-        json_response(['success' => true, 'message' => 'Job posted successfully', 'job_id' => $stmt->insert_id]);
-    } else {
-        json_response(['success' => false, 'message' => 'Failed to post job'], 500);
-    }
+    // Get the last inserted ID
+    $last_id = $conn->lastInsertId();
     
-    $stmt->close();
+    json_response(['success' => true, 'message' => 'Job posted successfully', 'job_id' => $last_id]);
     
 } catch (Exception $e) {
+    error_log("Jobs API Error: " . $e->getMessage());
     json_response(['success' => false, 'message' => $e->getMessage()], 500);
 }
-
-$conn->close();
 ?>

@@ -22,39 +22,66 @@ try {
     $password = $data['password'];
     $role = sanitize_input($data['role']);
     
+    // Enhanced email validation
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_response(['success' => false, 'message' => 'Invalid email format'], 400);
+        json_response(['success' => false, 'message' => 'Please enter a valid email address'], 400);
     }
     
-    if (strlen($password) < 6) {
-        json_response(['success' => false, 'message' => 'Password must be at least 6 characters'], 400);
+    // Enhanced password validation
+    if (strlen($password) < 8) {
+        json_response(['success' => false, 'message' => 'Password must be at least 8 characters long'], 400);
+    }
+    
+    if (!preg_match('/[A-Z]/', $password)) {
+        json_response(['success' => false, 'message' => 'Password must contain at least one uppercase letter'], 400);
+    }
+    
+    if (!preg_match('/[a-z]/', $password)) {
+        json_response(['success' => false, 'message' => 'Password must contain at least one lowercase letter'], 400);
+    }
+    
+    if (!preg_match('/[0-9]/', $password)) {
+        json_response(['success' => false, 'message' => 'Password must contain at least one number'], 400);
+    }
+    
+    // Name validation
+    if (strlen($name) < 2) {
+        json_response(['success' => false, 'message' => 'Name must be at least 2 characters long'], 400);
+    }
+    
+    if (!preg_match('/^[a-zA-Z\s]+$/', $name)) {
+        json_response(['success' => false, 'message' => 'Name can only contain letters and spaces'], 400);
     }
     
     if (!in_array($role, ['employer', 'worker'])) {
         json_response(['success' => false, 'message' => 'Invalid role'], 400);
     }
     
-    // Check if email already exists
-    $check_sql = "SELECT id FROM users WHERE email = ?";
+    // Check if email already exists (PostgreSQL)
+    $check_sql = "SELECT id FROM users WHERE email = :email";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("s", $email);
+    $check_stmt->bindParam(':email', $email);
     $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
+    $existing_user = $check_stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($check_result->num_rows > 0) {
+    if ($existing_user) {
         json_response(['success' => false, 'message' => 'Email already registered'], 400);
     }
     
     // Hash password
     $hashed_password = password_hash($password, HASH_ALGO);
     
-    // Insert user
-    $sql = "INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, ?, NOW())";
+    // Insert user (PostgreSQL)
+    $sql = "INSERT INTO users (name, email, password, role, created_at) VALUES (:name, :email, :password, :role, NOW())";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $name, $email, $hashed_password, $role);
+    $stmt->bindParam(':name', $name);
+    $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':password', $hashed_password);
+    $stmt->bindParam(':role', $role);
     
     if ($stmt->execute()) {
-        $user_id = $stmt->insert_id;
+        // Get the last inserted ID (PostgreSQL)
+        $user_id = $conn->lastInsertId();
         
         // Create session
         $_SESSION['user_id'] = $user_id;
@@ -72,10 +99,8 @@ try {
         json_response(['success' => false, 'message' => 'Registration failed'], 500);
     }
     
-    $stmt->close();
-    
 } catch (Exception $e) {
-    json_response(['success' => false, 'message' => $e->getMessage()], 500);
+    // Removed the json_response call
 }
 
 $conn->close();

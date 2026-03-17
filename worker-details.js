@@ -55,12 +55,17 @@ function displayWorkerDetails(worker) {
     
     // Set profile image
     const profileImg = document.getElementById('profile-image');
-    if (worker.profile_image) {
+    if (worker.profile_image && worker.profile_image !== '') {
         profileImg.src = worker.profile_image;
         profileImg.onerror = function() {
+            console.log('Failed to load profile image:', worker.profile_image);
             this.src = `https://picsum.photos/seed/${worker.id}/300/300.jpg`;
         };
+        profileImg.onload = function() {
+            console.log('Profile image loaded successfully:', worker.profile_image);
+        };
     } else {
+        console.log('No profile image available, using placeholder');
         profileImg.src = `https://picsum.photos/seed/${worker.id}/300/300.jpg`;
     }
     

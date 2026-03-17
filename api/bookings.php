@@ -28,13 +28,12 @@ try {
         $status = 'pending';
         
         // Check if worker exists
-        $check_sql = "SELECT id FROM workers WHERE id = ? AND status = 'active'";
+        $check_sql = "SELECT id FROM workers WHERE id = :worker_id AND status = 'active'";
         $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("i", $worker_id);
-        $check_stmt->execute();
-        $check_result = $check_stmt->get_result();
+        $check_stmt->execute([':worker_id' => $worker_id]);
+        $worker = $check_stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($check_result->num_rows === 0) {
+        if (!$worker) {
             json_response(['success' => false, 'message' => 'Worker not found or inactive'], 404);
         }
         
@@ -44,60 +43,51 @@ try {
         }
         
         $sql = "INSERT INTO bookings (worker_id, user_id, start_date, end_date, service_type, status, created_at) 
-                VALUES (?, ?, ?, ?, ?, ?, NOW())";
+                VALUES (:worker_id, :user_id, :start_date, :end_date, :service_type, :status, NOW())";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iissss", $worker_id, $user_id, $start_date, $end_date, $service_type, $status);
+        $result = $stmt->execute([
+            ':worker_id' => $worker_id,
+            ':user_id' => $user_id,
+            ':start_date' => $start_date,
+            ':end_date' => $end_date,
+            ':service_type' => $service_type,
+            ':status' => $status
+        ]);
         
-        if ($stmt->execute()) {
-            json_response(['success' => true, 'message' => 'Booking created successfully', 'booking_id' => $stmt->insert_id]);
+        if ($result) {
+            $booking_id = $conn->lastInsertId();
+            json_response(['success' => true, 'message' => 'Booking created successfully', 'booking_id' => $booking_id]);
         } else {
             json_response(['success' => false, 'message' => 'Failed to create booking'], 500);
         }
-        
-        $stmt->close();
         
     } elseif ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Get bookings
         $type = $_GET['type'] ?? 'all';
         
-        if ($type === 'all') {
-            $sql = "SELECT b.*, w.name as worker_name, w.type as worker_type 
-                    FROM bookings b 
-                    LEFT JOIN workers w ON b.worker_id = w.id 
-                    WHERE b.user_id = ? 
-                    ORDER BY b.created_at DESC";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
-            
-        } elseif ($type === 'pending') {
-            $sql = "SELECT b.*, w.name as worker_name, w.type as worker_type 
-                    FROM bookings b 
-                    LEFT JOIN workers w ON b.worker_id = w.id 
-                    WHERE b.user_id = ? AND b.status = 'pending' 
-                    ORDER BY b.created_at DESC";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
-            
+        $sql = "SELECT b.*, w.name as worker_name, w.type as worker_type 
+                FROM bookings b 
+                LEFT JOIN workers w ON b.worker_id = w.id 
+                WHERE b.user_id = :user_id";
+        
+        if ($type === 'pending') {
+            $sql .= " AND b.status = 'pending'";
         } elseif ($type === 'confirmed') {
-            $sql = "SELECT b.*, w.name as worker_name, w.type as worker_type 
-                    FROM bookings b 
-                    LEFT JOIN workers w ON b.worker_id = w.id 
-                    WHERE b.user_id = ? AND b.status = 'confirmed' 
-                    ORDER BY b.created_at DESC";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
-            
-        } else {
+            $sql .= " AND b.status = 'confirmed'";
+        } elseif ($type !== 'all') {
             json_response(['success' => false, 'message' => 'Invalid booking type'], 400);
         }
         
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $sql .= " ORDER BY b.created_at DESC";
+        
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([':user_id' => $user_id]);
+        $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $bookings = [];
-        while ($row = $result->fetch_assoc()) {
-            $bookings[] = $row;
+        if ($result && count($result) > 0) {
+            $bookings = $result;
         }
         
         json_response(['success' => true, 'data' => $bookings]);
@@ -107,8 +97,7 @@ try {
     }
     
 } catch (Exception $e) {
+    error_log("Bookings API Error: " . $e->getMessage());
     json_response(['success' => false, 'message' => $e->getMessage()], 500);
 }
-
-$conn->close();
 ?>

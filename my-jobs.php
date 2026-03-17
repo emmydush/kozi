@@ -19,27 +19,21 @@ if ($user_role === 'employer') {
                    SUM(CASE WHEN ja.status = 'accepted' THEN 1 ELSE 0 END) as accepted_count
             FROM jobs j 
             LEFT JOIN job_applications ja ON j.id = ja.job_id 
-            WHERE j.employer_id = ? 
+            WHERE j.employer_id = :user_id 
             GROUP BY j.id 
             ORDER BY j.created_at DESC";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $jobs[] = $row;
-        }
-    }
+    $posted_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Calculate statistics
-    $total_posted = count($jobs);
+    $total_posted = count($posted_jobs);
     $active_count = 0;
     $filled_count = 0;
     $total_applications = 0;
     
-    foreach ($jobs as $job) {
+    foreach ($posted_jobs as $job) {
         if ($job['status'] === 'active') {
             $active_count++;
         } else if ($job['status'] === 'filled') {
@@ -51,55 +45,50 @@ if ($user_role === 'employer') {
 } else {
     // Fetch active jobs for worker (accepted applications)
     $active_jobs = [];
-    $sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.job_type,
+    $sql = "SELECT ja.*, j.title, j.description, j.salary, j.location, j.work_hours, j.type,
                    u.name as employer_name, u.email as employer_email,
                    b.start_date, b.end_date, b.status as booking_status
             FROM job_applications ja
             JOIN jobs j ON ja.job_id = j.id
             JOIN users u ON j.employer_id = u.id
             LEFT JOIN bookings b ON ja.worker_id = b.worker_id AND ja.job_id = (SELECT id FROM jobs WHERE employer_id = b.user_id LIMIT 1)
-            WHERE ja.worker_id = ? AND ja.status = 'accepted'
+            WHERE ja.worker_id = :user_id AND ja.status = 'accepted'
             ORDER BY ja.applied_at DESC";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result && $result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $active_jobs[] = $row;
-        }
-    }
+    $active_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Calculate worker statistics
     $active_count = count($active_jobs);
     
     // Fetch completed jobs count
-    $completed_sql = "SELECT COUNT(*) as completed FROM earnings WHERE worker_id = ? AND payment_status = 'paid'";
+    $completed_sql = "SELECT COUNT(*) as completed FROM earnings WHERE worker_id = :user_id AND payment_status = 'paid'";
     $stmt = $conn->prepare($completed_sql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $completed_result = $stmt->get_result();
-    $completed_count = $completed_result->fetch_assoc()['completed'];
+    $completed_result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $completed_count = $completed_result['completed'];
     
     // Calculate earnings
     $this_month_sql = "SELECT COALESCE(SUM(amount), 0) as total FROM earnings 
-                      WHERE worker_id = ? AND payment_status = 'paid' 
-                      AND MONTH(work_date) = MONTH(CURRENT_DATE) AND YEAR(work_date) = YEAR(CURRENT_DATE)";
+                      WHERE worker_id = :user_id AND payment_status = 'paid' 
+                      AND EXTRACT(MONTH FROM work_date) = EXTRACT(MONTH FROM CURRENT_DATE) 
+                      AND EXTRACT(YEAR FROM work_date) = EXTRACT(YEAR FROM CURRENT_DATE)";
     $stmt = $conn->prepare($this_month_sql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $month_result = $stmt->get_result();
-    $this_month_earnings = $month_result->fetch_assoc()['total'];
+    $month_result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $this_month_earnings = $month_result['total'];
     
     // Calculate pending payments
     $pending_sql = "SELECT COALESCE(SUM(amount), 0) as total FROM earnings 
-                   WHERE worker_id = ? AND payment_status = 'pending'";
+                   WHERE worker_id = :user_id AND payment_status = 'pending'";
     $stmt = $conn->prepare($pending_sql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(':user_id', $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $pending_result = $stmt->get_result();
-    $pending_payments = $pending_result->fetch_assoc()['total'];
+    $pending_result = $stmt->fetch(PDO::FETCH_ASSOC);
+    $pending_payments = $pending_result['total'];
 }
 ?>
 
@@ -626,7 +615,7 @@ if ($user_role === 'employer') {
         </div>
 
         <div class="row">
-            <?php if (empty($jobs)): ?>
+            <?php if (empty($posted_jobs)): ?>
                 <div class="col-12">
                     <div class="alert alert-info text-center">
                         <i class="fas fa-info-circle me-2"></i>
@@ -634,9 +623,9 @@ if ($user_role === 'employer') {
                     </div>
                 </div>
             <?php else: ?>
-                <?php foreach ($jobs as $job): ?>
+                <?php foreach ($posted_jobs as $job): ?>
                     <div class="col-md-6 mb-4">
-                        <div class="card job-card">
+                        <div class="card job-card" id="job-<?php echo $job['id']; ?>">
                             <div class="card-body">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                     <h5 class="card-title"><?php echo htmlspecialchars($job['title']); ?></h5>
@@ -654,6 +643,9 @@ if ($user_role === 'employer') {
                                     </button>
                                     <button class="btn btn-sm btn-outline-secondary" onclick="editJob(<?php echo $job['id']; ?>)">
                                         <i class="fas fa-edit me-1"></i>Edit Job
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteJob(<?php echo $job['id']; ?>)">
+                                        <i class="fas fa-trash me-1"></i>Delete
                                     </button>
                                 </div>
                             </div>
@@ -724,7 +716,7 @@ if ($user_role === 'employer') {
                                             'gardening' => 'fa-seedling',
                                             'other' => 'fa-briefcase'
                                         ];
-                                        $icon = isset($icons[$job['job_type']]) ? $icons[$job['job_type']] : 'fa-briefcase';
+                                        $icon = isset($icons[$job['type']]) ? $icons[$job['type']] : 'fa-briefcase';
                                         ?>
                                         <?php echo htmlspecialchars($job['title']); ?> - <?php echo htmlspecialchars($job['employer_name']); ?>
                                     </h5>
@@ -772,6 +764,58 @@ if ($user_role === 'employer') {
         // Edit job
         function editJob(jobId) {
             window.location.href = 'edit-job.php?id=' + jobId;
+        }
+        
+        // Delete job
+        function deleteJob(jobId) {
+            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+                fetch('./api/delete-job.php', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        job_id: jobId
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove job from page
+                        const jobElement = document.getElementById('job-' + jobId);
+                        if (jobElement) {
+                            jobElement.remove();
+                        }
+                        // Show success message
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+                        alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 300px;';
+                        alertDiv.innerHTML = `
+                            <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+                            <strong>Success!</strong> ${data.message}
+                        `;
+                        document.body.appendChild(alertDiv);
+                        
+                        // Auto-remove after 3 seconds
+                        setTimeout(() => {
+                            if (alertDiv.parentNode) {
+                                alertDiv.parentNode.removeChild(alertDiv);
+                            }
+                        }, 3000);
+                        
+                        // Reload page after short delay
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 1000);
+                    } else {
+                        alert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to delete job. Please try again.');
+                });
+            }
         }
         <?php else: ?>
         // View job details

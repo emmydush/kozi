@@ -16,35 +16,36 @@ if ($_SESSION['user_role'] !== 'worker') {
 }
 
 try {
-    $sql = "SELECT ja.*, j.title, j.salary, j.location, j.job_type, j.work_hours,
+    $sql = "SELECT ja.*, j.title, j.salary, j.location, j.type as job_type, j.work_hours,
                    u.name as employer_name, u.phone as employer_phone
             FROM job_applications ja
             JOIN jobs j ON ja.job_id = j.id
             JOIN users u ON j.employer_id = u.id
-            WHERE ja.worker_id = ?
-            ORDER BY ja.applied_at DESC";
+            WHERE ja.worker_id = :user_id
+            ORDER BY ja.created_at DESC";
     
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt->execute([':user_id' => $user_id]);
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $applications = [];
-    while ($row = $result->fetch_assoc()) {
-        $applications[] = [
-            'id' => $row['id'],
-            'job_id' => $row['job_id'],
-            'title' => $row['title'],
-            'salary' => $row['salary'],
-            'location' => $row['location'],
-            'job_type' => $row['job_type'],
-            'work_hours' => $row['work_hours'],
-            'employer_name' => $row['employer_name'],
-            'employer_phone' => $row['employer_phone'],
-            'status' => $row['status'],
-            'applied_at' => $row['applied_at'],
-            'updated_at' => $row['updated_at']
-        ];
+    if ($result && count($result) > 0) {
+        foreach ($result as $row) {
+            $applications[] = [
+                'id' => $row['id'],
+                'job_id' => $row['job_id'],
+                'title' => $row['title'],
+                'salary' => $row['salary'],
+                'location' => $row['location'],
+                'job_type' => $row['job_type'],
+                'work_hours' => $row['work_hours'],
+                'employer_name' => $row['employer_name'],
+                'employer_phone' => $row['employer_phone'],
+                'status' => $row['status'],
+                'created_at' => $row['created_at'],
+                'updated_at' => $row['updated_at'] ?? null
+            ];
+        }
     }
     
     // Get statistics
@@ -54,13 +55,11 @@ try {
                     SUM(CASE WHEN status = 'under_review' THEN 1 ELSE 0 END) as under_review,
                     SUM(CASE WHEN status = 'accepted' THEN 1 ELSE 0 END) as accepted,
                     SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) as rejected
-                  FROM job_applications WHERE worker_id = ?";
+                  FROM job_applications WHERE worker_id = :user_id";
     
     $stats_stmt = $conn->prepare($stats_sql);
-    $stats_stmt->bind_param("i", $user_id);
-    $stats_stmt->execute();
-    $stats_result = $stats_stmt->get_result();
-    $stats = $stats_result->fetch_assoc();
+    $stats_stmt->execute([':user_id' => $user_id]);
+    $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
     
     json_response([
         'success' => true, 
@@ -69,8 +68,7 @@ try {
     ]);
     
 } catch (Exception $e) {
+    error_log("My Applications Error: " . $e->getMessage());
     json_response(['success' => false, 'message' => $e->getMessage()], 500);
 }
-
-$conn->close();
 ?>

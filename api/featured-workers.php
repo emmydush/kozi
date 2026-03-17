@@ -4,18 +4,23 @@ require_once '../config.php';
 header('Content-Type: application/json');
 
 try {
-    $sql = "SELECT id, name, description, type, location, experience, hourly_rate, rating, 
-                   phone, email, profile_image 
-            FROM workers 
-            WHERE status = 'active' 
-            ORDER BY rating DESC, created_at DESC 
+    $sql = "SELECT w.id, w.name, w.description, w.type, w.location, w.experience_years as experience, 
+                   w.hourly_rate, w.average_rating as rating, 
+                   u.phone, u.email, u.profile_image
+            FROM workers w
+            JOIN users u ON w.user_id = u.id
+            WHERE w.status = 'active' 
+            ORDER BY w.average_rating DESC, w.created_at DESC 
             LIMIT 20";
-    $result = $conn->query($sql);
+    
+    $stmt = $conn->prepare($sql);
+    $stmt->execute();
+    $result = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $workers = [];
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $row['formatted_rate'] = format_currency($row['hourly_rate']);
+    if ($result && count($result) > 0) {
+        foreach ($result as $row) {
+            $row['formatted_rate'] = format_currency($row['hourly_rate'] ?? 0);
             $row['profile_image'] = $row['profile_image'] ?: 'https://picsum.photos/seed/' . $row['id'] . '/400/300.jpg';
             $workers[] = $row;
         }
@@ -24,8 +29,7 @@ try {
     echo json_encode(['success' => true, 'data' => $workers]);
     
 } catch (Exception $e) {
+    error_log("Featured Workers Error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
-
-$conn->close();
 ?>

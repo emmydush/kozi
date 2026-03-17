@@ -26,13 +26,9 @@ $sql = "SELECT b.*, u.name as worker_name, u.email as worker_email, u.phone as w
         WHERE b.user_id = ?
         ORDER BY b.start_date ASC, b.created_at DESC";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param('i', $user_id);
+$stmt->bindParam(1, $user_id, PDO::PARAM_INT);
 $stmt->execute();
-$result = $stmt->get_result();
-
-while ($row = $result->fetch_assoc()) {
-    $bookings[] = $row;
-}
+$bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate statistics
 $total_bookings = count($bookings);
@@ -44,7 +40,6 @@ $completed_bookings = count(array_filter($bookings, fn($b) => $b['status'] === '
 $current_month = date('Y-m');
 $this_month_bookings = count(array_filter($bookings, fn($b) => date('Y-m', strtotime($b['start_date'])) === $current_month));
 
-$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -126,9 +121,35 @@ $stmt->close();
                 transform: translateX(0);
             }
             
-            .main-content {
-                margin-left: 250px;
-                padding: 20px;
+            .booking-card .booking-actions .btn {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+
+        /* Smartphone layout for dashboard cards */
+        @media (max-width: 576px) {
+            .row .col-6 {
+                padding-left: 5px !important;
+                padding-right: 5px !important;
+            }
+            
+            .row .col-6 .card {
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .card .card-body {
+                padding: 15px;
+            }
+            
+            .row .col-6 .card h5 {
+                font-size: 0.9rem;
+                margin-bottom: 10px;
+            }
+            
+            .row .col-6 .card h2 {
+                font-size: 1.5rem;
+                margin-bottom: 0;
             }
         }
         
@@ -381,7 +402,7 @@ $stmt->close();
 
         <!-- Booking Statistics -->
         <div class="row mb-4">
-            <div class="col-lg-6 col-md-12 mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">Active Bookings</h5>
@@ -389,7 +410,7 @@ $stmt->close();
                     </div>
                 </div>
             </div>
-            <div class="col-lg-6 col-md-12 mb-4">
+            <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
                         <h5 class="card-title">This Month</h5>

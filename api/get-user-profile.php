@@ -5,24 +5,33 @@ header('Content-Type: application/json');
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    json_response(['success' => false, 'message' => 'Unauthorized'], 401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
+    exit();
 }
 
 $user_id = $_SESSION['user_id'];
 
 if (!$user_id) {
-    json_response(['success' => false, 'message' => 'User not logged in'], 401);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => 'User not logged in']);
+    exit();
 }
 
 try {
-    $conn->select_db("household_connect");
+    // PostgreSQL doesn't need select_db - connection is already to the correct database
     
     // Get user profile data from users table
-    $sql = "SELECT name, email, phone, profile_image FROM users WHERE id = $user_id";
-    $result = $conn->query($sql);
+    $sql = "SELECT name, email, phone, profile_image FROM users WHERE id = :user_id";
+    $stmt = $conn->prepare($sql);
+    $stmt->bindParam(':user_id', $user_id);
+    $stmt->execute();
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if (!$result || !$row = $result->fetch_assoc()) {
-        json_response(['success' => false, 'message' => 'User not found'], 404);
+    if (!$row) {
+        header('Content-Type: application/json');
+        echo json_encode(['success' => false, 'message' => 'User not found']);
+        exit();
     }
     
     $data = [
@@ -40,21 +49,25 @@ try {
     
     // If user is a worker, get additional data from workers table
     if ($_SESSION['user_role'] === 'worker') {
-        $worker_sql = "SELECT experience_years, skills, availability FROM workers WHERE user_id = $user_id";
-        $worker_result = $conn->query($worker_sql);
+        $worker_sql = "SELECT experience_years, skills, availability FROM workers WHERE user_id = :user_id";
+        $worker_stmt = $conn->prepare($worker_sql);
+        $worker_stmt->bindParam(':user_id', $user_id);
+        $worker_stmt->execute();
+        $worker_row = $worker_stmt->fetch(PDO::FETCH_ASSOC);
         
-        if ($worker_result && $worker_row = $worker_result->fetch_assoc()) {
+        if ($worker_row) {
             $data['experience'] = $worker_row['experience_years'];
             $data['skills'] = $worker_row['skills'] ? json_decode($worker_row['skills'], true) : [];
             $data['availability'] = $worker_row['availability'];
         }
     }
     
-    json_response(['success' => true, 'data' => $data]);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'data' => $data]);
     
 } catch (Exception $e) {
-    json_response(['success' => false, 'message' => $e->getMessage()], 500);
+    header('Content-Type: application/json');
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }
 
-$conn->close();
 ?>

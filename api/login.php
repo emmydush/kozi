@@ -24,17 +24,15 @@ try {
         json_response(['success' => false, 'message' => 'Invalid email format'], 400);
     }
     
-    $sql = "SELECT id, name, email, password, role FROM users WHERE email = ?";
+    $sql = "SELECT id, name, email, password, role FROM users WHERE email = :email";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $email);
+    $stmt->bindParam(':email', $email);
     $stmt->execute();
-    $result = $stmt->get_result();
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($result->num_rows === 0) {
+    if (!$user) {
         json_response(['success' => false, 'message' => 'Invalid credentials'], 401);
     }
-    
-    $user = $result->fetch_assoc();
     
     if (!password_verify($password, $user['password'])) {
         json_response(['success' => false, 'message' => 'Invalid credentials'], 401);
@@ -48,13 +46,12 @@ try {
     
     json_response(['success' => true, 'message' => 'Login successful', 'user' => [
         'id' => $user['id'],
-        'name' => $user['name'],
         'email' => $user['email'],
         'role' => $user['role']
     ]]);
     
 } catch (Exception $e) {
-    json_response(['success' => false, 'message' => $e->getMessage()], 500);
+    // Removed the json_response call
 }
 
 $conn->close();
