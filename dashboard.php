@@ -11,6 +11,113 @@ $user_role = $_SESSION['user_role'];
 $user_name = $_SESSION['user_name'];
 $user_id = $_SESSION['user_id'];
 
+$dashboard_translations = [
+    'en' => [
+        'title' => 'Dashboard - KOZI',
+        'brand' => '',
+        'dashboard' => 'Dashboard',
+        'post_job' => 'Post Job',
+        'job_applications' => 'Job Applications',
+        'find_workers' => 'Find Workers',
+        'my_jobs' => 'My Jobs',
+        'bookings' => 'Bookings',
+        'find_jobs' => 'Find Jobs',
+        'my_applications' => 'My Applications',
+        'active_jobs' => 'Active Jobs',
+        'messages' => 'Messages',
+        'help_support' => 'Help & Support',
+        'logout' => 'Logout',
+        'welcome_back' => 'Welcome back, %s!',
+        'welcome_subtitle' => "We're glad to see you again! Here's what's happening with your %s dashboard today.",
+        'create_worker_profile' => 'Create Your Worker Profile',
+        'create_worker_profile_text' => 'To start finding jobs, you need to create your worker profile. This will help employers learn about your skills and experience.',
+        'create_profile_now' => 'Create Profile Now',
+        'posted_jobs' => 'Posted Jobs',
+        'active_bookings' => 'Active Bookings',
+        'available_workers' => 'Available Workers',
+        'search_workers' => 'Search workers...',
+        'all_types' => 'All Types',
+        'cleaning' => 'Cleaning',
+        'childcare' => 'Childcare',
+        'gardening' => 'Gardening',
+        'eldercare' => 'Elder Care',
+        'cooking' => 'Cooking',
+        'loading_available_workers' => 'Loading available workers...',
+        'recent_job_postings' => 'Recent Job Postings',
+        'loading_recent_jobs' => 'Loading recent jobs...',
+        'jobs_applied' => 'Jobs Applied',
+        'available_jobs' => 'Available Jobs',
+        'loading_available_jobs' => 'Loading available jobs...',
+        'quick_actions' => 'Quick Actions',
+        'update_profile' => 'Update Profile',
+        'browse_jobs' => 'Browse Jobs',
+        'worker_profile' => 'Worker Profile',
+        'close' => 'Close',
+        'contact' => 'Contact',
+        'book_now' => 'Book Now',
+        'contact_worker' => 'Contact Worker',
+        'subject' => 'Subject',
+        'message' => 'Message',
+        'cancel' => 'Cancel',
+        'send_message' => 'Send Message',
+        'book_worker' => 'Book Worker',
+        'start_date' => 'Start Date',
+        'end_date' => 'End Date',
+        'service_type' => 'Service Type',
+        'additional_notes' => 'Additional Notes',
+        'create_booking' => 'Create Booking',
+        'available' => 'Available',
+        'applied' => 'Applied',
+        'unknown' => 'Unknown',
+        'apply_now' => 'Apply Now',
+        'already_applied' => 'Already Applied',
+        'not_available' => 'Not Available',
+        'no_recent_jobs' => 'No recent job postings',
+        'no_available_jobs' => 'No available jobs at the moment',
+        'application_soon' => 'Application functionality will be implemented soon!',
+        'loading_workers' => 'Loading workers...',
+        'no_workers_match' => 'No workers found matching your criteria.',
+        'general_worker' => 'General Worker',
+        'no_description' => 'No description available',
+        'view_profile' => 'View Profile',
+        'no_workers_yet' => 'No Workers Available Yet',
+        'no_workers_yet_text' => 'Be the first to register as a worker and start connecting with employers looking for household services!',
+        'register_worker' => 'Register as Worker',
+        'previous' => 'Previous',
+        'next' => 'Next',
+        'contact_soon' => 'Contact functionality will be implemented soon!',
+        'loading_worker_profile' => 'Loading worker profile...',
+        'failed_load_worker_profile' => 'Failed to load worker profile. Please try again.',
+        'name_not_available' => 'Name not available',
+        'reviews' => 'reviews',
+        'location_not_specified' => 'Location not specified',
+        'experience_not_specified' => 'Experience not specified',
+        'years' => 'years',
+        'other' => 'Other',
+        'available_for_work' => 'Available for work',
+        'reviews_title' => 'Reviews',
+        'contact_information' => 'Contact Information',
+        'skills_title' => 'Skills',
+        'national_id_unavailable' => 'National ID photo not available',
+        'no_certifications' => 'No certifications listed',
+        'no_specific_skills' => 'No specific skills listed',
+        'no_reviews_yet' => 'No reviews yet',
+        'no_comment' => 'No comment provided',
+    ],
+    'fr' => [
+        'title' => 'Tableau de bord - KOZI','brand' => '','dashboard' => 'Tableau de bord','post_job' => 'Publier une offre','job_applications' => 'Candidatures','find_workers' => 'Trouver des travailleurs','my_jobs' => 'Mes offres','bookings' => 'Reservations','find_jobs' => 'Trouver des offres','my_applications' => 'Mes candidatures','active_jobs' => 'Offres actives','messages' => 'Messages','help_support' => 'Aide et support','logout' => 'Deconnexion','welcome_back' => 'Bon retour, %s !','welcome_subtitle' => 'Heureux de vous revoir ! Voici ce qui se passe aujourd\'hui sur votre tableau de bord %s.','create_worker_profile' => 'Creez votre profil travailleur','create_worker_profile_text' => 'Pour commencer a trouver des offres, vous devez creer votre profil. Cela aidera les employeurs a connaitre vos competences et votre experience.','create_profile_now' => 'Creer le profil maintenant','posted_jobs' => 'Offres publiees','active_bookings' => 'Reservations actives','available_workers' => 'Travailleurs disponibles','search_workers' => 'Rechercher des travailleurs...','all_types' => 'Tous les types','cleaning' => 'Nettoyage','childcare' => 'Garde d\'enfants','gardening' => 'Jardinage','eldercare' => 'Aide aux personnes agees','cooking' => 'Cuisine','loading_available_workers' => 'Chargement des travailleurs disponibles...','recent_job_postings' => 'Offres recentes','loading_recent_jobs' => 'Chargement des offres recentes...','jobs_applied' => 'Offres postulees','available_jobs' => 'Offres disponibles','loading_available_jobs' => 'Chargement des offres disponibles...','quick_actions' => 'Actions rapides','update_profile' => 'Mettre a jour le profil','browse_jobs' => 'Parcourir les offres','worker_profile' => 'Profil du travailleur','close' => 'Fermer','contact' => 'Contacter','book_now' => 'Reserver','contact_worker' => 'Contacter le travailleur','subject' => 'Sujet','message' => 'Message','cancel' => 'Annuler','send_message' => 'Envoyer le message','book_worker' => 'Reserver le travailleur','start_date' => 'Date de debut','end_date' => 'Date de fin','service_type' => 'Type de service','additional_notes' => 'Notes supplementaires','create_booking' => 'Creer une reservation','available' => 'Disponible','applied' => 'Postule','unknown' => 'Inconnu','apply_now' => 'Postuler','already_applied' => 'Deja postule','not_available' => 'Indisponible','no_recent_jobs' => 'Aucune offre recente','no_available_jobs' => 'Aucune offre disponible pour le moment','application_soon' => 'La fonctionnalite de candidature arrive bientot !','loading_workers' => 'Chargement des travailleurs...','no_workers_match' => 'Aucun travailleur ne correspond a vos criteres.','general_worker' => 'Travailleur general','no_description' => 'Aucune description disponible','view_profile' => 'Voir le profil','no_workers_yet' => 'Aucun travailleur disponible pour le moment','no_workers_yet_text' => 'Soyez la premiere personne a vous inscrire comme travailleur et commencez a entrer en contact avec des employeurs !','register_worker' => 'S\'inscrire comme travailleur','previous' => 'Precedent','next' => 'Suivant','contact_soon' => 'La fonctionnalite de contact arrive bientot !','loading_worker_profile' => 'Chargement du profil du travailleur...','failed_load_worker_profile' => 'Impossible de charger le profil du travailleur. Veuillez reessayer.','name_not_available' => 'Nom non disponible','reviews' => 'avis','location_not_specified' => 'Lieu non precise','experience_not_specified' => 'Experience non precisee','years' => 'ans','other' => 'Autre','available_for_work' => 'Disponible pour travailler','reviews_title' => 'Avis','contact_information' => 'Informations de contact','skills_title' => 'Competences','national_id_unavailable' => 'Photo de carte d\'identite non disponible','no_certifications' => 'Aucune certification indiquee','no_specific_skills' => 'Aucune competence specifique indiquee','no_reviews_yet' => 'Aucun avis pour le moment','no_comment' => 'Aucun commentaire fourni',
+    ],
+    'rw' => [
+        'title' => 'Imbonerahamwe - KOZI','brand' => '','dashboard' => 'Imbonerahamwe','post_job' => 'Tangaza akazi','job_applications' => 'Abasabye akazi','find_workers' => 'Shaka abakozi','my_jobs' => 'Akazi kanjye','bookings' => 'Bokingi','find_jobs' => 'Shaka akazi','my_applications' => 'Ubusabe bwanjye','active_jobs' => 'Akazi gakora','messages' => 'Ubutumwa','help_support' => 'Ubufasha na serivisi','logout' => 'Sohoka','welcome_back' => 'Murakaza neza, %s!','welcome_subtitle' => 'Twishimiye kongera kukubona! Dore ibiri kubera kuri konti yawe ya %s uyu munsi.','create_worker_profile' => 'Kora profili yawe y\'umukozi','create_worker_profile_text' => 'Kugira ngo utangire gushaka akazi, ugomba kubanza gukora profili yawe. Bizafasha abakoresha kumenya ubushobozi n\'uburambe bwawe.','create_profile_now' => 'Kora profili nonaha','posted_jobs' => 'Akazi katangajwe','active_bookings' => 'Bokingi zikora','available_workers' => 'Abakozi baboneka','search_workers' => 'Shaka abakozi...','all_types' => 'Ubwoko bwose','cleaning' => 'Isuku','childcare' => 'Kurera abana','gardening' => 'Ubusitani','eldercare' => 'Kwita ku bageze mu zabukuru','cooking' => 'Guteka','loading_available_workers' => 'Turimo gupakira abakozi baboneka...','recent_job_postings' => 'Akazi katangajwe vuba','loading_recent_jobs' => 'Turimo gupakira akazi ka vuba...','jobs_applied' => 'Akazi wasabiye','available_jobs' => 'Akazi kaboneka','loading_available_jobs' => 'Turimo gupakira akazi kaboneka...','quick_actions' => 'Ibikorwa byihuse','update_profile' => 'Hindura profili','browse_jobs' => 'Reba akazi','worker_profile' => 'Profili y\'umukozi','close' => 'Funga','contact' => 'Vugana','book_now' => 'Buka nonaha','contact_worker' => 'Vugana n\'umukozi','subject' => 'Umutwe','message' => 'Ubutumwa','cancel' => 'Hagarika','send_message' => 'Ohereza ubutumwa','book_worker' => 'Buka umukozi','start_date' => 'Itariki yo gutangira','end_date' => 'Itariki yo kurangiza','service_type' => 'Ubwoko bwa serivisi','additional_notes' => 'Andi makuru','create_booking' => 'Kora bokingi','available' => 'Biraboneka','applied' => 'Warasabye','unknown' => 'Ntibizwi','apply_now' => 'Saba nonaha','already_applied' => 'Warasabye','not_available' => 'Ntibiboneka','no_recent_jobs' => 'Nta kazi katangajwe vuba','no_available_jobs' => 'Nta kazi kaboneka ubu','application_soon' => 'Uburyo bwo gusaba akazi buraza vuba!','loading_workers' => 'Turimo gupakira abakozi...','no_workers_match' => 'Nta bakozi bahuye n\'ibyo washakaga.','general_worker' => 'Umukozi rusange','no_description' => 'Nta bisobanuro bihari','view_profile' => 'Reba profili','no_workers_yet' => 'Nta bakozi baraboneka kugeza ubu','no_workers_yet_text' => 'Ba uwa mbere wiyandikisha nk\'umukozi utangire guhuzwa n\'abakoresha bashaka serivisi zo mu rugo!','register_worker' => 'Iyandikishe nk\'umukozi','previous' => 'Ibanza','next' => 'Ikurikira','contact_soon' => 'Uburyo bwo kuvugana buraza vuba!','loading_worker_profile' => 'Turimo gupakira profili y\'umukozi...','failed_load_worker_profile' => 'Ntibyakunze gupakira profili y\'umukozi. Ongera ugerageze.','name_not_available' => 'Izina ntirihari','reviews' => 'ibitekerezo','location_not_specified' => 'Aho aherereye ntihasobanuwe','experience_not_specified' => 'Uburambe ntibwasobanuwe','years' => 'imyaka','other' => 'Ibindi','available_for_work' => 'Ariteguye gukora','reviews_title' => 'Ibitekerezo','contact_information' => 'Amakuru yo kuvugana','skills_title' => 'Ubumenyi','national_id_unavailable' => 'Ifoto y\'indangamuntu ntiboneka','no_certifications' => 'Nta byangombwa byanditswe','no_specific_skills' => 'Nta bumenyi bwihariye bwanditswe','no_reviews_yet' => 'Nta bitekerezo birabaho','no_comment' => 'Nta gitekerezo cyatanzwe',
+    ],
+];
+
+$dlang = $dashboard_translations[current_language()] ?? $dashboard_translations['en'];
+function dt($key) {
+    global $dlang;
+    return $dlang[$key] ?? $key;
+}
+
 // Check if worker has a profile (only for workers)
 $has_worker_profile = false;
 if ($user_role === 'worker') {
@@ -30,11 +137,11 @@ if ($user_role === 'worker') {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(current_language()); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Household Connect</title>
+    <title><?php echo htmlspecialchars(dt('title')); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -779,56 +886,56 @@ if ($user_role === 'worker') {
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h3><i class="fas fa-home"></i> Household Connect</h3>
+            <h3><i class="fas fa-home"></i> <?php echo htmlspecialchars(dt('brand')); ?></h3>
         </div>
         
         <nav class="nav flex-column p-3">
             <a class="nav-link active" href="dashboard.php">
-                <i class="fas fa-tachometer-alt"></i> Dashboard
+                <i class="fas fa-tachometer-alt"></i> <?php echo htmlspecialchars(dt('dashboard')); ?>
             </a>
             
             <?php if ($user_role === 'employer'): ?>
             <a class="nav-link" href="post-job.php">
-                <i class="fas fa-plus-circle"></i> Post Job
+                <i class="fas fa-plus-circle"></i> <?php echo htmlspecialchars(dt('post_job')); ?>
             </a>
             <a class="nav-link" href="job-applications.php">
-                <i class="fas fa-users"></i> Job Applications
+                <i class="fas fa-users"></i> <?php echo htmlspecialchars(dt('job_applications')); ?>
             </a>
             <a class="nav-link" href="workers.php">
-                <i class="fas fa-search"></i> Find Workers
+                <i class="fas fa-search"></i> <?php echo htmlspecialchars(dt('find_workers')); ?>
             </a>
             <a class="nav-link" href="my-jobs.php">
-                <i class="fas fa-briefcase"></i> My Jobs
+                <i class="fas fa-briefcase"></i> <?php echo htmlspecialchars(dt('my_jobs')); ?>
             </a>
             <a class="nav-link" href="bookings.php">
-                <i class="fas fa-calendar-check"></i> Bookings
+                <i class="fas fa-calendar-check"></i> <?php echo htmlspecialchars(dt('bookings')); ?>
             </a>
             <?php else: ?>
             <a class="nav-link" href="jobs.php">
-                <i class="fas fa-search"></i> Find Jobs
+                <i class="fas fa-search"></i> <?php echo htmlspecialchars(dt('find_jobs')); ?>
             </a>
             <a class="nav-link" href="my-applications.php">
-                <i class="fas fa-file-alt"></i> My Applications
+                <i class="fas fa-file-alt"></i> <?php echo htmlspecialchars(dt('my_applications')); ?>
             </a>
             <a class="nav-link" href="my-jobs.php">
-                <i class="fas fa-briefcase"></i> Active Jobs
+                <i class="fas fa-briefcase"></i> <?php echo htmlspecialchars(dt('active_jobs')); ?>
             </a>
             <a class="nav-link" href="earnings.php">
-                <i class="fas fa-money-bill-wave"></i> Earnings
+                <i class="fas fa-money-bill-wave"></i> <?php echo htmlspecialchars(t('nav.earnings')); ?>
             </a>
             <?php endif; ?>
             
             <a class="nav-link" href="messages.php">
-                <i class="fas fa-envelope"></i> Messages
+                <i class="fas fa-envelope"></i> <?php echo htmlspecialchars(dt('messages')); ?>
             </a>
             
             <hr class="text-white-50">
             
             <a class="nav-link" href="help.php">
-                <i class="fas fa-question-circle"></i> Help & Support
+                <i class="fas fa-question-circle"></i> <?php echo htmlspecialchars(dt('help_support')); ?>
             </a>
             <a class="nav-link" href="#" onclick="confirmLogout(event)">
-                <i class="fas fa-sign-out-alt"></i> Logout
+                <i class="fas fa-sign-out-alt"></i> <?php echo htmlspecialchars(dt('logout')); ?>
             </a>
         </nav>
     </div>
@@ -838,8 +945,8 @@ if ($user_role === 'worker') {
         <div class="row">
             <div class="col-12">
                 <div class="welcome-section">
-                    <h2 class="welcome-title">Welcome back, <?php echo htmlspecialchars($user_name); ?>! 👋</h2>
-                    <p class="welcome-subtitle text-muted">We're glad to see you again! Here's what's happening with your <?php echo htmlspecialchars($user_role); ?> dashboard today.</p>
+                    <h2 class="welcome-title"><?php echo htmlspecialchars(sprintf(dt('welcome_back'), $user_name)); ?> 👋</h2>
+                    <p class="welcome-subtitle text-muted"><?php echo htmlspecialchars(sprintf(dt('welcome_subtitle'), $user_role)); ?></p>
                     <div class="welcome-stats d-flex gap-4 mt-3">
                         <div class="stat-item">
                             <i class="fas fa-calendar-day text-primary"></i>
@@ -862,10 +969,10 @@ if ($user_role === 'worker') {
                     <div class="d-flex align-items-center">
                         <i class="fas fa-user-plus fa-2x me-3"></i>
                         <div class="flex-grow-1">
-                            <h5 class="alert-heading mb-1">Create Your Worker Profile</h5>
-                            <p class="mb-2">To start finding jobs, you need to create your worker profile. This will help employers learn about your skills and experience.</p>
+                            <h5 class="alert-heading mb-1"><?php echo htmlspecialchars(dt('create_worker_profile')); ?></h5>
+                            <p class="mb-2"><?php echo htmlspecialchars(dt('create_worker_profile_text')); ?></p>
                             <a href="create-worker-profile.php" class="btn btn-primary">
-                                <i class="fas fa-plus-circle me-2"></i>Create Profile Now
+                                <i class="fas fa-plus-circle me-2"></i><?php echo htmlspecialchars(dt('create_profile_now')); ?>
                             </a>
                         </div>
                     </div>
@@ -881,7 +988,7 @@ if ($user_role === 'worker') {
             <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Posted Jobs</h5>
+                        <h5 class="card-title"><?php echo htmlspecialchars(dt('posted_jobs')); ?></h5>
                         <h2 id="posted-jobs-count">0</h2>
                     </div>
                 </div>
@@ -889,7 +996,7 @@ if ($user_role === 'worker') {
             <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Active Bookings</h5>
+                        <h5 class="card-title"><?php echo htmlspecialchars(dt('active_bookings')); ?></h5>
                         <h2 id="active-bookings-count">0</h2>
                     </div>
                 </div>
@@ -900,22 +1007,22 @@ if ($user_role === 'worker') {
             <div class="col-lg-8 col-md-12 mb-4">
                 <div class="card h-100">
                     <div class="card-header d-flex justify-content-between align-items-center sticky-search-header">
-                        <h5>Available Workers</h5>
+                        <h5><?php echo htmlspecialchars(dt('available_workers')); ?></h5>
                         <div class="d-flex gap-2">
-                            <input type="text" id="worker-search" class="form-control form-control-sm" placeholder="Search workers..." style="width: 200px;">
+                            <input type="text" id="worker-search" class="form-control form-control-sm" placeholder="<?php echo htmlspecialchars(dt('search_workers')); ?>" style="width: 200px;">
                             <select id="worker-type-filter" class="form-select form-select-sm" style="width: 150px;">
-                                <option value="">All Types</option>
-                                <option value="cleaning">Cleaning</option>
-                                <option value="childcare">Childcare</option>
-                                <option value="gardening">Gardening</option>
-                                <option value="eldercare">Elder Care</option>
-                                <option value="cooking">Cooking</option>
+                                <option value=""><?php echo htmlspecialchars(dt('all_types')); ?></option>
+                                <option value="cleaning"><?php echo htmlspecialchars(dt('cleaning')); ?></option>
+                                <option value="childcare"><?php echo htmlspecialchars(dt('childcare')); ?></option>
+                                <option value="gardening"><?php echo htmlspecialchars(dt('gardening')); ?></option>
+                                <option value="eldercare"><?php echo htmlspecialchars(dt('eldercare')); ?></option>
+                                <option value="cooking"><?php echo htmlspecialchars(dt('cooking')); ?></option>
                             </select>
                         </div>
                     </div>
                     <div class="card-body">
                         <div id="workers-container" class="row">
-                            <p class="text-muted col-12">Loading available workers...</p>
+                            <p class="text-muted col-12"><?php echo htmlspecialchars(dt('loading_available_workers')); ?></p>
                         </div>
                         <div class="d-flex justify-content-center mt-3">
                             <nav id="workers-pagination"></nav>
@@ -926,11 +1033,11 @@ if ($user_role === 'worker') {
             <div class="col-lg-4 col-md-12 mb-4">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5>Recent Job Postings</h5>
+                        <h5><?php echo htmlspecialchars(dt('recent_job_postings')); ?></h5>
                     </div>
                     <div class="card-body">
                         <div id="recent-jobs">
-                            <p class="text-muted">Loading recent jobs...</p>
+                            <p class="text-muted"><?php echo htmlspecialchars(dt('loading_recent_jobs')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -943,7 +1050,7 @@ if ($user_role === 'worker') {
             <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-success text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Jobs Applied</h5>
+                        <h5 class="card-title"><?php echo htmlspecialchars(dt('jobs_applied')); ?></h5>
                         <h2 id="jobs-applied-count">0</h2>
                     </div>
                 </div>
@@ -951,7 +1058,7 @@ if ($user_role === 'worker') {
             <div class="col-lg-6 col-md-6 col-sm-6 col-6 mb-4">
                 <div class="card bg-primary text-white h-100">
                     <div class="card-body">
-                        <h5 class="card-title">Active Jobs</h5>
+                        <h5 class="card-title"><?php echo htmlspecialchars(dt('active_jobs')); ?></h5>
                         <h2 id="active-jobs-count">0</h2>
                     </div>
                 </div>
@@ -962,11 +1069,11 @@ if ($user_role === 'worker') {
             <div class="col-lg-8 col-md-12 mb-4">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5>Available Jobs</h5>
+                        <h5><?php echo htmlspecialchars(dt('available_jobs')); ?></h5>
                     </div>
                     <div class="card-body">
                         <div id="available-jobs">
-                            <p class="text-muted">Loading available jobs...</p>
+                            <p class="text-muted"><?php echo htmlspecialchars(dt('loading_available_jobs')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -974,13 +1081,13 @@ if ($user_role === 'worker') {
             <div class="col-lg-4 col-md-12 mb-4">
                 <div class="card h-100">
                     <div class="card-header">
-                        <h5>Quick Actions</h5>
+                        <h5><?php echo htmlspecialchars(dt('quick_actions')); ?></h5>
                     </div>
                     <div class="card-body">
                         <div class="d-grid gap-2">
-                            <a href="profile.php" class="btn btn-primary">Update Profile</a>
-                            <a href="jobs.php" class="btn btn-outline-primary">Browse Jobs</a>
-                            <a href="messages.php" class="btn btn-outline-secondary">Messages</a>
+                            <a href="profile.php" class="btn btn-primary"><?php echo htmlspecialchars(dt('update_profile')); ?></a>
+                            <a href="jobs.php" class="btn btn-outline-primary"><?php echo htmlspecialchars(dt('browse_jobs')); ?></a>
+                            <a href="messages.php" class="btn btn-outline-secondary"><?php echo htmlspecialchars(dt('messages')); ?></a>
                         </div>
                     </div>
                 </div>
@@ -993,9 +1100,9 @@ if ($user_role === 'worker') {
     <div class="modal fade" id="workerProfileModal" tabindex="-1" aria-labelledby="workerProfileModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
+                <div class="modal-header text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                     <h5 class="modal-title" id="workerProfileModalLabel">
-                        <i class="fas fa-user me-2"></i>Worker Profile
+                        <i class="fas fa-user me-2"></i><?php echo htmlspecialchars(dt('worker_profile')); ?>
                     </h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
@@ -1006,13 +1113,13 @@ if ($user_role === 'worker') {
                 </div>
                 <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                        <i class="fas fa-times me-2"></i>Close
+                        <i class="fas fa-times me-2"></i><?php echo htmlspecialchars(dt('close')); ?>
                     </button>
                     <button type="button" class="btn btn-warning" id="modal-contact-btn">
-                        <i class="fas fa-envelope me-2"></i>Contact
+                        <i class="fas fa-envelope me-2"></i><?php echo htmlspecialchars(dt('contact')); ?>
                     </button>
                     <button type="button" class="btn btn-success" id="modal-book-btn">
-                        <i class="fas fa-calendar-check me-2"></i>Book Now
+                        <i class="fas fa-calendar-check me-2"></i><?php echo htmlspecialchars(dt('book_now')); ?>
                     </button>
                 </div>
             </div>
@@ -1024,24 +1131,24 @@ if ($user_role === 'worker') {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Contact Worker</h5>
+                    <h5 class="modal-title"><?php echo htmlspecialchars(dt('contact_worker')); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="contact-form">
                         <div class="mb-3">
-                            <label for="message-subject" class="form-label">Subject</label>
+                            <label for="message-subject" class="form-label"><?php echo htmlspecialchars(dt('subject')); ?></label>
                             <input type="text" class="form-control" id="message-subject" required>
                         </div>
                         <div class="mb-3">
-                            <label for="message-body" class="form-label">Message</label>
+                            <label for="message-body" class="form-label"><?php echo htmlspecialchars(dt('message')); ?></label>
                             <textarea class="form-control" id="message-body" rows="4" required></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" id="send-message-btn">Send Message</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo htmlspecialchars(dt('cancel')); ?></button>
+                    <button type="button" class="btn btn-primary" id="send-message-btn"><?php echo htmlspecialchars(dt('send_message')); ?></button>
                 </div>
             </div>
         </div>
@@ -1052,39 +1159,39 @@ if ($user_role === 'worker') {
         <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Book Worker</h5>
+                    <h5 class="modal-title"><?php echo htmlspecialchars(dt('book_worker')); ?></h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <form id="booking-form">
                         <div class="mb-3">
-                            <label for="booking-start" class="form-label">Start Date</label>
+                            <label for="booking-start" class="form-label"><?php echo htmlspecialchars(dt('start_date')); ?></label>
                             <input type="date" class="form-control" id="booking-start" required>
                         </div>
                         <div class="mb-3">
-                            <label for="booking-end" class="form-label">End Date</label>
+                            <label for="booking-end" class="form-label"><?php echo htmlspecialchars(dt('end_date')); ?></label>
                             <input type="date" class="form-control" id="booking-end" required>
                         </div>
                         <div class="mb-3">
-                            <label for="booking-service" class="form-label">Service Type</label>
+                            <label for="booking-service" class="form-label"><?php echo htmlspecialchars(dt('service_type')); ?></label>
                             <select class="form-select" id="booking-service" required>
-                                <option value="cleaning">Cleaning</option>
-                                <option value="cooking">Cooking</option>
-                                <option value="childcare">Childcare</option>
-                                <option value="eldercare">Eldercare</option>
-                                <option value="gardening">Gardening</option>
-                                <option value="other">Other</option>
+                                <option value="cleaning"><?php echo htmlspecialchars(dt('cleaning')); ?></option>
+                                <option value="cooking"><?php echo htmlspecialchars(dt('cooking')); ?></option>
+                                <option value="childcare"><?php echo htmlspecialchars(dt('childcare')); ?></option>
+                                <option value="eldercare"><?php echo htmlspecialchars(dt('eldercare')); ?></option>
+                                <option value="gardening"><?php echo htmlspecialchars(dt('gardening')); ?></option>
+                                <option value="other"><?php echo htmlspecialchars(dt('other')); ?></option>
                             </select>
                         </div>
                         <div class="mb-3">
-                            <label for="booking-notes" class="form-label">Additional Notes</label>
+                            <label for="booking-notes" class="form-label"><?php echo htmlspecialchars(dt('additional_notes')); ?></label>
                             <textarea class="form-control" id="booking-notes" rows="3"></textarea>
                         </div>
                     </form>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-success" id="create-booking-btn">Create Booking</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?php echo htmlspecialchars(dt('cancel')); ?></button>
+                    <button type="button" class="btn btn-success" id="create-booking-btn"><?php echo htmlspecialchars(dt('create_booking')); ?></button>
                 </div>
             </div>
         </div>
@@ -1094,6 +1201,11 @@ if ($user_role === 'worker') {
     <script src="https://kit.fontawesome.com/your-fontawesome-kit.js"></script>
     <script src="assets/js/dialog.js"></script>
     <script>
+        const dashboardI18n = <?php echo json_encode($dlang, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES); ?>;
+        function tr(key) {
+            return dashboardI18n[key] || key;
+        }
+
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             sidebar.classList.toggle('show');
@@ -1141,7 +1253,7 @@ if ($user_role === 'worker') {
             loadingElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
-                    element.textContent = 'Loading...';
+                    element.textContent = '<?php echo addslashes(t('common.loading')); ?>';
                     element.style.display = 'block';
                     element.style.visibility = 'visible';
                     console.log('Set loading for element:', id);
@@ -1307,7 +1419,7 @@ if ($user_role === 'worker') {
                         </div>
                     `).join('');
                 } else {
-                    recentJobsContainer.innerHTML = '<p class="text-muted">No recent job postings</p>';
+                    recentJobsContainer.innerHTML = `<p class="text-muted">${tr('no_recent_jobs')}</p>`;
                 }
             }
         }
@@ -1354,16 +1466,16 @@ if ($user_role === 'worker') {
                         
                         switch(job.status) {
                             case 'active':
-                                statusBadge = '<span class="badge bg-success">Available</span>';
-                                actionButton = `<button class="btn btn-sm btn-primary mt-2" onclick="applyForJob(${job.id})">Apply Now</button>`;
+                                statusBadge = `<span class="badge bg-success">${tr('available')}</span>`;
+                                actionButton = `<button class="btn btn-sm btn-primary mt-2" onclick="applyForJob(${job.id})">${tr('apply_now')}</button>`;
                                 break;
                             case 'applied':
-                                statusBadge = '<span class="badge bg-warning">Applied</span>';
-                                actionButton = `<button class="btn btn-sm btn-secondary mt-2" disabled>Already Applied</button>`;
+                                statusBadge = `<span class="badge bg-warning">${tr('applied')}</span>`;
+                                actionButton = `<button class="btn btn-sm btn-secondary mt-2" disabled>${tr('already_applied')}</button>`;
                                 break;
                             default:
-                                statusBadge = '<span class="badge bg-secondary">Unknown</span>';
-                                actionButton = `<button class="btn btn-sm btn-secondary mt-2" disabled>Not Available</button>`;
+                                statusBadge = `<span class="badge bg-secondary">${tr('unknown')}</span>`;
+                                actionButton = `<button class="btn btn-sm btn-secondary mt-2" disabled>${tr('not_available')}</button>`;
                         }
                         
                         return `
@@ -1383,7 +1495,7 @@ if ($user_role === 'worker') {
                     }).join('');
                 } else {
                     console.log('No available jobs - showing empty message');
-                    availableJobsContainer.innerHTML = '<p class="text-muted">No available jobs at the moment</p>';
+                    availableJobsContainer.innerHTML = `<p class="text-muted">${tr('no_available_jobs')}</p>`;
                 }
             }
         }
@@ -1403,7 +1515,7 @@ if ($user_role === 'worker') {
         
         function applyForJob(jobId) {
             // Implement job application logic
-            alert('Application functionality will be implemented soon!');
+            alert(tr('application_soon'));
         }
         
         // Logout confirmation function (same as in navbar)
@@ -1417,7 +1529,7 @@ if ($user_role === 'worker') {
                         <div class="modal-content">
                             <div class="modal-header bg-danger text-white">
                                 <h5 class="modal-title" id="logoutModalLabel">
-                                    <i class="fas fa-exclamation-triangle me-2"></i>Confirm Logout
+                                    <i class="fas fa-exclamation-triangle me-2"></i><?php echo addslashes(t('nav.confirm_logout')); ?>
                                 </h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
@@ -1425,15 +1537,15 @@ if ($user_role === 'worker') {
                                 <div class="text-center mb-3">
                                     <i class="fas fa-sign-out-alt fa-3x text-danger mb-3"></i>
                                 </div>
-                                <h6 class="text-center">Are you sure you want to logout?</h6>
-                                <p class="text-muted text-center mb-0">You will be redirected to the homepage and will need to login again to access your account.</p>
+                                <h6 class="text-center"><?php echo addslashes(t('nav.confirm_logout_question')); ?></h6>
+                                <p class="text-muted text-center mb-0"><?php echo addslashes(t('nav.confirm_logout_text')); ?></p>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                    <i class="fas fa-times me-2"></i>Cancel
+                                    <i class="fas fa-times me-2"></i><?php echo addslashes(t('nav.cancel')); ?>
                                 </button>
                                 <button type="button" class="btn btn-danger" onclick="performLogout()">
-                                    <i class="fas fa-sign-out-alt me-2"></i>Logout
+                                    <i class="fas fa-sign-out-alt me-2"></i><?php echo addslashes(t('nav.logout')); ?>
                                 </button>
                             </div>
                         </div>
@@ -1468,10 +1580,10 @@ if ($user_role === 'worker') {
                         <div class="modal-content">
                             <div class="modal-body text-center py-4">
                                 <div class="spinner-border text-primary mb-3" role="status">
-                                    <span class="visually-hidden">Loading...</span>
+                                    <span class="visually-hidden"><?php echo addslashes(t('common.loading')); ?></span>
                                 </div>
-                                <h6>Logging out...</h6>
-                                <p class="text-muted mb-0">Please wait while we secure your session.</p>
+                                <h6><?php echo addslashes(t('nav.logout')); ?>...</h6>
+                                <p class="text-muted mb-0"><?php echo addslashes(t('nav.confirm_logout_text')); ?></p>
                             </div>
                         </div>
                     </div>
@@ -1500,7 +1612,7 @@ if ($user_role === 'worker') {
                         window.location.href = './index.php';
                     }, 1000);
                 } else {
-                    throw new Error('Logout failed');
+                    throw new Error('<?php echo addslashes(t('nav.logout')); ?> failed');
                 }
             })
             .catch(error => {
@@ -1523,7 +1635,7 @@ if ($user_role === 'worker') {
             
             const container = document.getElementById('workers-container');
             if (container) {
-                container.innerHTML = '<p class="text-muted col-12">Loading workers...</p>';
+                container.innerHTML = `<p class="text-muted col-12">${tr('loading_workers')}</p>`;
             }
             
             // Build query parameters
@@ -1567,7 +1679,7 @@ if ($user_role === 'worker') {
             if (!container) return;
             
             if (workers.length === 0) {
-                container.innerHTML = '<p class="text-muted col-12">No workers found matching your criteria.</p>';
+                container.innerHTML = `<p class="text-muted col-12">${tr('no_workers_match')}</p>`;
                 return;
             }
             
@@ -1580,9 +1692,9 @@ if ($user_role === 'worker') {
                             <div class="text-center p-3">
                                 <img src="${worker.profile_image}" class="rounded-circle mb-3" alt="${worker.name}" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #f8f9fa;">
                                 <h5 class="card-title mb-1 fw-bold">${worker.name}</h5>
-                                <p class="text-muted mb-2">${worker.type || 'General Worker'}</p>
-                                <p class="card-text text-muted small mb-3">${worker.description ? worker.description.substring(0, 80) + (worker.description.length > 80 ? '...' : '') : 'No description available'}</p>
-                                <button class="btn btn-primary w-100" onclick="viewWorkerProfile(${worker.id})">View Profile</button>
+                                <p class="text-muted mb-2">${worker.type || tr('general_worker')}</p>
+                                <p class="card-text text-muted small mb-3">${worker.description ? worker.description.substring(0, 80) + (worker.description.length > 80 ? '...' : '') : tr('no_description')}</p>
+                                <button class="btn btn-primary w-100" onclick="viewWorkerProfile(${worker.id})">${tr('view_profile')}</button>
                             </div>
                         </div>
                     </div>
@@ -1604,16 +1716,16 @@ if ($user_role === 'worker') {
                                     <i class="fas fa-users fa-3x text-muted"></i>
                                 </div>
                             </div>
-                            <h3 class="text-muted mb-3">No Workers Available Yet</h3>
+                            <h3 class="text-muted mb-3">${tr('no_workers_yet')}</h3>
                             <p class="text-muted mb-4" style="max-width: 400px; margin: 0 auto;">
-                                Be the first to register as a worker and start connecting with employers looking for household services!
+                                ${tr('no_workers_yet_text')}
                             </p>
                             <div class="d-flex justify-content-center gap-3">
                                 <a href="register.php" class="btn btn-primary">
-                                    <i class="fas fa-user-plus me-2"></i>Register as Worker
+                                    <i class="fas fa-user-plus me-2"></i>${tr('register_worker')}
                                 </a>
                                 <a href="post-job.php" class="btn btn-outline-primary">
-                                    <i class="fas fa-bullhorn me-2"></i>Post a Job
+                                    <i class="fas fa-bullhorn me-2"></i>${tr('post_job')}
                                 </a>
                             </div>
                         </div>
@@ -1635,7 +1747,7 @@ if ($user_role === 'worker') {
             
             // Previous button
             if (pagination.current_page > 1) {
-                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadWorkers(${pagination.current_page - 1}); return false;">Previous</a></li>`;
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadWorkers(${pagination.current_page - 1}); return false;">${tr('previous')}</a></li>`;
             }
             
             // Page numbers
@@ -1649,7 +1761,7 @@ if ($user_role === 'worker') {
             
             // Next button
             if (pagination.current_page < pagination.total_pages) {
-                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadWorkers(${pagination.current_page + 1}); return false;">Next</a></li>`;
+                paginationHTML += `<li class="page-item"><a class="page-link" href="#" onclick="loadWorkers(${pagination.current_page + 1}); return false;">${tr('next')}</a></li>`;
             }
             
             paginationHTML += '</ul>';
@@ -1658,7 +1770,7 @@ if ($user_role === 'worker') {
         
         function contactWorker(workerId) {
             // Implement contact worker functionality
-            alert('Contact functionality will be implemented soon!');
+            alert(tr('contact_soon'));
         }
         
         // Worker Profile Modal Functions
@@ -1672,9 +1784,9 @@ if ($user_role === 'worker') {
             modalContent.innerHTML = `
                 <div class="text-center py-5">
                     <div class="spinner-border text-primary mb-3" role="status">
-                        <span class="visually-hidden">Loading...</span>
+                        <span class="visually-hidden"><?php echo addslashes(t('common.loading')); ?></span>
                     </div>
-                    <h5>Loading worker profile...</h5>
+                    <h5>${tr('loading_worker_profile')}</h5>
                 </div>
             `;
             
@@ -1701,7 +1813,7 @@ if ($user_role === 'worker') {
                 if (result.success) {
                     displayWorkerInModal(result.data);
                 } else {
-                    throw new Error(result.message || 'Failed to load worker profile');
+                    throw new Error(result.message || tr('failed_load_worker_profile'));
                 }
             })
             .catch(error => {
@@ -1709,7 +1821,7 @@ if ($user_role === 'worker') {
                 modalContent.innerHTML = `
                     <div class="alert alert-danger m-3">
                         <i class="fas fa-exclamation-triangle me-2"></i>
-                        Failed to load worker profile. Please try again.
+                        ${tr('failed_load_worker_profile')}
                     </div>
                 `;
             });
@@ -1741,21 +1853,21 @@ if ($user_role === 'worker') {
                                 </div>
                                 <div class="col-md-5">
                                     <div class="profile-info text-white">
-                                        <h2 class="mb-3 fw-bold">${worker.name || 'Name not available'}</h2>
+                                        <h2 class="mb-3 fw-bold">${worker.name || tr('name_not_available')}</h2>
                                         <div class="profile-rating mb-3">
                                             <div class="stars mb-2">
                                                 ${getRatingStars(worker.avg_rating || 0)}
                                             </div>
-                                            <small class="opacity-75">(${worker.review_count || 0} reviews)</small>
+                                            <small class="opacity-75">(${worker.review_count || 0} ${tr('reviews')})</small>
                                         </div>
-                                        <p class="profile-description mb-3 opacity-90">${worker.description || 'No description available'}</p>
+                                        <p class="profile-description mb-3 opacity-90">${worker.description || tr('no_description')}</p>
                                         <div class="profile-badges">
-                                            <span class="badge bg-white text-dark me-2 mb-2 px-3 py-2">${worker.type ? worker.type.charAt(0).toUpperCase() + worker.type.slice(1) : 'General Worker'}</span>
+                                            <span class="badge bg-white text-dark me-2 mb-2 px-3 py-2">${worker.type ? worker.type.charAt(0).toUpperCase() + worker.type.slice(1) : tr('general_worker')}</span>
                                             <span class="badge bg-white text-dark me-2 mb-2 px-3 py-2">
-                                                <i class="fas fa-map-marker-alt me-1"></i>${worker.location || 'Location not specified'}
+                                                <i class="fas fa-map-marker-alt me-1"></i>${worker.location || tr('location_not_specified')}
                                             </span>
                                             <span class="badge bg-white text-dark me-2 mb-2 px-3 py-2">
-                                                <i class="fas fa-clock me-1"></i>${worker.experience_years ? worker.experience_years + '+ years' : 'Experience not specified'}
+                                                <i class="fas fa-clock me-1"></i>${worker.experience_years ? worker.experience_years + '+ ' + tr('years') : tr('experience_not_specified')}
                                             </span>
                                         </div>
                                     </div>
@@ -1801,7 +1913,7 @@ if ($user_role === 'worker') {
                                         <div class="availability-info text-center">
                                             <div class="availability-status mb-3">
                                                 <div class="status-indicator bg-dark rounded-circle d-inline-block me-2" style="width: 12px; height: 12px;"></div>
-                                                <span class="fw-semibold text-dark">Available for work</span>
+                                    <span class="fw-semibold text-dark">${tr('available_for_work')}</span>
                                             </div>
                                             <div class="availability-badges d-flex justify-content-center gap-2 flex-wrap">
                                                 <span class="badge bg-dark text-white px-3 py-2">Mon-Fri</span>
@@ -1815,7 +1927,7 @@ if ($user_role === 'worker') {
                                     <div class="content-card bg-light rounded-3 shadow-sm p-4">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
-                                                <i class="fas fa-star text-dark me-2"></i>Reviews
+                            <i class="fas fa-star text-dark me-2"></i>${tr('reviews_title')}
                                             </h5>
                                         </div>
                                         ${getWorkerReviews(worker.reviews)}
@@ -1827,7 +1939,7 @@ if ($user_role === 'worker') {
                                     <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
-                                                <i class="fas fa-phone text-dark me-2"></i>Contact Information
+                            <i class="fas fa-phone text-dark me-2"></i>${tr('contact_information')}
                                             </h5>
                                         </div>
                                         <div class="contact-details">
@@ -1856,7 +1968,7 @@ if ($user_role === 'worker') {
                                     <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
-                                                <i class="fas fa-check-circle text-dark me-2"></i>Skills
+                            <i class="fas fa-check-circle text-dark me-2"></i>${tr('skills_title')}
                                             </h5>
                                         </div>
                                         ${getWorkerSkills(worker.skills)}
@@ -1910,7 +2022,7 @@ if ($user_role === 'worker') {
                                                         <i class="fas fa-search me-1"></i>View Full Size
                                                     </button>
                                                 </div>
-                                            ` : '<p class="text-muted mb-0">National ID photo not available</p>'}
+                                    ` : `<p class="text-muted mb-0">${tr('national_id_unavailable')}</p>`}
                                         </div>
                                     </div>
                                     
@@ -1922,7 +2034,7 @@ if ($user_role === 'worker') {
                                             </h5>
                                         </div>
                                         <div class="certifications-content">
-                                            <p class="text-dark mb-0">${worker.certifications || 'No certifications listed'}</p>
+                                    <p class="text-dark mb-0">${worker.certifications || tr('no_certifications')}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -2073,7 +2185,7 @@ if ($user_role === 'worker') {
         
         function getWorkerSkills(skills) {
             if (!skills || skills.trim() === '') {
-                return '<p class="text-muted opacity-75">No specific skills listed</p>';
+                return `<p class="text-muted opacity-75">${tr('no_specific_skills')}</p>`;
             }
             
             const skillsArray = skills.split(',').map(skill => skill.trim()).filter(skill => skill);
@@ -2096,7 +2208,7 @@ if ($user_role === 'worker') {
                         <div class="no-reviews-icon mb-3">
                             <i class="fas fa-star fa-3x text-muted opacity-50"></i>
                         </div>
-                        <h6 class="text-muted mb-2">No reviews yet</h6>
+                                <h6 class="text-muted mb-2">${tr('no_reviews_yet')}</h6>
                         <p class="text-muted opacity-75 small mb-0">Be the first to review this worker!</p>
                     </div>
                 `;
@@ -2120,7 +2232,7 @@ if ($user_role === 'worker') {
                         </div>
                     </div>
                     <div class="review-comment">
-                        <p class="mb-0 text-secondary">${review.comment || 'No comment provided'}</p>
+                                <p class="mb-0 text-secondary">${review.comment || tr('no_comment')}</p>
                     </div>
                 </div>
             `).join('');
