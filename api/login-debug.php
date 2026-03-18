@@ -35,7 +35,7 @@ try {
     // Debug: Log received data
     error_log("Login attempt data: " . print_r($data, true));
     
-    $required_fields = ['email', 'password'];
+    $required_fields = ['phone', 'password'];
     $errors = validate_required($required_fields, $data);
     
     if (!empty($errors)) {
@@ -44,12 +44,12 @@ try {
         exit();
     }
     
-    $email = sanitize_input($data['email']);
+    $phone = preg_replace('/\D+/', '', (string) ($data['phone'] ?? ''));
     $password = $data['password'];
     
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+    if (strlen($phone) < 9) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Invalid email format']);
+        echo json_encode(['success' => false, 'message' => 'Invalid phone number format']);
         exit();
     }
     
@@ -61,7 +61,7 @@ try {
         exit();
     }
     
-    $sql = "SELECT id, name, email, password, role FROM users WHERE email = :email";
+    $sql = "SELECT id, name, email, phone, password, role FROM users WHERE REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = :phone LIMIT 1";
     $stmt = $conn->prepare($sql);
     
     if ($stmt === false) {
@@ -71,7 +71,7 @@ try {
         exit();
     }
     
-    $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':phone', $phone);
     $result = $stmt->execute();
     
     if ($result === false) {
@@ -85,17 +85,17 @@ try {
     
     if (!$user) {
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+        echo json_encode(['success' => false, 'message' => 'Invalid phone number or password']);
         exit();
     }
     
     // Debug: Log user data (without password)
-    error_log("Found user: " . print_r(['id' => $user['id'], 'email' => $user['email'], 'role' => $user['role']], true));
+    error_log("Found user: " . print_r(['id' => $user['id'], 'phone' => $user['phone'], 'role' => $user['role']], true));
     
     if (!password_verify($password, $user['password'])) {
-        error_log("Password verification failed for email: " . $email);
+        error_log("Password verification failed for phone: " . $phone);
         header('Content-Type: application/json');
-        echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
+        echo json_encode(['success' => false, 'message' => 'Invalid phone number or password']);
         exit();
     }
     
@@ -106,16 +106,25 @@ try {
     $_SESSION['user_role'] = $user['role'];
     
     // Debug: Log session creation
-    error_log("Session created for user ID: " . $user['id']);
+    error_log("Session created for user ID: " . $user['id'] . " with role: " . $user['role']);
+    
+    // Determine redirect based on user role
+    $redirect = 'dashboard.php'; // Default for regular users
+    if ($user['role'] === 'admin') {
+        $redirect = 'admin-dashboard.php';
+    }
+    
+    error_log("Redirecting to: " . $redirect);
     
     header('Content-Type: application/json');
     echo json_encode([
         'success' => true, 
         'message' => 'Login successful', 
-        'redirect' => 'dashboard.php',
+        'redirect' => $redirect,
         'user' => [
             'id' => $user['id'],
             'name' => $user['name'],
+            'phone' => $user['phone'],
             'email' => $user['email'],
             'role' => $user['role']
         ]

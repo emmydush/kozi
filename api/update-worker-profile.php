@@ -35,9 +35,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Check if worker record exists
     $check_sql = "SELECT id FROM workers WHERE user_id = ?";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("i", $user_id);
+    $check_stmt->bindParam(1, $user_id, PDO::PARAM_INT);
     $check_stmt->execute();
-    $check_result = $check_stmt->get_result();
+    $check_result = $check_stmt->fetchAll();
     
     // Handle file uploads
     $profile_image_filename = null;
@@ -64,9 +64,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Update or insert worker record
-    if ($check_result->num_rows > 0) {
+    if (!empty($check_result)) {
         // Update existing record
-        $worker_id = $check_result->fetch_assoc()['id'];
+        $worker_id = $check_result[0]['id'];
         
         $update_sql = "UPDATE workers SET name = ?, type = ?, description = ?, experience_years = ?, 
                       hourly_rate = ?, location = ?, availability = ?, skills = ?, education = ?, 

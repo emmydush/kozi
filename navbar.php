@@ -1,4 +1,5 @@
 <?php
+$language_options = supported_languages();
 // Get user session data
 $user_name = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Guest';
 $user_role = isset($_SESSION['user_role']) ? $_SESSION['user_role'] : '';
@@ -45,6 +46,21 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
         </a>
         
         <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+            <div class="nav-item dropdown language-switcher me-2 me-sm-3" id="navbar-language-dropdown" data-language-control="native">
+                <a class="nav-link language-toggle text-white p-2 p-sm-1" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-globe me-1"></i>
+                    <span><?php echo strtoupper(htmlspecialchars(current_language())); ?></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end language-menu">
+                    <?php foreach ($language_options as $code => $language): ?>
+                        <li>
+                            <a class="dropdown-item <?php echo current_language() === $code ? 'active' : ''; ?>" href="<?php echo htmlspecialchars(language_switch_url($code)); ?>">
+                                <?php echo htmlspecialchars($language['label']); ?>
+                            </a>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
             <!-- Notifications - Larger on mobile -->
             <div class="nav-item dropdown me-2 me-sm-3">
                 <a class="nav-link text-white p-2 p-sm-1" href="#" role="button" data-bs-toggle="dropdown" style="font-size: 1.1rem;">
@@ -54,8 +70,8 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                     </span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-end" id="notifications-dropdown">
-                    <li><h6 class="dropdown-header">Notifications</h6></li>
-                    <li><div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> Loading...</div></li>
+                    <li><h6 class="dropdown-header"><?php echo htmlspecialchars(t('common.notifications')); ?></h6></li>
+                    <li><div class="text-center p-3"><i class="fas fa-spinner fa-spin"></i> <?php echo htmlspecialchars(t('common.loading')); ?></div></li>
                 </ul>
             </div>
             
@@ -106,22 +122,22 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
                     </li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="profile.php">
-                        <i class="fas fa-user-cog me-2"></i> Profile Settings
+                        <i class="fas fa-user-cog me-2"></i> <?php echo htmlspecialchars(t('nav.profile_settings')); ?>
                     </a></li>
                     <li><a class="dropdown-item" href="reviews.php">
-                        <i class="fas fa-star me-2"></i> My Reviews
+                        <i class="fas fa-star me-2"></i> <?php echo htmlspecialchars(t('nav.my_reviews')); ?>
                     </a></li>
                     <?php if ($user_role === 'worker'): ?>
                     <li><a class="dropdown-item" href="earnings.php">
-                        <i class="fas fa-money-bill-wave me-2"></i> Earnings
+                        <i class="fas fa-money-bill-wave me-2"></i> <?php echo htmlspecialchars(t('nav.earnings')); ?>
                     </a></li>
                     <?php endif; ?>
                     <li><a class="dropdown-item" href="help.php">
-                        <i class="fas fa-question-circle me-2"></i> Help & Support
+                        <i class="fas fa-question-circle me-2"></i> <?php echo htmlspecialchars(t('nav.help_support')); ?>
                     </a></li>
                     <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item text-danger" href="#" onclick="confirmLogout(event)">
-                        <i class="fas fa-sign-out-alt me-2"></i> Logout
+                        <i class="fas fa-sign-out-alt me-2"></i> <?php echo htmlspecialchars(t('nav.logout')); ?>
                     </a></li>
                 </ul>
             </div>
@@ -136,6 +152,34 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
         min-height: 60px;
         padding: 0.5rem 0;
         background: linear-gradient(135deg, #000000 0%, #333333 100%) !important;
+    }
+    
+    .language-switcher .language-toggle {
+        min-height: 40px;
+        padding: 0.45rem 0.8rem !important;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        font-size: 0.92rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+
+    .language-switcher .language-toggle:hover,
+    .language-switcher .language-toggle:focus {
+        background: rgba(255, 255, 255, 0.18);
+        border-color: rgba(255, 255, 255, 0.24);
+        color: #fff;
+    }
+
+    .language-switcher .language-menu {
+        border: none;
+        border-radius: 14px;
+        padding: 0.45rem;
+        min-width: 180px;
+        box-shadow: 0 16px 34px rgba(0,0,0,0.18);
     }
     
     .main-content {
@@ -205,6 +249,13 @@ $user_initial = strtoupper(substr($user_name, 0, 1));
     .container-fluid {
         padding: 0 10px;
     }
+    
+    @media (max-width: 768px) {
+        .language-switcher .language-toggle {
+            padding: 0.4rem 0.7rem !important;
+            font-size: 0.85rem;
+        }
+    }
 </style>
 
 <script>
@@ -223,7 +274,7 @@ function confirmLogout(event) {
                 <div class="modal-content">
                     <div class="modal-header bg-danger text-white">
                         <h5 class="modal-title" id="logoutModalLabel">
-                            <i class="fas fa-exclamation-triangle me-2"></i>Confirm Logout
+                            <i class="fas fa-exclamation-triangle me-2"></i><?php echo addslashes(t('nav.confirm_logout')); ?>
                         </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
@@ -231,15 +282,15 @@ function confirmLogout(event) {
                         <div class="text-center mb-3">
                             <i class="fas fa-sign-out-alt fa-3x text-danger mb-3"></i>
                         </div>
-                        <h6 class="text-center">Are you sure you want to logout?</h6>
-                        <p class="text-muted text-center mb-0">You will be redirected to the homepage and will need to login again to access your account.</p>
+                        <h6 class="text-center"><?php echo addslashes(t('nav.confirm_logout_question')); ?></h6>
+                        <p class="text-muted text-center mb-0"><?php echo addslashes(t('nav.confirm_logout_text')); ?></p>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-2"></i>Cancel
+                            <i class="fas fa-times me-2"></i><?php echo addslashes(t('nav.cancel')); ?>
                         </button>
                         <button type="button" class="btn btn-danger" onclick="performLogout()">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
+                            <i class="fas fa-sign-out-alt me-2"></i><?php echo addslashes(t('nav.logout_now')); ?>
                         </button>
                     </div>
                 </div>
@@ -274,10 +325,10 @@ function performLogout() {
                 <div class="modal-content">
                     <div class="modal-body text-center py-4">
                         <div class="spinner-border text-primary mb-3" role="status">
-                            <span class="visually-hidden">Loading...</span>
+                            <span class="visually-hidden"><?php echo addslashes(t('common.loading')); ?></span>
                         </div>
-                        <h6>Logging out...</h6>
-                        <p class="text-muted mb-0">Please wait while we secure your session.</p>
+                        <h6><?php echo addslashes(t('nav.logout')); ?>...</h6>
+                        <p class="text-muted mb-0"><?php echo addslashes(t('nav.confirm_logout_text')); ?></p>
                     </div>
                 </div>
             </div>
@@ -403,5 +454,21 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Refresh messages count every 30 seconds
     setInterval(loadMessagesCount, 30000);
+    
+    // Update current language flag
+    updateLanguageFlag();
 });
+
+function updateLanguageFlag() {
+    const currentLang = '<?php echo current_language(); ?>';
+    const flagElement = document.getElementById('current-flag');
+    if (flagElement) {
+        const flags = {
+            'en': '🇬🇧',
+            'fr': '🇫🇷', 
+            'rw': '🇷🇼'
+        };
+        flagElement.textContent = flags[currentLang] || '🇬🇧';
+    }
+}
 </script>

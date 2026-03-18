@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('index.php');
 }
 
 // Get user role
@@ -71,7 +71,7 @@ if ($user_role === 'worker') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Settings - Household Connect</title>
+    <title><?php echo t('nav.profile_settings'); ?> - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -298,16 +298,16 @@ if ($user_role === 'worker') {
             
             <?php if ($user_role === 'employer'): ?>
             <a class="nav-link" href="post-job.php">
-                <i class="fas fa-plus-circle"></i> Post Job
+                <i class="fas fa-plus-circle"></i> <?php echo t('common.post_job'); ?>
             </a>
             <a class="nav-link" href="workers.php">
-                <i class="fas fa-users"></i> Find Workers
+                <i class="fas fa-users"></i> <?php echo t('common.find_workers'); ?>
             </a>
             <a class="nav-link" href="my-jobs.php">
-                <i class="fas fa-briefcase"></i> My Jobs
+                <i class="fas fa-briefcase"></i> <?php echo t('common.my_jobs'); ?>
             </a>
             <a class="nav-link" href="bookings.php">
-                <i class="fas fa-calendar-check"></i> Bookings
+                <i class="fas fa-calendar-check"></i> <?php echo t('common.bookings'); ?>
             </a>
             <?php else: ?>
             <a class="nav-link" href="jobs.php">
@@ -325,7 +325,7 @@ if ($user_role === 'worker') {
             <?php endif; ?>
             
             <a class="nav-link" href="messages.php">
-                <i class="fas fa-envelope"></i> Messages
+                <i class="fas fa-envelope"></i> <?php echo t('common.messages'); ?>
             </a>
             
             <hr class="text-white-50">
@@ -343,7 +343,7 @@ if ($user_role === 'worker') {
     <div class="main-content">
         <div class="row">
             <div class="col-12">
-                <h2>Profile Settings</h2>
+                <h2><?php echo t('nav.profile_settings'); ?></h2>
                 <p class="text-muted">Manage your account information and preferences</p>
             </div>
         </div>

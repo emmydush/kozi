@@ -24,11 +24,10 @@ try {
                 ORDER BY ja.created_at DESC
                 LIMIT 5";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $user_id);
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $notifications[] = [
                 'type' => $row['type'],
                 'message' => 'New application for: ' . $row['message'],
@@ -41,17 +40,16 @@ try {
         
         // Payment confirmations
         $paymentSql = "SELECT 'payment' as type, 'Payment confirmed' as message, b.created_at, b.id as reference_id
-                      FROM bookings b
-                      WHERE b.user_id = ? AND b.payment_status = 'confirmed'
-                      AND b.created_at > DATE_SUB(NOW(), INTERVAL 7 DAY)
-                      ORDER BY b.created_at DESC
-                      LIMIT 3";
+                       FROM bookings b
+                       WHERE b.user_id = ? AND b.payment_status = 'confirmed'
+                       AND b.created_at > NOW() - INTERVAL '7 days'
+                       ORDER BY b.created_at DESC
+                       LIMIT 3";
         $stmt = $conn->prepare($paymentSql);
-        $stmt->bind_param('i', $user_id);
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $notifications[] = [
                 'type' => $row['type'],
                 'message' => $row['message'],
@@ -65,22 +63,21 @@ try {
     } else {
         // Worker notifications
         $sql = "SELECT 'application_status' as type, 
-                       CASE 
-                           WHEN ja.status = 'accepted' THEN 'Application accepted!'
-                           WHEN ja.status = 'under_review' THEN 'Application under review'
-                           ELSE 'Application status updated'
-                       END as message,
-                       ja.updated_at as created_at, ja.id as reference_id
+                        CASE 
+                            WHEN ja.status = 'accepted' THEN 'Application accepted!'
+                            WHEN ja.status = 'under_review' THEN 'Application under review'
+                            ELSE 'Application status updated'
+                        END as message,
+                        ja.updated_at as created_at, ja.id as reference_id
                 FROM job_applications ja
                 WHERE ja.worker_id = ? AND ja.status IN ('accepted', 'under_review')
                 ORDER BY ja.updated_at DESC
                 LIMIT 5";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param('i', $user_id);
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
         $stmt->execute();
-        $result = $stmt->get_result();
         
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $notifications[] = [
                 'type' => $row['type'],
                 'message' => $row['message'],
@@ -123,6 +120,4 @@ function format_time_ago($datetime) {
     }
 }
 
-$stmt->close();
-$conn->close();
 ?>

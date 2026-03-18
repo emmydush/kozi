@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -38,10 +38,8 @@ $trans_sql = "SELECT
     FROM transactions 
     WHERE created_at BETWEEN ? AND ?";
 $trans_stmt = $conn->prepare($trans_sql);
-$trans_stmt->bind_param("ss", $start_date, $end_date);
-$trans_stmt->execute();
-$trans_result = $trans_stmt->get_result();
-if ($trans_row = $trans_result->fetch_assoc()) {
+$trans_stmt->execute([$start_date, $end_date]);
+if ($trans_row = $trans_stmt->fetch(PDO::FETCH_ASSOC)) {
     $financial_stats = array_merge($financial_stats, $trans_row);
 }
 
@@ -51,18 +49,16 @@ $financial_stats['platform_fees'] = $financial_stats['total_revenue'] * 0.05;
 // Get monthly revenue data
 $monthly_revenue = [];
 $monthly_sql = "SELECT 
-    DATE_FORMAT(created_at, '%Y-%m') as month,
+    TO_CHAR(created_at, 'YYYY-MM') as month,
     SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END) as revenue,
     COUNT(*) as transactions
     FROM transactions 
-    WHERE created_at BETWEEN DATE_SUB(?, INTERVAL 12 MONTH) AND ?
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    WHERE created_at BETWEEN (?::date - interval '12 months') AND ?
+    GROUP BY TO_CHAR(created_at, 'YYYY-MM')
     ORDER BY month";
 $monthly_stmt = $conn->prepare($monthly_sql);
-$monthly_stmt->bind_param("ss", $end_date, $end_date);
-$monthly_stmt->execute();
-$monthly_result = $monthly_stmt->get_result();
-while ($row = $monthly_result->fetch_assoc()) {
+$monthly_stmt->execute([$end_date, $end_date]);
+while ($row = $monthly_stmt->fetch(PDO::FETCH_ASSOC)) {
     $monthly_revenue[] = $row;
 }
 
@@ -76,13 +72,12 @@ $top_earners_sql = "SELECT
     LEFT JOIN transactions t ON w.user_id = t.user_id AND t.status = 'completed'
     WHERE t.created_at BETWEEN ? AND ?
     GROUP BY w.id, w.name, w.user_id
-    HAVING total_earned > 0
-    ORDER BY total_earned DESC
+    HAVING COALESCE(SUM(t.amount), 0) > 0
+    ORDER BY COALESCE(SUM(t.amount), 0) DESC
     LIMIT 10";
 $top_earners_stmt = $conn->prepare($top_earners_sql);
-$top_earners_stmt->bind_param("ss", $start_date, $end_date);
-$top_earners_stmt->execute();
-$top_earners_result = $top_earners_stmt->get_result();
+$top_earners_stmt->execute([$start_date, $end_date]);
+$top_earners = $top_earners_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get job statistics by type
 $job_stats_sql = "SELECT 
@@ -95,9 +90,8 @@ $job_stats_sql = "SELECT
     GROUP BY j.type
     ORDER BY total_jobs DESC";
 $job_stats_stmt = $conn->prepare($job_stats_sql);
-$job_stats_stmt->bind_param("ss", $start_date, $end_date);
-$job_stats_stmt->execute();
-$job_stats_result = $job_stats_stmt->get_result();
+$job_stats_stmt->execute([$start_date, $end_date]);
+$job_stats = $job_stats_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get booking statistics
 $booking_stats_sql = "SELECT 
@@ -110,29 +104,22 @@ $booking_stats_sql = "SELECT
     FROM bookings 
     WHERE created_at BETWEEN ? AND ?";
 $booking_stats_stmt = $conn->prepare($booking_stats_sql);
-$booking_stats_stmt->bind_param("ss", $start_date, $end_date);
-$booking_stats_stmt->execute();
-$booking_stats_result = $booking_stats_stmt->get_result();
-$booking_stats = $booking_stats_result->fetch_assoc();
+$booking_stats_stmt->execute([$start_date, $end_date]);
+$booking_stats = $booking_stats_stmt->fetch(PDO::FETCH_ASSOC);
 
 // Get user growth data
 $user_growth_sql = "SELECT 
-    DATE_FORMAT(created_at, '%Y-%m') as month,
+    TO_CHAR(created_at, 'YYYY-MM') as month,
     COUNT(*) as new_users,
     SUM(CASE WHEN role = 'worker' THEN 1 ELSE 0 END) as new_workers,
     SUM(CASE WHEN role = 'employer' THEN 1 ELSE 0 END) as new_employers
     FROM users 
-    WHERE created_at BETWEEN DATE_SUB(?, INTERVAL 12 MONTH) AND ?
-    GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+    WHERE created_at BETWEEN (?::date - interval '12 months') AND ?
+    GROUP BY TO_CHAR(created_at, 'YYYY-MM')
     ORDER BY month";
 $user_growth_stmt = $conn->prepare($user_growth_sql);
-$user_growth_stmt->bind_param("ss", $end_date, $end_date);
-$user_growth_stmt->execute();
-$user_growth_result = $user_growth_stmt->get_result();
-$user_growth_data = [];
-while ($row = $user_growth_result->fetch_assoc()) {
-    $user_growth_data[] = $row;
-}
+$user_growth_stmt->execute([$end_date, $end_date]);
+$user_growth_data = $user_growth_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Handle export functionality
 if (isset($_GET['export']) && $_GET['export'] === 'csv') {
@@ -162,7 +149,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
     // Top Earners
     fputcsv($output, ['Top Earners']);
     fputcsv($output, ['Worker Name', 'Total Earned', 'Transaction Count']);
-    while ($row = $top_earners_result->fetch_assoc()) {
+    foreach ($top_earners as $row) {
         fputcsv($output, [
             $row['name'],
             format_currency($row['total_earned']),
@@ -344,7 +331,9 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 24px;
+            position: relative;
+            height: 400px;
+            min-height: 300px;
         }
 
         .filter-section {
@@ -618,7 +607,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                         <div class="col-lg-8 mb-4">
                             <div class="chart-container">
                                 <h5 class="mb-4">Monthly Revenue Trend</h5>
-                                <canvas id="revenueChart" height="100"></canvas>
+                                <canvas id="revenueChart" height="300"></canvas>
                             </div>
                         </div>
 
@@ -636,7 +625,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                         <div class="col-12">
                             <div class="chart-container">
                                 <h5 class="mb-4">User Growth Trend</h5>
-                                <canvas id="userGrowthChart" height="80"></canvas>
+                                <canvas id="userGrowthChart" height="250"></canvas>
                             </div>
                         </div>
                     </div>
@@ -657,8 +646,8 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php if ($top_earners_result->num_rows > 0): ?>
-                                                <?php while ($row = $top_earners_result->fetch_assoc()): ?>
+                                            <?php if (!empty($top_earners)): ?>
+                                                <?php foreach ($top_earners as $row): ?>
                                                     <tr>
                                                         <td>
                                                             <div class="d-flex align-items-center">
@@ -671,7 +660,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                                         <td class="fw-bold text-success"><?php echo format_currency($row['total_earned']); ?></td>
                                                         <td><?php echo $row['transaction_count']; ?></td>
                                                     </tr>
-                                                <?php endwhile; ?>
+                                                <?php endforeach; ?>
                                             <?php else: ?>
                                                 <tr>
                                                     <td colspan="3" class="text-center text-muted">No earnings data available</td>
@@ -698,8 +687,8 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            <?php if ($job_stats_result->num_rows > 0): ?>
-                                                <?php while ($row = $job_stats_result->fetch_assoc()): ?>
+                                            <?php if (!empty($job_stats)): ?>
+                                                <?php foreach ($job_stats as $row): ?>
                                                     <tr>
                                                         <td>
                                                             <span class="badge bg-primary"><?php echo ucfirst($row['type']); ?></span>
@@ -712,7 +701,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
                                                             <span class="badge bg-info"><?php echo $row['filled_jobs']; ?></span>
                                                         </td>
                                                     </tr>
-                                                <?php endwhile; ?>
+                                                <?php endforeach; ?>
                                             <?php else: ?>
                                                 <tr>
                                                     <td colspan="4" class="text-center text-muted">No job data available</td>
@@ -868,7 +857,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         display: false
@@ -978,7 +967,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
+                maintainAspectRatio: true,
                 plugins: {
                     legend: {
                         position: 'top'

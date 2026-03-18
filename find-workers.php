@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('index.php');
 }
 
 // Get user role
@@ -233,18 +233,19 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
         .worker-card {
             background: white;
             border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
             overflow: hidden;
             transition: all 0.3s ease;
             border: 1px solid var(--border-color);
             height: 100%;
             display: flex;
             flex-direction: column;
+            gap: 12px;
         }
 
         .worker-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+            transform: translateY(-6px);
+            box-shadow: 0 16px 36px rgba(37,99,235,0.16);
             border-color: var(--primary-color);
         }
 
@@ -259,38 +260,44 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
             color: white;
             font-size: 3rem;
             font-weight: bold;
+            position: relative;
         }
 
         .worker-badge {
             position: absolute;
-            top: 1rem;
-            right: 1rem;
-            background: var(--success-color);
+            top: 12px;
+            right: 12px;
+            background: linear-gradient(135deg, #22c55e, #16a34a);
             color: white;
-            padding: 0.25rem 0.75rem;
+            padding: 0.35rem 0.85rem;
             border-radius: 20px;
             font-size: 0.8rem;
-            font-weight: 600;
+            font-weight: 700;
+            box-shadow: 0 10px 30px rgba(22,163,74,0.25);
         }
 
         .worker-info {
-            padding: 1.5rem;
+            padding: 1.25rem 1.5rem 1.5rem;
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 8px;
         }
 
         .worker-name {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--dark-color);
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.15rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .worker-type {
             color: var(--primary-color);
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.35rem;
         }
 
         .rating {
@@ -331,20 +338,22 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
             margin-top: auto;
             display: flex;
             gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
         .btn-primary-custom {
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), #3b82f6);
             color: white;
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
+            padding: 0.75rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 700;
             text-decoration: none;
             transition: all 0.3s ease;
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            box-shadow: 0 12px 30px rgba(37,99,235,0.20);
         }
 
         .btn-primary-custom:hover {
@@ -356,10 +365,10 @@ $service_types = ['cleaning', 'cooking', 'childcare', 'eldercare', 'gardening', 
         .btn-outline-custom {
             background: transparent;
             color: var(--primary-color);
-            border: 2px solid var(--primary-color);
-            padding: 0.75rem 1.5rem;
-            border-radius: 10px;
-            font-weight: 600;
+            border: 1px solid rgba(37,99,235,0.25);
+            padding: 0.75rem 1.2rem;
+            border-radius: 12px;
+            font-weight: 700;
             text-decoration: none;
             transition: all 0.3s ease;
             display: inline-flex;

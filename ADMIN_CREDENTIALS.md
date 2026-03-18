@@ -1,9 +1,20 @@
 # Household Connect - Admin Credentials
 
-## Default Administrator Account
+## Latest Administrator Account
 
-**Email:** admin@householdconnect.rw  
-**Password:** admin123
+**Phone Number (Login):** 250772623815
+**Email:** admin1773779866@householdconnect.rw
+**Password:** j@zf5JuXHxtjjbw7
+**Created:** 2026-03-17 22:37:47
+
+## Login Instructions
+
+📱 **Use Phone Number and Password to login**
+
+1. Go to login.php
+2. Enter phone number: 250772623815
+3. Enter password: j@zf5JuXHxtjjbw7
+4. Click Login
 
 ## Security Instructions
 
@@ -19,23 +30,5 @@
 - **Admin Dashboard:** `admin-dashboard.php`
 - **Login Page:** `login.php`
 
-## Database Setup
-
-If you need to recreate the admin account:
-
-1. Run `setup-admin.php`
-2. Or execute SQL directly:
-```sql
-INSERT INTO users (name, email, password, role, is_verified, status, created_at) 
-VALUES ('System Administrator', 'admin@householdconnect.rw', '$2y$10$...', 'admin', 1, 'active', NOW());
-```
-
-## Support
-
-For technical support:
-- Check database connection in `config.php`
-- Verify file permissions
-- Review error logs
-
 ---
-*Generated automatically during system setup*
+*Generated on 2026-03-17 22:37:47*

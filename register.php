@@ -8,12 +8,12 @@ if (isset($_SESSION['user_id'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(current_language()); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register | Kigali</title>
-    <meta name="description" content="Create your account and find trusted household workers in Kigali">
+    <title><?php echo htmlspecialchars(t('register.heading')); ?> | Kigali</title>
+    <meta name="description" content="<?php echo htmlspecialchars(t('register.subtitle')); ?>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -929,9 +929,21 @@ if (isset($_SESSION['user_id'])) {
     </style>
 </head>
 <body>
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 20;">
+        <div class="dropdown">
+            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-globe me-1"></i><?php echo strtoupper(htmlspecialchars(current_language())); ?>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <?php foreach (supported_languages() as $code => $language): ?>
+                    <li><a class="dropdown-item <?php echo current_language() === $code ? 'active' : ''; ?>" href="<?php echo htmlspecialchars(language_switch_url($code)); ?>"><?php echo htmlspecialchars($language['label']); ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
     <a href="index.php" class="back-to-home">
         <i class="fas fa-arrow-left"></i>
-        Back to Home
+        <?php echo htmlspecialchars(t('common.back_home')); ?>
     </a>
 
     <div class="register-container">
@@ -947,22 +959,22 @@ if (isset($_SESSION['user_id'])) {
             <div class="register-header">
                 <div class="register-logo">
                 </div>
-                <h2 class="register-title">Create Account</h2>
-                <p class="register-subtitle">Join thousands of families and workers in Kigali</p>
+                <h2 class="register-title"><?php echo htmlspecialchars(t('register.heading')); ?></h2>
+                <p class="register-subtitle"><?php echo htmlspecialchars(t('register.subtitle')); ?></p>
                 
                 <!-- Progress Indicator -->
                 <div class="progress-indicator">
                     <div class="step active" data-step="1">
                         <div class="step-number">1</div>
-                        <div class="step-title">Personal Info</div>
+                        <div class="step-title"><?php echo htmlspecialchars(t('register.step_personal')); ?></div>
                     </div>
                     <div class="step" data-step="2">
                         <div class="step-number">2</div>
-                        <div class="step-title">Account</div>
+                        <div class="step-title"><?php echo htmlspecialchars(t('register.step_account')); ?></div>
                     </div>
                     <div class="step" data-step="3">
                         <div class="step-number">3</div>
-                        <div class="step-title">Role</div>
+                        <div class="step-title"><?php echo htmlspecialchars(t('register.step_role')); ?></div>
                     </div>
                 </div>
             </div>
@@ -973,56 +985,56 @@ if (isset($_SESSION['user_id'])) {
                 <form id="register-form" novalidate>
                     <!-- Step 1: Personal Information -->
                     <div class="form-step active" data-step="1">
-                        <h3 class="step-heading">Personal Information</h3>
-                        <p class="step-description">Tell us about yourself</p>
+                        <h3 class="step-heading"><?php echo htmlspecialchars(t('register.personal_heading')); ?></h3>
+                        <p class="step-description"><?php echo htmlspecialchars(t('register.personal_subtitle')); ?></p>
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input type="text" class="form-control" id="firstName" placeholder="First Name" required>
-                                    <label for="firstName">First Name</label>
-                                    <div class="invalid-feedback">Please enter your first name</div>
+                                    <label for="firstName"><?php echo htmlspecialchars(t('common.first_name')); ?></label>
+                                    <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_first')); ?></div>
                                 </div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating">
                                     <input type="text" class="form-control" id="lastName" placeholder="Last Name" required>
-                                    <label for="lastName">Last Name</label>
-                                    <div class="invalid-feedback">Please enter your last name</div>
+                                    <label for="lastName"><?php echo htmlspecialchars(t('common.last_name')); ?></label>
+                                    <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_last')); ?></div>
                                 </div>
                             </div>
                         </div>
 
                         <div class="form-floating">
                             <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
-                            <label for="email">Email Address</label>
-                            <div class="invalid-feedback">Please enter a valid email address</div>
+                            <label for="email"><?php echo htmlspecialchars(t('common.email_address')); ?></label>
+                            <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_email')); ?></div>
                         </div>
 
                         <div class="form-floating">
                             <input type="tel" class="form-control" id="phone" placeholder="+250 7XX XXX XXX" required>
-                            <label for="phone">Phone Number</label>
-                            <div class="invalid-feedback">Please enter your phone number</div>
+                            <label for="phone"><?php echo htmlspecialchars(t('common.phone_number')); ?></label>
+                            <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_phone')); ?></div>
                         </div>
 
 
                         <div class="step-buttons">
                             <button type="button" class="btn btn-next" onclick="nextStep(1)">
-                                Next Step <i class="fas fa-arrow-right ms-2"></i>
+                                <?php echo htmlspecialchars(t('common.next_step')); ?> <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
                     </div>
 
                     <!-- Step 2: Account Setup -->
                     <div class="form-step" data-step="2">
-                        <h3 class="step-heading">Create Your Account</h3>
-                        <p class="step-description">Set up your login credentials</p>
+                        <h3 class="step-heading"><?php echo htmlspecialchars(t('register.account_heading')); ?></h3>
+                        <p class="step-description"><?php echo htmlspecialchars(t('register.account_subtitle')); ?></p>
                         
                         <div class="row">
                             <div class="col-md-6">
                                 <div class="form-floating position-relative">
                                     <input type="password" class="form-control" id="password" placeholder="Password" required>
-                                    <label for="password">Password</label>
+                                    <label for="password"><?php echo htmlspecialchars(t('common.password')); ?></label>
                                     <span class="password-toggle" onclick="togglePassword('password')">
                                         <i class="fas fa-eye" id="password-icon"></i>
                                     </span>
@@ -1030,46 +1042,46 @@ if (isset($_SESSION['user_id'])) {
                                 <div class="password-strength" id="password-strength"></div>
                                 <div class="password-requirements">
                                     <div class="requirement" id="req-length">
-                                        <i class="fas fa-circle"></i> At least 8 characters
+                                        <i class="fas fa-circle"></i> <?php echo htmlspecialchars(t('register.password_length')); ?>
                                     </div>
                                     <div class="requirement" id="req-uppercase">
-                                        <i class="fas fa-circle"></i> One uppercase letter
+                                        <i class="fas fa-circle"></i> <?php echo htmlspecialchars(t('register.password_upper')); ?>
                                     </div>
                                     <div class="requirement" id="req-lowercase">
-                                        <i class="fas fa-circle"></i> One lowercase letter
+                                        <i class="fas fa-circle"></i> <?php echo htmlspecialchars(t('register.password_lower')); ?>
                                     </div>
                                     <div class="requirement" id="req-number">
-                                        <i class="fas fa-circle"></i> One number
+                                        <i class="fas fa-circle"></i> <?php echo htmlspecialchars(t('register.password_number')); ?>
                                     </div>
                                 </div>
-                                <div class="invalid-feedback">Password does not meet requirements</div>
+                                <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_password')); ?></div>
                             </div>
                             <div class="col-md-6">
                                 <div class="form-floating position-relative">
                                     <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password" required>
-                                    <label for="confirmPassword">Confirm Password</label>
+                                    <label for="confirmPassword"><?php echo htmlspecialchars(t('register.confirm_password')); ?></label>
                                     <span class="password-toggle" onclick="togglePassword('confirmPassword')">
                                         <i class="fas fa-eye" id="confirm-password-icon"></i>
                                     </span>
                                 </div>
-                                <div class="invalid-feedback">Passwords do not match</div>
+                                <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_confirm')); ?></div>
                             </div>
                         </div>
 
                         <div class="step-buttons">
                             <button type="button" class="btn btn-prev" onclick="prevStep(2)">
-                                <i class="fas fa-arrow-left me-2"></i> Previous
+                                <i class="fas fa-arrow-left me-2"></i> <?php echo htmlspecialchars(t('common.previous')); ?>
                             </button>
                             <button type="button" class="btn btn-next" onclick="nextStep(2)">
-                                Next Step <i class="fas fa-arrow-right ms-2"></i>
+                                <?php echo htmlspecialchars(t('common.next_step')); ?> <i class="fas fa-arrow-right ms-2"></i>
                             </button>
                         </div>
                     </div>
 
                     <!-- Step 3: Role Selection -->
                     <div class="form-step" data-step="3">
-                        <h3 class="step-heading">Choose Your Role</h3>
-                        <p class="step-description">How will you use our platform?</p>
+                        <h3 class="step-heading"><?php echo htmlspecialchars(t('register.role_heading')); ?></h3>
+                        <p class="step-description"><?php echo htmlspecialchars(t('register.role_subtitle')); ?></p>
                         
                         <div class="role-cards">
                             <label class="role-card">
@@ -1077,34 +1089,34 @@ if (isset($_SESSION['user_id'])) {
                                 <div class="role-icon">
                                     <i class="fas fa-user-tie"></i>
                                 </div>
-                                <div class="role-title">Employer</div>
-                                <div class="role-description">Looking for household workers</div>
+                                <div class="role-title"><?php echo htmlspecialchars(t('register.employer')); ?></div>
+                                <div class="role-description"><?php echo htmlspecialchars(t('register.employer_text')); ?></div>
                             </label>
                             <label class="role-card">
                                 <input type="radio" name="role" value="worker" required>
                                 <div class="role-icon">
                                     <i class="fas fa-briefcase"></i>
                                 </div>
-                                <div class="role-title">Worker</div>
-                                <div class="role-description">Looking for job opportunities</div>
+                                <div class="role-title"><?php echo htmlspecialchars(t('register.worker')); ?></div>
+                                <div class="role-description"><?php echo htmlspecialchars(t('register.worker_text')); ?></div>
                             </label>
                         </div>
-                        <div class="invalid-feedback">Please select your role</div>
+                        <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_role')); ?></div>
 
                         <div class="form-check mb-3">
                             <input class="form-check-input" type="checkbox" id="terms" required>
                             <label class="form-check-label" for="terms">
-                                I agree to the <a href="#" style="color: #000000;">Terms of Service</a> and <a href="#" style="color: #000000;">Privacy Policy</a>
+                                I agree to the <a href="#" style="color: #000000;"><?php echo htmlspecialchars(t('common.terms')); ?></a> and <a href="#" style="color: #000000;"><?php echo htmlspecialchars(t('common.privacy')); ?></a>
                             </label>
-                            <div class="invalid-feedback">You must agree to the terms and conditions</div>
+                            <div class="invalid-feedback"><?php echo htmlspecialchars(t('register.invalid_terms')); ?></div>
                         </div>
 
                         <div class="step-buttons">
                             <button type="button" class="btn btn-prev" onclick="prevStep(3)">
-                                <i class="fas fa-arrow-left me-2"></i> Previous
+                                <i class="fas fa-arrow-left me-2"></i> <?php echo htmlspecialchars(t('common.previous')); ?>
                             </button>
                             <button type="submit" class="btn btn-register">
-                                <span class="btn-text">Create Account</span>
+                                <span class="btn-text"><?php echo htmlspecialchars(t('register.create_submit')); ?></span>
                                 <div class="loading-spinner"></div>
                             </button>
                         </div>
@@ -1112,7 +1124,7 @@ if (isset($_SESSION['user_id'])) {
                 </form>
 
                 <div class="divider">
-                    Already have an account? <a href="login.php" style="color: #000000; text-decoration: none; font-weight: 600;">Sign in</a>
+                    <?php echo htmlspecialchars(t('register.already_account')); ?> <a href="login.php" style="color: #000000; text-decoration: none; font-weight: 600;"><?php echo htmlspecialchars(t('common.sign_in')); ?></a>
                 </div>
             </div>
         </div>
@@ -1155,11 +1167,11 @@ if (isset($_SESSION['user_id'])) {
             if (loading) {
                 button.classList.add('loading');
                 button.disabled = true;
-                buttonText.textContent = 'Creating Account...';
+                buttonText.textContent = '<?php echo addslashes(t('register.creating')); ?>';
             } else {
                 button.classList.remove('loading');
                 button.disabled = false;
-                buttonText.textContent = 'Create Your Account';
+                buttonText.textContent = '<?php echo addslashes(t('register.create_submit')); ?>';
             }
         }
 
@@ -1222,7 +1234,7 @@ if (isset($_SESSION['user_id'])) {
             const email = document.getElementById('email').value.trim();
             
             if (!firstName || !lastName || !email) {
-                showAlert('Please fill in all required fields');
+                showAlert('<?php echo addslashes(t('register.fill_required')); ?>');
                 return;
             }
             
@@ -1232,7 +1244,7 @@ if (isset($_SESSION['user_id'])) {
             
             // Show loading state
             submitBtn.classList.add('loading');
-            btnText.textContent = 'Creating Account...';
+            btnText.textContent = '<?php echo addslashes(t('register.creating')); ?>';
             spinner.style.display = 'inline-block';
             
             // Collect form data
@@ -1256,19 +1268,19 @@ if (isset($_SESSION['user_id'])) {
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert('Account created successfully! Redirecting to login...', 'success');
+                    showAlert('<?php echo addslashes(t('register.success')); ?>', 'success');
                     setTimeout(() => {
                         window.location.href = 'login.php';
                     }, 2000);
                 } else {
-                    showAlert(result.message || 'Registration failed. Please try again.', 'danger');
+                    showAlert(result.message || '<?php echo addslashes(t('register.failed')); ?>', 'danger');
                 }
             } catch (error) {
-                showAlert('Network error. Please check your connection and try again.', 'danger');
+                showAlert('<?php echo addslashes(t('register.network')); ?>', 'danger');
             } finally {
                 // Reset loading state
                 submitBtn.classList.remove('loading');
-                btnText.textContent = 'Create Account';
+                btnText.textContent = '<?php echo addslashes(t('register.create_submit')); ?>';
                 spinner.style.display = 'none';
             }
         });

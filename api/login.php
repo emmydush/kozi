@@ -5,37 +5,37 @@ header('Content-Type: application/json');
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        json_response(['success' => false, 'message' => 'Method not allowed'], 405);
+        json_response(['success' => false, 'message' => t('auth.method_not_allowed')], 405);
     }
     
     $data = json_decode(file_get_contents('php://input'), true);
     
-    $required_fields = ['email', 'password'];
+    $required_fields = ['phone', 'password'];
     $errors = validate_required($required_fields, $data);
     
     if (!empty($errors)) {
-        json_response(['success' => false, 'message' => 'Validation failed', 'errors' => $errors], 400);
+        json_response(['success' => false, 'message' => t('auth.validation_failed'), 'errors' => $errors], 400);
     }
     
-    $email = sanitize_input($data['email']);
+    $phone = preg_replace('/\D+/', '', (string) ($data['phone'] ?? ''));
     $password = $data['password'];
     
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_response(['success' => false, 'message' => 'Invalid email format'], 400);
+    if (strlen($phone) < 9) {
+        json_response(['success' => false, 'message' => t('auth.invalid_phone')], 400);
     }
     
-    $sql = "SELECT id, name, email, password, role FROM users WHERE email = :email";
+    $sql = "SELECT id, name, email, phone, password, role FROM users WHERE REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = :phone LIMIT 1";
     $stmt = $conn->prepare($sql);
-    $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':phone', $phone);
     $stmt->execute();
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if (!$user) {
-        json_response(['success' => false, 'message' => 'Invalid credentials'], 401);
+        json_response(['success' => false, 'message' => t('auth.invalid_credentials')], 401);
     }
     
     if (!password_verify($password, $user['password'])) {
-        json_response(['success' => false, 'message' => 'Invalid credentials'], 401);
+        json_response(['success' => false, 'message' => t('auth.invalid_credentials')], 401);
     }
     
     // Create session
@@ -44,15 +44,25 @@ try {
     $_SESSION['user_email'] = $user['email'];
     $_SESSION['user_role'] = $user['role'];
     
-    json_response(['success' => true, 'message' => 'Login successful', 'user' => [
-        'id' => $user['id'],
-        'email' => $user['email'],
-        'role' => $user['role']
-    ]]);
+    // Determine redirect based on user role
+    $redirect = 'dashboard.php'; // Default for regular users
+    if ($user['role'] === 'admin') {
+        $redirect = 'admin-dashboard.php';
+    }
+    
+    json_response([
+        'success' => true, 
+        'message' => t('auth.login_success'), 
+        'redirect' => $redirect,
+        'user' => [
+            'id' => $user['id'],
+            'phone' => $user['phone'],
+            'email' => $user['email'],
+            'role' => $user['role']
+        ]
+    ]);
     
 } catch (Exception $e) {
-    // Removed the json_response call
+    json_response(['success' => false, 'message' => t('auth.server_error') . ': ' . $e->getMessage()], 500);
 }
-
-$conn->close();
 ?>

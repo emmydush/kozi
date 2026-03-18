@@ -1,9 +1,9 @@
 <?php
-require_once 'config.php';
+require_once '../config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('../index.php');
 }
 
 // Get user role and ID

@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('index.php');
 }
 
 // Get user role
@@ -259,10 +259,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </a>
             
             <a class="nav-link" href="messages.php">
-                <i class="fas fa-envelope"></i> Messages
+                <i class="fas fa-envelope"></i> <?php echo t('common.messages'); ?>
             </a>
             <a class="nav-link" href="profile.php">
-                <i class="fas fa-user-cog"></i> Profile Settings
+                <i class="fas fa-user-cog"></i> <?php echo t('nav.profile_settings'); ?>
             </a>
             
             <hr class="text-white-50">

@@ -8,12 +8,12 @@ if (isset($_SESSION['user_id'])) {
 }
 ?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(current_language()); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login | Kigali</title>
-    <meta name="description" content="Login to your Household Connect account and find trusted household workers in Kigali">
+    <title><?php echo htmlspecialchars(t('login.heading')); ?> | Kigali</title>
+    <meta name="description" content="<?php echo htmlspecialchars(t('login.subtitle')); ?>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -345,6 +345,18 @@ if (isset($_SESSION['user_id'])) {
     </style>
 </head>
 <body>
+    <div class="position-fixed top-0 end-0 p-3" style="z-index: 20;">
+        <div class="dropdown" data-language-control="native">
+            <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-globe me-1"></i><?php echo strtoupper(htmlspecialchars(current_language())); ?>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <?php foreach (supported_languages() as $code => $language): ?>
+                    <li><a class="dropdown-item <?php echo current_language() === $code ? 'active' : ''; ?>" href="<?php echo htmlspecialchars(language_switch_url($code)); ?>"><?php echo htmlspecialchars($language['label']); ?></a></li>
+                <?php endforeach; ?>
+            </ul>
+        </div>
+    </div>
     
     <div class="login-container">
         <div class="login-particles">
@@ -360,21 +372,21 @@ if (isset($_SESSION['user_id'])) {
                 <div class="text-center mb-4">
                     <div class="login-logo justify-content-center">
                     </div>
-                    <h1 class="login-title">Login</h1>
-                    <p class="login-subtitle">Enter your credentials to access your account</p>
+                    <h1 class="login-title"><?php echo htmlspecialchars(t('login.heading')); ?></h1>
+                    <p class="login-subtitle"><?php echo htmlspecialchars(t('login.subtitle')); ?></p>
                 </div>
 
                 <div id="alert-container"></div>
 
                 <form id="login-form">
                     <div class="form-floating">
-                        <input type="email" class="form-control" id="email" placeholder="name@example.com" required>
-                        <label for="email">Email Address</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+250 7XX XXX XXX" required>
+                        <label for="phone"><?php echo htmlspecialchars(t('common.phone_number')); ?></label>
                     </div>
 
                     <div class="form-floating position-relative">
                         <input type="password" class="form-control" id="password" placeholder="Password" required>
-                        <label for="password">Password</label>
+                        <label for="password"><?php echo htmlspecialchars(t('common.password')); ?></label>
                         <span class="password-toggle" onclick="togglePassword()">
                             <i class="fas fa-eye" id="password-icon"></i>
                         </span>
@@ -384,20 +396,20 @@ if (isset($_SESSION['user_id'])) {
                         <div class="form-check">
                             <input class="form-check-input" type="checkbox" id="remember">
                             <label class="form-check-label" for="remember">
-                                Remember me
+                                <?php echo htmlspecialchars(t('common.remember_me')); ?>
                             </label>
                         </div>
-                        <a href="#" class="text-decoration-none" style="color: #000000;">Forgot Password?</a>
+                        <a href="forgot-password.php" class="text-decoration-none" style="color: #000000;"><?php echo htmlspecialchars(t('common.forgot_password')); ?></a>
                     </div>
 
                     <button type="submit" class="btn btn-login">
-                        <span class="btn-text">Login to Your Account</span>
+                        <span class="btn-text"><?php echo htmlspecialchars(t('login.submit')); ?></span>
                         <div class="loading-spinner"></div>
                     </button>
                 </form>
 
                 <div class="divider">
-                    Don't have an account? <a href="register.php" style="color: #000000; text-decoration: none; font-weight: 600;">Sign up</a>
+                    <?php echo htmlspecialchars(t('login.no_account')); ?> <a href="register.php" style="color: #000000; text-decoration: none; font-weight: 600;"><?php echo htmlspecialchars(t('common.sign_up')); ?></a>
                 </div>
             </div>
         </div>
@@ -439,18 +451,18 @@ if (isset($_SESSION['user_id'])) {
             if (loading) {
                 button.classList.add('loading');
                 button.disabled = true;
-                buttonText.textContent = 'Logging in...';
+                buttonText.textContent = '<?php echo addslashes(t('login.logging_in')); ?>';
             } else {
                 button.classList.remove('loading');
                 button.disabled = false;
-                buttonText.textContent = 'Login to Your Account';
+                buttonText.textContent = '<?php echo addslashes(t('login.submit')); ?>';
             }
         }
 
         document.getElementById('login-form').addEventListener('submit', async function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const phone = document.getElementById('phone').value;
             const password = document.getElementById('password').value;
             const remember = document.getElementById('remember').checked;
             
@@ -458,47 +470,39 @@ if (isset($_SESSION['user_id'])) {
             document.getElementById('alert-container').innerHTML = '';
             
             // Basic validation
-            if (!email || !password) {
-                showAlert('Please fill in all fields');
+            if (!phone || !password) {
+                showAlert('<?php echo addslashes(t('login.fill_all')); ?>');
                 return;
             }
             
             setLoading(true);
             
             try {
-                const response = await fetch('api/login-debug.php', {
+                const response = await fetch('api/login.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ email, password, remember })
+                    body: JSON.stringify({ phone, password, remember })
                 });
                 
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert(result.message || 'Login successful!', 'success');
+                    showAlert('<?php echo addslashes(t('login.success')); ?>', 'success');
                     
                     // Redirect after a short delay
                     setTimeout(() => {
                         window.location.href = result.redirect || 'dashboard.php';
                     }, 1500);
                 } else {
-                    showAlert(result.message || 'Login failed. Please try again.');
+                    showAlert(result.message || '<?php echo addslashes(t('login.failed')); ?>');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showAlert('Network error. Please check your connection and try again.');
+                showAlert('<?php echo addslashes(t('login.network')); ?>');
             } finally {
                 setLoading(false);
-            }
-        });
-
-        // Forgot password handler
-        document.querySelector('a[href="#"]').addEventListener('click', function(e) {
-            if (this.textContent.includes('Forgot')) {
-                e.preventDefault();
-                showAlert('Password reset feature coming soon!');
             }
         });
 

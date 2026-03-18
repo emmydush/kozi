@@ -28,11 +28,11 @@ try {
         // Check if recipient exists
         $check_sql = "SELECT id FROM users WHERE id = ?";
         $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("i", $recipient_id);
+        $check_stmt->bindParam(1, $recipient_id, PDO::PARAM_INT);
         $check_stmt->execute();
-        $check_result = $check_stmt->get_result();
+        $check_result = $check_stmt->fetchAll();
         
-        if ($check_result->num_rows === 0) {
+        if (empty($check_result)) {
             json_response(['success' => false, 'message' => 'Recipient not found'], 404);
         }
         
@@ -40,7 +40,10 @@ try {
                 VALUES (?, ?, ?, ?, NOW())";
         
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("iiss", $user_id, $recipient_id, $subject, $message);
+        $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
+        $stmt->bindParam(2, $recipient_id, PDO::PARAM_INT);
+        $stmt->bindParam(3, $subject, PDO::PARAM_STR);
+        $stmt->bindParam(4, $message, PDO::PARAM_STR);
         
         if ($stmt->execute()) {
             json_response(['success' => true, 'message' => 'Message sent successfully']);
@@ -61,7 +64,7 @@ try {
                     WHERE m.recipient_id = ? 
                     ORDER BY m.created_at DESC";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
+            $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
             
         } elseif ($type === 'sent') {
             $sql = "SELECT m.*, u.name as recipient_name 
@@ -70,17 +73,16 @@ try {
                     WHERE m.sender_id = ? 
                     ORDER BY m.created_at DESC";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("i", $user_id);
+            $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
             
         } else {
             json_response(['success' => false, 'message' => 'Invalid message type'], 400);
         }
         
         $stmt->execute();
-        $result = $stmt->get_result();
         
         $messages = [];
-        while ($row = $result->fetch_assoc()) {
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $messages[] = $row;
         }
         

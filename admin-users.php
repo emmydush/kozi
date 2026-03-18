@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -11,6 +11,21 @@ $user_id = $_SESSION['user_id'];
 // Handle form submissions
 $message = '';
 $message_type = '';
+
+// Lightweight API: return user details for the edit modal
+if (isset($_GET['action']) && $_GET['action'] === 'get_user') {
+    $user_id_param = isset($_GET['id']) ? (int)$_GET['id'] : 0;
+    $user_sql = "SELECT id, name, email, role, phone, address, status, is_verified FROM users WHERE id = ?";
+    $user_stmt = $conn->prepare($user_sql);
+    $user_stmt->execute([$user_id_param]);
+    $user = $user_stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+        json_response($user);
+    } else {
+        json_response(['error' => 'User not found'], 404);
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (isset($_POST['action'])) {
@@ -31,11 +46,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Check if email already exists
                     $check_sql = "SELECT id FROM users WHERE email = ?";
                     $check_stmt = $conn->prepare($check_sql);
-                    $check_stmt->bind_param("s", $email);
-                    $check_stmt->execute();
-                    $check_result = $check_stmt->get_result();
+                    $check_stmt->execute([$email]);
+                    $check_count = $check_stmt->fetchColumn();
                     
-                    if ($check_result->num_rows > 0) {
+                    if ($check_count > 0) {
                         $message = 'Email already exists!';
                         $message_type = 'danger';
                     } else {
@@ -44,16 +58,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $sql = "INSERT INTO users (name, email, password, role, phone, address, is_verified, status) 
                                 VALUES (?, ?, ?, ?, ?, ?, TRUE, 'active')";
                         $stmt = $conn->prepare($sql);
-                        $stmt->bind_param("sssssss", $name, $email, $hashed_password, $role, $phone, $address);
                         
-                        if ($stmt->execute()) {
+                        if ($stmt->execute([$name, $email, $hashed_password, $role, $phone, $address])) {
                             // Log admin action
                             $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, new_values) 
                                        VALUES (?, 'CREATE', 'users', ?, ?)";
                             $log_stmt = $conn->prepare($log_sql);
                             $new_values = json_encode(['name' => $name, 'email' => $email, 'role' => $role]);
-                            $log_stmt->bind_param("iis", $user_id, $conn->insert_id, $new_values);
-                            $log_stmt->execute();
+                            $log_stmt->execute([$user_id, $conn->lastInsertId(), $new_values]);
                             
                             redirect('admin-users.php?success=' . urlencode('User created successfully!'));
                         } else {
@@ -79,25 +91,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get old values for logging
                 $old_sql = "SELECT * FROM users WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $user_id_to_update);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$user_id_to_update]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update user
                 $sql = "UPDATE users SET name = ?, email = ?, role = ?, phone = ?, address = ?, status = ?, is_verified = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssssssii", $name, $email, $role, $phone, $address, $status, $is_verified, $user_id_to_update);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$name, $email, $role, $phone, $address, $status, $is_verified, $user_id_to_update])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values, new_values) 
                                VALUES (?, 'UPDATE', 'users', ?, ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['name' => $name, 'email' => $email, 'role' => $role, 'status' => $status]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $user_id_to_update, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $user_id_to_update, $old_values, $new_values]);
                     
                     redirect('admin-users.php?success=' . urlencode('User updated successfully!'));
                 } else {
@@ -111,10 +119,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get user data for logging
                 $get_sql = "SELECT * FROM users WHERE id = ?";
                 $get_stmt = $conn->prepare($get_sql);
-                $get_stmt->bind_param("i", $user_id_to_delete);
-                $get_stmt->execute();
-                $get_result = $get_stmt->get_result();
-                $user_data = $get_result->fetch_assoc();
+                $get_stmt->execute([$user_id_to_delete]);
+                $user_data = $get_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Don't allow deleting admins
                 if ($user_data['role'] === 'admin') {
@@ -124,16 +130,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     // Delete user (cascade will handle related records)
                     $sql = "DELETE FROM users WHERE id = ?";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("i", $user_id_to_delete);
                     
-                    if ($stmt->execute()) {
+                    if ($stmt->execute([$user_id_to_delete])) {
                         // Log admin action
                         $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values) 
                                    VALUES (?, 'DELETE', 'users', ?, ?)";
                         $log_stmt = $conn->prepare($log_sql);
                         $old_values = json_encode($user_data);
-                        $log_stmt->bind_param("iis", $user_id, $user_id_to_delete, $old_values);
-                        $log_stmt->execute();
+                        $log_stmt->execute([$user_id, $user_id_to_delete, $old_values]);
                         
                         redirect('admin-users.php?success=' . urlencode('User deleted successfully!'));
                     } else {
@@ -149,25 +153,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get old values
                 $old_sql = "SELECT * FROM users WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $user_id_to_toggle);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$user_id_to_toggle]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update status
                 $sql = "UPDATE users SET status = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("si", $new_status, $user_id_to_toggle);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$new_status, $user_id_to_toggle])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values, new_values) 
                                VALUES (?, 'TOGGLE_STATUS', 'users', ?, ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['status' => $new_status]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $user_id_to_toggle, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $user_id_to_toggle, $old_values, $new_values]);
                     
                     redirect('admin-users.php?success=' . urlencode('User status updated successfully!'));
                 } else {
@@ -219,11 +219,11 @@ $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_c
 $count_sql = "SELECT COUNT(*) as total FROM users $where_clause";
 $count_stmt = $conn->prepare($count_sql);
 if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
+    $count_stmt->execute($params);
+} else {
+    $count_stmt->execute();
 }
-$count_stmt->execute();
-$total_result = $count_stmt->get_result();
-$total_users = $total_result->fetch_assoc()['total'];
+$total_users = $count_stmt->fetchColumn();
 $total_pages = ceil($total_users / $per_page);
 
 // Get users
@@ -231,12 +231,7 @@ $sql = "SELECT * FROM users $where_clause ORDER BY created_at DESC LIMIT ? OFFSE
 $stmt = $conn->prepare($sql);
 $params[] = $per_page;
 $params[] = $offset;
-$types .= 'ii';
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$users = $stmt->get_result();
+$stmt->execute($params);
 ?>
 
 <!DOCTYPE html>
@@ -528,6 +523,61 @@ $users = $stmt->get_result();
         .mobile-menu-toggle {
             display: none;
         }
+
+        /* Modern Confirmation Modal Styles */
+        #customConfirmModal .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        #customConfirmModal .modal-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+            padding: 1.5rem;
+        }
+
+        #customConfirmModal .modal-body {
+            padding: 2rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+        }
+
+        #customConfirmModal .modal-footer {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        #customConfirmModal .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        #customConfirmModal .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #customConfirmModal .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        #customConfirmModal .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        #customConfirmModal .modal-title {
+            font-weight: 700;
+            color: #495057;
+        }
     </style>
 </head>
 <body>
@@ -608,6 +658,24 @@ $users = $stmt->get_result();
             <div class="col-md-9 col-lg-10">
                 <div class="main-content">
                     <!-- Alert Message -->
+                    <?php 
+                    // Check for URL parameters and display messages
+                    if (isset($_GET['success'])): ?>
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            <?php echo htmlspecialchars($_GET['success']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+                    
+                    <?php if (isset($_GET['error'])): ?>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <?php echo htmlspecialchars($_GET['error']); ?>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <?php endif; ?>
+
                     <?php if (!empty($message)): ?>
                         <div class="alert alert-<?php echo $message_type; ?> alert-dismissible fade show" role="alert">
                             <?php echo htmlspecialchars($message); ?>
@@ -676,8 +744,12 @@ $users = $stmt->get_result();
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <?php if ($users->num_rows > 0): ?>
-                                            <?php while ($user = $users->fetch_assoc()): ?>
+                                        <?php 
+                                        // Fetch all users first
+                                        $all_users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                                        if (count($all_users) > 0): 
+                                        ?>
+                                            <?php foreach ($all_users as $user): ?>
                                                 <tr>
                                                     <td>
                                                         <div class="d-flex align-items-center">
@@ -724,21 +796,49 @@ $users = $stmt->get_result();
                                                     </td>
                                                     <td>
                                                         <div class="btn-group" role="group">
-                                                            <button type="button" class="btn btn-sm btn-action btn-primary" onclick="editUser(<?php echo $user['id']; ?>)">
+                                                            <button
+                                                                type="button"
+                                                                class="btn btn-sm btn-action btn-primary"
+                                                                data-id="<?php echo $user['id']; ?>"
+                                                                data-name="<?php echo htmlspecialchars($user['name']); ?>"
+                                                                data-email="<?php echo htmlspecialchars($user['email']); ?>"
+                                                                data-role="<?php echo $user['role']; ?>"
+                                                                data-phone="<?php echo htmlspecialchars($user['phone']); ?>"
+                                                                data-address="<?php echo htmlspecialchars($user['address']); ?>"
+                                                                data-status="<?php echo $user['status']; ?>"
+                                                                data-verified="<?php echo $user['is_verified'] ? '1' : '0'; ?>"
+                                                                onclick="editUser(this)">
                                                                 <i class="fas fa-edit"></i>
                                                             </button>
                                                             <?php if ($user['role'] !== 'admin'): ?>
-                                                                <button type="button" class="btn btn-sm btn-action btn-<?php echo $user['status'] === 'active' ? 'warning' : 'success'; ?>" onclick="toggleStatus(<?php echo $user['id']; ?>, '<?php echo $user['status'] === 'active' ? 'inactive' : 'active'; ?>')">
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-sm btn-action btn-<?php echo $user['status'] === 'active' ? 'warning' : 'success'; ?>"
+                                                                    onclick="toggleStatus(<?php echo $user['id']; ?>, '<?php echo $user['status'] === 'active' ? 'inactive' : 'active'; ?>')"
+                                                                    title="<?php echo $user['status'] === 'active' ? 'Deactivate User' : 'Activate User'; ?>">
                                                                     <i class="fas fa-<?php echo $user['status'] === 'active' ? 'pause' : 'play'; ?>"></i>
                                                                 </button>
-                                                                <button type="button" class="btn btn-sm btn-action btn-danger" onclick="deleteUser(<?php echo $user['id']; ?>)">
+                                                                <?php if ($user['status'] !== 'suspended'): ?>
+                                                                    <button
+                                                                        type="button"
+                                                                        class="btn btn-sm btn-action btn-warning"
+                                                                        onclick="toggleStatus(<?php echo $user['id']; ?>, 'suspended')"
+                                                                        title="Suspend User">
+                                                                        <i class="fas fa-ban"></i>
+                                                                    </button>
+                                                                <?php endif; ?>
+                                                                <button
+                                                                    type="button"
+                                                                    class="btn btn-sm btn-action btn-danger"
+                                                                    onclick="deleteUser(<?php echo $user['id']; ?>)"
+                                                                    title="Delete User">
                                                                     <i class="fas fa-trash"></i>
                                                                 </button>
                                                             <?php endif; ?>
                                                         </div>
                                                     </td>
                                                 </tr>
-                                            <?php endwhile; ?>
+                                            <?php endforeach; ?>
                                         <?php else: ?>
                                             <tr>
                                                 <td colspan="7" class="text-center py-4">
@@ -915,37 +1015,68 @@ $users = $stmt->get_result();
         </div>
     </div>
 
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="successToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-success text-white">
+                <i class="fas fa-check-circle me-2"></i>
+                <strong class="me-auto">Success</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="successToastMessage">
+                Operation completed successfully!
+            </div>
+        </div>
+        
+        <div id="errorToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-danger text-white">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong class="me-auto">Error</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="errorToastMessage">
+                An error occurred!
+            </div>
+        </div>
+        
+        <div id="infoToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header bg-info text-white">
+                <i class="fas fa-info-circle me-2"></i>
+                <strong class="me-auto">Information</strong>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="infoToastMessage">
+                Information message!
+            </div>
+        </div>
+    </div>
+
     <!-- Custom Confirmation Modal -->
-    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+    <div class="modal fade" id="customConfirmModal" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title" id="confirmationModalLabel">
-                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>
-                        Confirm Action
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Action
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    <div class="text-center mb-3">
-                        <i class="fas fa-question-circle fa-3x text-primary"></i>
-                    </div>
-                    <p class="text-center mb-0" id="confirmationMessage">
-                        Are you sure you want to perform this action?
-                    </p>
+                <div class="modal-body" id="customConfirmModalBody">
+                    <!-- Message will be inserted here -->
                 </div>
-                <div class="modal-footer border-0 justify-content-center">
-                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i>Cancel
                     </button>
-                    <button type="button" class="btn btn-danger px-4" id="confirmDeleteBtn">
-                        <i class="fas fa-trash me-2"></i>Delete
+                    <button type="button" class="btn btn-danger" id="customConfirmOKButton">
+                        <i class="fas fa-check me-2"></i>Confirm
                     </button>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Toggle mobile sidebar
         function toggleSidebar() {
@@ -1062,9 +1193,9 @@ $users = $stmt->get_result();
 
         // Custom confirmation dialog function
         function showCustomConfirm(message, onConfirm, onCancel = null) {
-            const modal = new bootstrap.Modal(document.getElementById('confirmationModal'));
-            const messageElement = document.getElementById('confirmationMessage');
-            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            const modalElement = document.getElementById('customConfirmModal');
+            const messageElement = document.getElementById('customConfirmModalBody');
+            const confirmBtn = document.getElementById('customConfirmOKButton');
             
             // Set the message
             messageElement.textContent = message;
@@ -1075,17 +1206,18 @@ $users = $stmt->get_result();
             
             // Add click event listener
             newConfirmBtn.addEventListener('click', () => {
+                const modal = bootstrap.Modal.getInstance(modalElement);
                 modal.hide();
                 if (onConfirm) onConfirm();
             });
             
             // Handle modal hidden event for cancel
-            const modalElement = document.getElementById('confirmationModal');
             modalElement.addEventListener('hidden.bs.modal', function () {
                 if (onCancel) onCancel();
             }, { once: true });
             
             // Show the modal
+            const modal = new bootstrap.Modal(modalElement);
             modal.show();
         }
 
@@ -1103,33 +1235,38 @@ $users = $stmt->get_result();
             window.location.href = '?' + params.toString();
         }
 
-        // Edit user
-        function editUser(userId) {
-            // Fetch user data via AJAX (for demo, using a simple approach)
-            fetch(`admin-users.php?action=get_user&id=${userId}`)
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('edit_user_id').value = data.id;
-                    document.getElementById('edit_name').value = data.name;
-                    document.getElementById('edit_email').value = data.email;
-                    document.getElementById('edit_role').value = data.role;
-                    document.getElementById('edit_phone').value = data.phone || '';
-                    document.getElementById('edit_address').value = data.address || '';
-                    document.getElementById('edit_status').value = data.status;
-                    document.getElementById('edit_verified').checked = data.is_verified;
-                    
-                    new bootstrap.Modal(document.getElementById('editUserModal')).show();
-                })
-                .catch(error => {
-                    console.error('Error fetching user data:', error);
-                    // Fallback: reload page with edit parameter
-                    window.location.href = `?edit_user=${userId}`;
-                });
+        // Edit user (no network; uses data attributes on the button)
+        function editUser(btn) {
+            const data = btn.dataset;
+            document.getElementById('edit_user_id').value = data.id;
+            document.getElementById('edit_name').value = data.name || '';
+            document.getElementById('edit_email').value = data.email || '';
+            document.getElementById('edit_role').value = data.role || 'employer';
+            document.getElementById('edit_phone').value = data.phone || '';
+            document.getElementById('edit_address').value = data.address || '';
+            document.getElementById('edit_status').value = data.status || 'active';
+            document.getElementById('edit_verified').checked = data.verified === '1';
+
+            new bootstrap.Modal(document.getElementById('editUserModal')).show();
         }
 
         // Toggle user status
         function toggleStatus(userId, newStatus) {
-            const actionMessage = newStatus === 'active' ? 'activate' : 'deactivate';
+            let actionMessage = '';
+            switch(newStatus) {
+                case 'active':
+                    actionMessage = 'activate';
+                    break;
+                case 'inactive':
+                    actionMessage = 'deactivate';
+                    break;
+                case 'suspended':
+                    actionMessage = 'suspend';
+                    break;
+                default:
+                    actionMessage = 'change status of';
+            }
+            
             showCustomConfirm(`Are you sure you want to ${actionMessage} this user?`, () => {
                 const form = document.createElement('form');
                 form.method = 'POST';

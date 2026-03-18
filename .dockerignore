@@ -1,0 +1,10 @@
+.git
+.qodo
+.builder
+node_modules
+vendor
+storage/password_reset_tokens.json
+uploads
+*.zip
+*.log
+*.tmp

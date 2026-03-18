@@ -5,56 +5,62 @@ header('Content-Type: application/json');
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-        json_response(['success' => false, 'message' => 'Method not allowed'], 405);
+        json_response(['success' => false, 'message' => t('auth.method_not_allowed')], 405);
     }
     
     $data = json_decode(file_get_contents('php://input'), true);
     
-    $required_fields = ['name', 'email', 'password', 'role'];
+    $required_fields = ['name', 'email', 'phone', 'password', 'role'];
     $errors = validate_required($required_fields, $data);
     
     if (!empty($errors)) {
-        json_response(['success' => false, 'message' => 'Validation failed', 'errors' => $errors], 400);
+        json_response(['success' => false, 'message' => t('auth.validation_failed'), 'errors' => $errors], 400);
     }
     
     $name = sanitize_input($data['name']);
     $email = sanitize_input($data['email']);
+    $phone = trim((string) ($data['phone'] ?? ''));
+    $normalized_phone = preg_replace('/\D+/', '', $phone);
     $password = $data['password'];
     $role = sanitize_input($data['role']);
     
     // Enhanced email validation
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        json_response(['success' => false, 'message' => 'Please enter a valid email address'], 400);
+        json_response(['success' => false, 'message' => t('auth.invalid_email')], 400);
+    }
+
+    if (strlen($normalized_phone) < 9) {
+        json_response(['success' => false, 'message' => t('auth.phone_required')], 400);
     }
     
     // Enhanced password validation
     if (strlen($password) < 8) {
-        json_response(['success' => false, 'message' => 'Password must be at least 8 characters long'], 400);
+        json_response(['success' => false, 'message' => t('auth.password_length')], 400);
     }
     
     if (!preg_match('/[A-Z]/', $password)) {
-        json_response(['success' => false, 'message' => 'Password must contain at least one uppercase letter'], 400);
+        json_response(['success' => false, 'message' => t('auth.password_upper')], 400);
     }
     
     if (!preg_match('/[a-z]/', $password)) {
-        json_response(['success' => false, 'message' => 'Password must contain at least one lowercase letter'], 400);
+        json_response(['success' => false, 'message' => t('auth.password_lower')], 400);
     }
     
     if (!preg_match('/[0-9]/', $password)) {
-        json_response(['success' => false, 'message' => 'Password must contain at least one number'], 400);
+        json_response(['success' => false, 'message' => t('auth.password_number')], 400);
     }
     
     // Name validation
     if (strlen($name) < 2) {
-        json_response(['success' => false, 'message' => 'Name must be at least 2 characters long'], 400);
+        json_response(['success' => false, 'message' => t('auth.name_length')], 400);
     }
     
     if (!preg_match('/^[a-zA-Z\s]+$/', $name)) {
-        json_response(['success' => false, 'message' => 'Name can only contain letters and spaces'], 400);
+        json_response(['success' => false, 'message' => t('auth.name_letters')], 400);
     }
     
     if (!in_array($role, ['employer', 'worker'])) {
-        json_response(['success' => false, 'message' => 'Invalid role'], 400);
+        json_response(['success' => false, 'message' => t('auth.invalid_role')], 400);
     }
     
     // Check if email already exists (PostgreSQL)
@@ -65,17 +71,28 @@ try {
     $existing_user = $check_stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($existing_user) {
-        json_response(['success' => false, 'message' => 'Email already registered'], 400);
+        json_response(['success' => false, 'message' => t('auth.email_exists')], 400);
+    }
+
+    $phone_check_sql = "SELECT id FROM users WHERE REGEXP_REPLACE(COALESCE(phone, ''), '[^0-9]', '', 'g') = :phone";
+    $phone_check_stmt = $conn->prepare($phone_check_sql);
+    $phone_check_stmt->bindParam(':phone', $normalized_phone);
+    $phone_check_stmt->execute();
+    $existing_phone_user = $phone_check_stmt->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existing_phone_user) {
+        json_response(['success' => false, 'message' => t('auth.phone_exists')], 400);
     }
     
     // Hash password
     $hashed_password = password_hash($password, HASH_ALGO);
     
     // Insert user (PostgreSQL)
-    $sql = "INSERT INTO users (name, email, password, role, created_at) VALUES (:name, :email, :password, :role, NOW())";
+    $sql = "INSERT INTO users (name, email, phone, password, role, created_at) VALUES (:name, :email, :phone, :password, :role, NOW())";
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':name', $name);
     $stmt->bindParam(':email', $email);
+    $stmt->bindParam(':phone', $phone);
     $stmt->bindParam(':password', $hashed_password);
     $stmt->bindParam(':role', $role);
     
@@ -89,19 +106,18 @@ try {
         $_SESSION['user_email'] = $email;
         $_SESSION['user_role'] = $role;
         
-        json_response(['success' => true, 'message' => 'Registration successful', 'user' => [
+        json_response(['success' => true, 'message' => t('auth.registration_success'), 'user' => [
             'id' => $user_id,
             'name' => $name,
             'email' => $email,
+            'phone' => $phone,
             'role' => $role
         ]]);
     } else {
-        json_response(['success' => false, 'message' => 'Registration failed'], 500);
+        json_response(['success' => false, 'message' => t('auth.registration_failed')], 500);
     }
     
 } catch (Exception $e) {
-    // Removed the json_response call
+    json_response(['success' => false, 'message' => t('auth.server_error') . ': ' . $e->getMessage()], 500);
 }
-
-$conn->close();
 ?>

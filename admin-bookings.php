@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -23,15 +23,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get current booking data
                 $old_sql = "SELECT * FROM bookings WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $booking_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$booking_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update booking status
                 $sql = "UPDATE bookings SET status = ?, admin_notes = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssi", $new_status, $admin_notes, $booking_id);
+                
+                $stmt->execute([$new_status, $admin_notes, $booking_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -40,8 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['status' => $new_status, 'admin_notes' => $admin_notes]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $booking_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $booking_id, $old_values, $new_values]);
                     
                     // Send notifications to user and worker
                     $notification_sql = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'booking')";
@@ -53,20 +51,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     
                     // Notify user
-                    $notification_stmt->bind_param("iss", $old_data['user_id'], $title, $message_text);
-                    $notification_stmt->execute();
+                    $notification_stmt->execute([$old_data['user_id'], $title, $message_text]);
                     
                     // Notify worker
                     $worker_sql = "SELECT user_id FROM workers WHERE id = ?";
                     $worker_stmt = $conn->prepare($worker_sql);
-                    $worker_stmt->bind_param("i", $old_data['worker_id']);
-                    $worker_stmt->execute();
-                    $worker_result = $worker_stmt->get_result();
-                    $worker_data = $worker_result->fetch_assoc();
+                    $worker_stmt->execute([$old_data['worker_id']]);
+                    $worker_data = $worker_stmt->fetch(PDO::FETCH_ASSOC);
                     
                     if ($worker_data) {
-                        $notification_stmt->bind_param("iss", $worker_data['user_id'], $title, $message_text);
-                        $notification_stmt->execute();
+                        $notification_stmt->execute([$worker_data['user_id'], $title, $message_text]);
                     }
                     
                     redirect('admin-bookings.php?success=' . urlencode('Booking status updated successfully!'));
@@ -82,15 +76,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get current booking data
                 $old_sql = "SELECT * FROM bookings WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $booking_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$booking_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update payment status
                 $sql = "UPDATE bookings SET payment_status = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("si", $new_payment_status, $booking_id);
+                $stmt->execute([$new_payment_status, $booking_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -99,8 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['payment_status' => $new_payment_status]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $booking_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $booking_id, $old_values, $new_values]);
                     
                     redirect('admin-bookings.php?success=' . urlencode('Payment status updated successfully!'));
                 } else {
@@ -118,15 +109,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            JOIN workers w ON b.worker_id = w.id 
                            WHERE b.id = ?";
                 $get_stmt = $conn->prepare($get_sql);
-                $get_stmt->bind_param("i", $booking_id);
-                $get_stmt->execute();
-                $get_result = $get_stmt->get_result();
-                $booking_data = $get_result->fetch_assoc();
+                $get_stmt->execute([$booking_id]);
+                $booking_data = $get_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Delete booking
                 $sql = "DELETE FROM bookings WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $booking_id);
+                $stmt->execute([$booking_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -134,8 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                VALUES (?, 'DELETE_BOOKING', 'bookings', ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $old_values = json_encode($booking_data);
-                    $log_stmt->bind_param("iis", $user_id, $booking_id, $old_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $booking_id, $old_values]);
                     
                     redirect('admin-bookings.php?success=' . urlencode('Booking deleted successfully!'));
                 } else {
@@ -198,12 +186,8 @@ $count_sql = "SELECT COUNT(*) as total FROM bookings b
              JOIN workers w ON b.worker_id = w.id 
              $where_clause";
 $count_stmt = $conn->prepare($count_sql);
-if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
-}
-$count_stmt->execute();
-$total_result = $count_stmt->get_result();
-$total_bookings = $total_result->fetch_assoc()['total'];
+$count_stmt->execute($params);
+$total_bookings = $count_stmt->fetchColumn();
 $total_pages = ceil($total_bookings / $per_page);
 
 // Get bookings
@@ -220,12 +204,8 @@ $sql = "SELECT b.*, u.name as user_name, u.email as user_email,
 $stmt = $conn->prepare($sql);
 $params[] = $per_page;
 $params[] = $offset;
-$types .= 'ii';
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$bookings = $stmt->get_result();
+$stmt->execute($params);
+$bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get booking statistics
 $stats = [
@@ -251,7 +231,7 @@ $stats_sql = "SELECT
     COALESCE(SUM(CASE WHEN payment_status = 'paid' THEN total_amount ELSE 0 END), 0) as total_revenue
     FROM bookings";
 $stats_result = $conn->query($stats_sql);
-if ($stats_row = $stats_result->fetch_assoc()) {
+if ($stats_row = $stats_result->fetch(PDO::FETCH_ASSOC)) {
     $stats = array_merge($stats, $stats_row);
 }
 
@@ -259,7 +239,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
 $service_types_sql = "SELECT DISTINCT service_type FROM bookings ORDER BY service_type";
 $service_types_result = $conn->query($service_types_sql);
 $service_types = [];
-while ($row = $service_types_result->fetch_assoc()) {
+while ($row = $service_types_result->fetch(PDO::FETCH_ASSOC)) {
     $service_types[] = $row['service_type'];
 }
 ?>
@@ -729,8 +709,8 @@ while ($row = $service_types_result->fetch_assoc()) {
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if ($bookings->num_rows > 0): ?>
-                                <?php while ($booking = $bookings->fetch_assoc()): ?>
+                            <?php if (!empty($bookings)):
+                                foreach ($bookings as $booking): ?>
                                     <div class="booking-card">
                                         <div class="row align-items-start">
                                             <div class="col-md-8">
@@ -831,7 +811,7 @@ while ($row = $service_types_result->fetch_assoc()) {
                                             </div>
                                         </div>
                                     </div>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <div class="text-center py-5">
                                     <i class="fas fa-calendar-check fa-3x text-muted mb-3"></i>

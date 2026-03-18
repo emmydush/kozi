@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -32,8 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 foreach ($settings as $key => $value) {
                     $sql = "UPDATE admin_settings SET setting_value = ?, updated_at = CURRENT_TIMESTAMP WHERE setting_key = ?";
                     $stmt = $conn->prepare($sql);
-                    $stmt->bind_param("ss", $value, $key);
-                    $stmt->execute();
+                    $stmt->execute([$value, $key]);
                 }
 
                 // Log admin action
@@ -41,8 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            VALUES (?, 'UPDATE_SETTINGS', 'admin_settings', ?)";
                 $log_stmt = $conn->prepare($log_sql);
                 $settings_json = json_encode($settings);
-                $log_stmt->bind_param("is", $user_id, $settings_json);
-                $log_stmt->execute();
+                $log_stmt->execute([$user_id, $settings_json]);
 
                 $message = 'Settings updated successfully!';
                 $message_type = 'success';
@@ -59,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $sql = "INSERT INTO system_announcements (title, message, type, target_audience, start_date, end_date, created_by) 
                         VALUES (?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssssssi", $title, $announcement_message, $type, $target_audience, $start_date, $end_date, $user_id);
+                $stmt->execute([$title, $announcement_message, $type, $target_audience, $start_date, $end_date, $user_id]);
 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -67,8 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                VALUES (?, 'CREATE_ANNOUNCEMENT', 'system_announcements', ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $announcement_data = json_encode(compact('title', 'type', 'target_audience'));
-                    $log_stmt->bind_param("is", $user_id, $announcement_data);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $announcement_data]);
 
                     $message = 'Announcement created successfully!';
                     $message_type = 'success';
@@ -84,15 +81,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get announcement data for logging
                 $get_sql = "SELECT * FROM system_announcements WHERE id = ?";
                 $get_stmt = $conn->prepare($get_sql);
-                $get_stmt->bind_param("i", $announcement_id);
-                $get_stmt->execute();
-                $get_result = $get_stmt->get_result();
-                $announcement_data = $get_result->fetch_assoc();
+                $get_stmt->execute([$announcement_id]);
+                $announcement_data = $get_stmt->fetch(PDO::FETCH_ASSOC);
 
                 // Delete announcement
                 $sql = "DELETE FROM system_announcements WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $announcement_id);
+                $stmt->execute([$announcement_id]);
 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -100,8 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                VALUES (?, 'DELETE_ANNOUNCEMENT', 'system_announcements', ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $announcement_json = json_encode($announcement_data);
-                    $log_stmt->bind_param("is", $user_id, $announcement_json);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $announcement_json]);
 
                     $message = 'Announcement deleted successfully!';
                     $message_type = 'success';
@@ -117,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 $sql = "DELETE FROM admin_logs WHERE created_at < ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("s", $cutoff_date);
+                $stmt->execute([$cutoff_date]);
 
                 if ($stmt->execute()) {
                     $deleted_count = $stmt->affected_rows;
@@ -127,8 +121,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                VALUES (?, 'CLEAR_LOGS', ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $log_data = json_encode(['deleted_count' => $deleted_count, 'cutoff_days' => $days]);
-                    $log_stmt->bind_param("is", $user_id, $log_data);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $log_data]);
 
                     $message = "Successfully deleted $deleted_count log entries older than $days days!";
                     $message_type = 'success';
@@ -145,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $settings_sql = "SELECT setting_key, setting_value FROM admin_settings";
 $settings_result = $conn->query($settings_sql);
 $settings = [];
-while ($row = $settings_result->fetch_assoc()) {
+while ($row = $settings_result->fetch(PDO::FETCH_ASSOC)) {
     $settings[$row['setting_key']] = $row['setting_value'];
 }
 
@@ -162,7 +155,7 @@ $logs_result = $conn->query($logs_sql);
 // Get system information
 $system_info = [
     'php_version' => PHP_VERSION,
-    'mysql_version' => $conn->server_info,
+    'postgres_version' => $conn->getAttribute(PDO::ATTR_SERVER_VERSION),
     'app_version' => '1.0.0',
     'database_size' => 0,
     'total_users' => 0,
@@ -170,23 +163,19 @@ $system_info = [
     'total_jobs' => 0
 ];
 
-// Get database size (approximate)
-$db_size_sql = "SELECT ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb 
-                FROM information_schema.tables 
-                WHERE table_schema = ?";
+// Get database size (PostgreSQL)
+$db_size_sql = "SELECT pg_size_pretty(pg_database_size(?)) AS size_mb";
 $db_size_stmt = $conn->prepare($db_size_sql);
 $db_name = DB_NAME;
-$db_size_stmt->bind_param("s", $db_name);
-$db_size_stmt->execute();
-$db_size_result = $db_size_stmt->get_result();
-if ($row = $db_size_result->fetch_assoc()) {
+$db_size_stmt->execute([$db_name]);
+if ($row = $db_size_stmt->fetch(PDO::FETCH_ASSOC)) {
     $system_info['database_size'] = $row['size_mb'];
 }
 
 // Get counts
-$system_info['total_users'] = $conn->query("SELECT COUNT(*) FROM users")->fetch_row()[0];
-$system_info['total_workers'] = $conn->query("SELECT COUNT(*) FROM workers")->fetch_row()[0];
-$system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_row()[0];
+$system_info['total_users'] = $conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$system_info['total_workers'] = $conn->query("SELECT COUNT(*) FROM workers")->fetchColumn();
+$system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetchColumn();
 ?>
 
 <!DOCTYPE html>
@@ -684,8 +673,8 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
                                     </button>
                                 </div>
                                 <div class="card-body">
-                                    <?php if ($announcements_result->num_rows > 0): ?>
-                                        <?php while ($announcement = $announcements_result->fetch_assoc()): ?>
+                                    <?php if ($announcements_result->rowCount() > 0):
+                                        foreach ($announcements_result->fetchAll(PDO::FETCH_ASSOC) as $announcement): ?>
                                             <div class="announcement-item <?php echo $announcement['type']; ?>">
                                                 <div class="d-flex justify-content-between align-items-start mb-2">
                                                     <h6 class="mb-0"><?php echo htmlspecialchars($announcement['title']); ?></h6>
@@ -709,7 +698,7 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
                                                     <span><i class="fas fa-circle me-1"></i><?php echo $announcement['is_active'] ? 'Active' : 'Inactive'; ?></span>
                                                 </div>
                                             </div>
-                                        <?php endwhile; ?>
+                                        <?php endforeach; ?>
                                     <?php else: ?>
                                         <div class="text-center py-5">
                                             <i class="fas fa-bullhorn fa-3x text-muted mb-3"></i>
@@ -747,8 +736,8 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
                                                 </tr>
                                             </thead>
                                             <tbody>
-                                                <?php if ($logs_result->num_rows > 0): ?>
-                                                    <?php while ($log = $logs_result->fetch_assoc()): ?>
+                                                    <?php if ($logs_result->rowCount() > 0):
+                                                        foreach ($logs_result->fetchAll(PDO::FETCH_ASSOC) as $log): ?>
                                                         <tr>
                                                             <td>
                                                                 <div><?php echo format_date($log['created_at']); ?></div>
@@ -767,7 +756,7 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
                                                                 </small>
                                                             </td>
                                                         </tr>
-                                                    <?php endwhile; ?>
+                                                    <?php endforeach; ?>
                                                 <?php else: ?>
                                                     <tr>
                                                         <td colspan="5" class="text-center text-muted py-4">No activity logs found.</td>
@@ -1005,7 +994,7 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
 
         // Delete announcement
         function deleteAnnouncement(id) {
-            if (confirm('Are you sure you want to delete this announcement?')) {
+            showCustomConfirm('Are you sure you want to delete this announcement?', () => {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
@@ -1014,7 +1003,7 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
                 `;
                 document.body.appendChild(form);
                 form.submit();
-            }
+            });
         }
 
         // Refresh logs
@@ -1043,6 +1032,61 @@ $system_info['total_jobs'] = $conn->query("SELECT COUNT(*) FROM jobs")->fetch_ro
                 bsAlert.close();
             });
         }, 5000);
+
+        // Custom confirmation dialog function
+        function showCustomConfirm(message, onConfirm, onCancel = null) {
+            const modalElement = document.getElementById('customConfirmModal');
+            const messageElement = document.getElementById('customConfirmModalBody');
+            const confirmBtn = document.getElementById('customConfirmOKButton');
+            
+            // Set the message
+            messageElement.textContent = message;
+            
+            // Remove previous event listeners
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            
+            // Add click event listener
+            newConfirmBtn.addEventListener('click', () => {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                modal.hide();
+                if (onConfirm) onConfirm();
+            });
+            
+            // Handle modal hidden event for cancel
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                if (onCancel) onCancel();
+            }, { once: true });
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
     </script>
+
+    <!-- Custom Confirmation Modal -->
+    <div class="modal fade" id="customConfirmModal" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Action
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="customConfirmModalBody">
+                    <!-- Message will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="customConfirmOKButton">
+                        <i class="fas fa-check me-2"></i>Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

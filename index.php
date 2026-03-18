@@ -1,10 +1,14 @@
+<?php
+require_once 'config.php';
+$language_options = supported_languages();
+?>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="<?php echo htmlspecialchars(current_language()); ?>">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Household Connect - Kigali | Find Trusted Household Workers</title>
-    <meta name="description" content="Connect with trusted household workers in Kigali. Find reliable domestic workers for cleaning, cooking, childcare, and more.">
+    <title><?php echo htmlspecialchars(t('index.hero_title')); ?></title>
+    <meta name="description" content="<?php echo htmlspecialchars(t('index.hero_subtitle')); ?>">
     
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -350,6 +354,255 @@
             opacity: 0.95;
         }
 
+        /* Modern Footer */
+        .site-footer {
+            position: relative;
+            background:
+                radial-gradient(circle at top left, rgba(255,255,255,0.08), transparent 30%),
+                linear-gradient(135deg, #050505 0%, #111111 48%, #1c1c1c 100%);
+            color: rgba(255, 255, 255, 0.86);
+            padding: 5rem 0 1.5rem;
+            overflow: hidden;
+        }
+
+        .site-footer::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px),
+                linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px);
+            background-size: 28px 28px;
+            opacity: 0.25;
+            pointer-events: none;
+        }
+
+        .site-footer > .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .footer-top-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            border-radius: 28px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(14px);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .footer-kicker {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0.85rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #f4f4f4;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            margin-bottom: 1rem;
+        }
+
+        .footer-lead {
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1.15;
+            color: #ffffff;
+            margin-bottom: 0.9rem;
+            max-width: 10ch;
+        }
+
+        .footer-copy {
+            color: rgba(255, 255, 255, 0.72);
+            margin-bottom: 0;
+            max-width: 560px;
+        }
+
+        .footer-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 1rem;
+        }
+
+        .footer-stat {
+            padding: 1.1rem 1.2rem;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .footer-stat strong {
+            display: block;
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 0.25rem;
+        }
+
+        .footer-stat span {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.92rem;
+        }
+
+        .footer-brand-block {
+            padding-right: 1.5rem;
+        }
+
+        .footer-brand {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.85rem;
+            color: #ffffff;
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .footer-brand-mark {
+            width: 52px;
+            height: 52px;
+            border-radius: 16px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ffffff 0%, #cfcfcf 100%);
+            color: #111111;
+            box-shadow: 0 12px 30px rgba(255,255,255,0.15);
+        }
+
+        .footer-description {
+            color: rgba(255, 255, 255, 0.68);
+            max-width: 360px;
+            line-height: 1.75;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-socials {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .footer-socials a {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            text-decoration: none;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .footer-socials a:hover {
+            transform: translateY(-3px);
+            background: #ffffff;
+            color: #111111;
+        }
+
+        .footer-heading {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 1.1rem;
+        }
+
+        .footer-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .footer-links li + li {
+            margin-top: 0.75rem;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.74);
+            text-decoration: none;
+            transition: all 0.25s ease;
+        }
+
+        .footer-links a:hover {
+            color: #ffffff;
+            padding-left: 0.25rem;
+        }
+
+        .footer-contact-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 1.4rem;
+            margin-top: 1rem;
+        }
+
+        .footer-contact-item {
+            display: flex;
+            gap: 0.9rem;
+            align-items: flex-start;
+        }
+
+        .footer-contact-item + .footer-contact-item {
+            margin-top: 1rem;
+        }
+
+        .footer-contact-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            color: #ffffff;
+            flex-shrink: 0;
+        }
+
+        .footer-contact-item span {
+            display: block;
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.82rem;
+            margin-bottom: 0.15rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .footer-contact-item strong,
+        .footer-contact-item a {
+            color: #ffffff;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-contact-item a:hover {
+            color: #d8d8d8;
+        }
+
+        .footer-bottom {
+            margin-top: 2.5rem;
+            padding-top: 1.4rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-bottom p,
+        .footer-bottom a {
+            color: rgba(255, 255, 255, 0.68);
+            text-decoration: none;
+            margin-bottom: 0;
+        }
+
+        .footer-bottom a:hover {
+            color: #ffffff;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .hero-content h1 {
@@ -362,15 +615,17 @@
             }
             
             .hero-buttons {
-                flex-direction: column;
+                flex-direction: row;
                 gap: 1rem;
+                justify-content: center;
             }
             
             .hero-buttons .btn {
                 padding: 15px 25px;
                 font-size: 1rem;
-                width: 100%;
+                width: auto;
                 justify-content: center;
+                min-width: 150px;
             }
             
             .stat-number {
@@ -444,9 +699,31 @@
             .navbar-brand {
                 font-size: 1.2rem;
             }
-            
+
+            .homepage-nav-actions {
+                gap: 0.5rem;
+            }
+
+            .homepage-language-switcher {
+                margin: 0;
+            }
+
             .sidebar {
                 width: 280px;
+            }
+
+            .footer-top-card {
+                padding: 1.5rem;
+            }
+
+            .footer-lead {
+                font-size: 1.8rem;
+                max-width: none;
+            }
+
+            .footer-brand-block {
+                padding-right: 0;
+                margin-bottom: 2rem;
             }
         }
 
@@ -544,7 +821,15 @@
                 font-size: 16px; /* Prevents zoom on iOS */
                 min-height: 44px;
             }
-            
+
+            .footer-stat-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .footer-lead {
+                font-size: 1.55rem;
+            }
+
             /* Hide less important elements on very small screens */
             .hero-section::before {
                 opacity: 0.1;
@@ -552,6 +837,59 @@
         }
 
         /* Loading Animation */
+
+        .homepage-language-switcher .dropdown-toggle {
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            border-radius: 999px;
+            padding: 0.55rem 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            min-height: 44px;
+        }
+
+        .homepage-language-switcher .dropdown-toggle:hover,
+        .homepage-language-switcher .dropdown-toggle:focus {
+            background: rgba(255,255,255,0.16);
+            color: #fff;
+            border-color: rgba(255,255,255,0.35);
+        }
+
+        .homepage-language-switcher .dropdown-menu {
+            border: none;
+            border-radius: 16px;
+            padding: 0.5rem;
+            min-width: 190px;
+            box-shadow: 0 18px 40px rgba(0,0,0,0.18);
+        }
+
+        .homepage-language-switcher .dropdown-item {
+            border-radius: 12px;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .homepage-language-switcher .dropdown-item.active,
+        .homepage-language-switcher .dropdown-item:active {
+            background: #111;
+            color: #fff;
+        }
+
+        .homepage-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-left: auto;
+        }
+
+        .homepage-nav-actions .homepage-language-switcher {
+            margin: 0;
+        }
         .loading-skeleton {
             background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
             background-size: 200% 100%;
@@ -572,7 +910,7 @@
         <div class="sidebar" id="sidebar">
             <div class="sidebar-content">
                 <div class="sidebar-header">
-                    <h5 class="text-white">Menu</h5>
+                    <h5 class="text-white"><?php echo htmlspecialchars(t('common.menu')); ?></h5>
                     <button class="btn btn-sm btn-light" onclick="toggleSidebar()">
                         <i class="fas fa-times"></i>
                     </button>
@@ -580,39 +918,39 @@
                 <ul class="nav flex-column">
                     <li class="nav-item">
                         <a class="nav-link text-white" href="dashboard.php">
-                            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+                            <i class="fas fa-tachometer-alt me-2"></i> <?php echo htmlspecialchars(t('common.dashboard')); ?>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="profile.php">
-                            <i class="fas fa-user me-2"></i> Profile
+                            <i class="fas fa-user me-2"></i> <?php echo htmlspecialchars(t('common.profile')); ?>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="workers.php">
-                            <i class="fas fa-users me-2"></i> Workers
+                            <i class="fas fa-users me-2"></i> <?php echo htmlspecialchars(t('common.workers')); ?>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="jobs.php">
-                            <i class="fas fa-briefcase me-2"></i> Jobs
+                            <i class="fas fa-briefcase me-2"></i> <?php echo htmlspecialchars(t('common.jobs')); ?>
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="messages.php">
-                            <i class="fas fa-envelope me-2"></i> Messages
+                            <i class="fas fa-envelope me-2"></i> <?php echo htmlspecialchars(t('common.messages')); ?>
                         </a>
                     </li>
                     <?php if ($_SESSION['user_role'] === 'worker'): ?>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="earnings.php">
-                            <i class="fas fa-money-bill-wave me-2"></i> Earnings
+                            <i class="fas fa-money-bill-wave me-2"></i> <?php echo htmlspecialchars(t('nav.earnings')); ?>
                         </a>
                     </li>
                     <?php endif; ?>
                     <li class="nav-item">
                         <a class="nav-link text-white" href="help.php">
-                            <i class="fas fa-question-circle me-2"></i> Help
+                            <i class="fas fa-question-circle me-2"></i> <?php echo htmlspecialchars(t('common.help')); ?>
                         </a>
                     </li>
                 </ul>
@@ -626,25 +964,42 @@
                     <img src="Logo.png" alt="KOZI CONNECT" style="height: 30px; margin-right: 8px;">
                     KOZI CONNECT
                 </a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <div class="homepage-nav-actions">
+                    <div class="nav-item dropdown homepage-language-switcher" id="homepage-language-dropdown" data-language-control="native">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-globe"></i>
+                            <span><?php echo strtoupper(htmlspecialchars(current_language())); ?></span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <?php foreach ($language_options as $code => $language): ?>
+                                <li>
+                                    <a class="dropdown-item <?php echo current_language() === $code ? 'active' : ''; ?>" href="<?php echo htmlspecialchars(language_switch_url($code)); ?>">
+                                        <?php echo htmlspecialchars($language['label']); ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </div>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                </div>
                 <div class="collapse navbar-collapse" id="navbarNav">
                     <ul class="navbar-nav ms-auto">
                         <li class="nav-item">
-                            <a class="nav-link" href="#services">Services</a>
+                            <a class="nav-link" href="#services"><?php echo htmlspecialchars(t('index.nav_services')); ?></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#workers">Workers</a>
+                            <a class="nav-link" href="#workers"><?php echo htmlspecialchars(t('index.nav_workers')); ?></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="#how-it-works">How It Works</a>
+                            <a class="nav-link" href="#how-it-works"><?php echo htmlspecialchars(t('index.nav_how')); ?></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="login.php">Login</a>
+                            <a class="nav-link" href="login.php"><?php echo htmlspecialchars(t('common.login')); ?></a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link btn btn-success text-white px-3 ms-2" href="register.php">Register</a>
+                            <a class="nav-link btn btn-success text-white px-3 ms-2" href="register.php"><?php echo htmlspecialchars(t('common.register')); ?></a>
                         </li>
                     </ul>
                 </div>
@@ -665,22 +1020,22 @@
         <div class="container">
             <div class="row align-items-center min-vh-100">
                 <div class="col-lg-6 hero-content" data-aos="fade-right">
-                    <h1>Connect with Trusted Household Workers in Kigali</h1>
-                    <p class="lead">Find reliable domestic workers for cleaning, cooking, childcare, and more. All workers are verified and reviewed.</p>
+                    <h1><?php echo htmlspecialchars(t('index.hero_title')); ?></h1>
+                    <p class="lead"><?php echo htmlspecialchars(t('index.hero_subtitle')); ?></p>
                     <div class="hero-buttons d-flex flex-wrap">
                         <?php if (isset($_SESSION['user_id'])): ?>
                             <a href="jobs.php" class="btn btn-hero-primary">
-                                <i class="fas fa-search"></i> Find Workers
+                                <i class="fas fa-search"></i> <?php echo htmlspecialchars(t('index.hero_find_workers')); ?>
                             </a>
                             <a href="post-job.php" class="btn btn-hero-outline">
-                                <i class="fas fa-plus"></i> Post Job
+                                <i class="fas fa-plus"></i> <?php echo htmlspecialchars(t('index.hero_post_job')); ?>
                             </a>
                         <?php else: ?>
                             <a href="register.php" class="btn btn-hero-primary">
-                                <i class="fas fa-user-plus"></i> Get Started
+                                <i class="fas fa-user-plus"></i> <?php echo htmlspecialchars(t('index.hero_get_started')); ?>
                             </a>
                             <a href="#workers" class="btn btn-hero-outline">
-                                <i class="fas fa-search"></i> Browse Workers
+                                <i class="fas fa-search"></i> <?php echo htmlspecialchars(t('index.hero_browse_workers')); ?>
                             </a>
                         <?php endif; ?>
                     </div>
@@ -707,25 +1062,25 @@
                 <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="100">
                     <div class="stat-card">
                         <div class="stat-number" data-count="500">0</div>
-                        <div class="stat-label">Verified Workers</div>
+                        <div class="stat-label"><?php echo htmlspecialchars(t('index.stats_workers')); ?></div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="200">
                     <div class="stat-card">
                         <div class="stat-number" data-count="1200">0</div>
-                        <div class="stat-label">Happy Families</div>
+                        <div class="stat-label"><?php echo htmlspecialchars(t('index.stats_families')); ?></div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="300">
                     <div class="stat-card">
                         <div class="stat-number" data-count="3500">0</div>
-                        <div class="stat-label">Jobs Completed</div>
+                        <div class="stat-label"><?php echo htmlspecialchars(t('index.stats_jobs')); ?></div>
                     </div>
                 </div>
                 <div class="col-md-3 col-6" data-aos="fade-up" data-aos-delay="400">
                     <div class="stat-card">
                         <div class="stat-number" data-count="98">0</div>
-                        <div class="stat-label">Satisfaction %</div>
+                        <div class="stat-label"><?php echo htmlspecialchars(t('index.stats_satisfaction')); ?></div>
                     </div>
                 </div>
             </div>
@@ -736,8 +1091,8 @@
     <section id="services" class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">Our Services</h2>
-                <p class="lead text-muted">Professional household services tailored to your needs</p>
+                <h2 class="display-4 fw-bold"><?php echo htmlspecialchars(t('index.services_title')); ?></h2>
+                <p class="lead text-muted"><?php echo htmlspecialchars(t('index.services_subtitle')); ?></p>
             </div>
             <div class="row g-4">
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
@@ -751,8 +1106,8 @@
                             </div>
                         </div>
                         <div class="feature-content">
-                            <h4>House Cleaning</h4>
-                            <p class="text-muted">Professional cleaning services for homes and apartments with eco-friendly products.</p>
+                            <h4><?php echo htmlspecialchars(t('index.service_cleaning_title')); ?></h4>
+                            <p class="text-muted"><?php echo htmlspecialchars(t('index.service_cleaning_text')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -767,8 +1122,8 @@
                             </div>
                         </div>
                         <div class="feature-content">
-                            <h4>Cooking & Meal Prep</h4>
-                            <p class="text-muted">Experienced cooks for daily meals, meal planning, and special occasions.</p>
+                            <h4><?php echo htmlspecialchars(t('index.service_cooking_title')); ?></h4>
+                            <p class="text-muted"><?php echo htmlspecialchars(t('index.service_cooking_text')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -783,8 +1138,8 @@
                             </div>
                         </div>
                         <div class="feature-content">
-                            <h4>Childcare</h4>
-                            <p class="text-muted">Trusted caregivers for your children's safety, development, and well-being.</p>
+                            <h4><?php echo htmlspecialchars(t('index.service_childcare_title')); ?></h4>
+                            <p class="text-muted"><?php echo htmlspecialchars(t('index.service_childcare_text')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -799,8 +1154,8 @@
                             </div>
                         </div>
                         <div class="feature-content">
-                            <h4>Elder Care</h4>
-                            <p class="text-muted">Compassionate caregivers providing support and companionship for elderly family members.</p>
+                            <h4><?php echo htmlspecialchars(t('index.service_elder_title')); ?></h4>
+                            <p class="text-muted"><?php echo htmlspecialchars(t('index.service_elder_text')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -815,8 +1170,8 @@
                             </div>
                         </div>
                         <div class="feature-content">
-                            <h4>Gardening</h4>
-                            <p class="text-muted">Expert gardeners for lawn maintenance, landscaping, and plant care.</p>
+                            <h4><?php echo htmlspecialchars(t('index.service_garden_title')); ?></h4>
+                            <p class="text-muted"><?php echo htmlspecialchars(t('index.service_garden_text')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -831,8 +1186,8 @@
                             </div>
                         </div>
                         <div class="feature-content">
-                            <h4>Driving</h4>
-                            <p class="text-muted">Professional drivers for family transportation and errands.</p>
+                            <h4><?php echo htmlspecialchars(t('index.service_driver_title')); ?></h4>
+                            <p class="text-muted"><?php echo htmlspecialchars(t('index.service_driver_text')); ?></p>
                         </div>
                     </div>
                 </div>
@@ -845,10 +1200,10 @@
         <div class="container">
             <div class="row align-items-center mb-5">
                 <div class="col-lg-6" data-aos="fade-right">
-                    <h2 class="display-4 fw-bold">Featured Workers</h2>
-                    <p class="lead text-muted">Meet some of our top-rated household workers in Kigali</p>
+                    <h2 class="display-4 fw-bold"><?php echo htmlspecialchars(t('index.featured_title')); ?></h2>
+                    <p class="lead text-muted"><?php echo htmlspecialchars(t('index.featured_subtitle')); ?></p>
                     <a href="workers.php" class="btn btn-primary btn-lg">
-                        <i class="fas fa-arrow-right me-2"></i>View All Workers
+                        <i class="fas fa-arrow-right me-2"></i><?php echo htmlspecialchars(t('index.view_all_workers')); ?>
                     </a>
                 </div>
                 <div class="col-lg-6" data-aos="fade-left">
@@ -912,8 +1267,8 @@
     <section id="how-it-works" class="py-5 bg-light">
         <div class="container">
             <div class="text-center mb-5" data-aos="fade-up">
-                <h2 class="display-4 fw-bold">How It Works</h2>
-                <p class="lead text-muted">Get connected with household workers in 3 simple steps</p>
+                <h2 class="display-4 fw-bold"><?php echo htmlspecialchars(t('index.how_title')); ?></h2>
+                <p class="lead text-muted"><?php echo htmlspecialchars(t('index.how_subtitle')); ?></p>
             </div>
             <div class="row g-4">
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
@@ -921,8 +1276,8 @@
                         <div class="feature-icon mx-auto mb-3">
                             <i class="fas fa-user-plus"></i>
                         </div>
-                        <h4>1. Sign Up</h4>
-                        <p class="text-muted">Create your account and tell us about your household needs</p>
+                        <h4><?php echo htmlspecialchars(t('index.how_step1_title')); ?></h4>
+                        <p class="text-muted"><?php echo htmlspecialchars(t('index.how_step1_text')); ?></p>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
@@ -930,8 +1285,8 @@
                         <div class="feature-icon mx-auto mb-3">
                             <i class="fas fa-search"></i>
                         </div>
-                        <h4>2. Find Workers</h4>
-                        <p class="text-muted">Browse through verified workers and read reviews from other families</p>
+                        <h4><?php echo htmlspecialchars(t('index.how_step2_title')); ?></h4>
+                        <p class="text-muted"><?php echo htmlspecialchars(t('index.how_step2_text')); ?></p>
                     </div>
                 </div>
                 <div class="col-md-4" data-aos="fade-up" data-aos-delay="300">
@@ -939,8 +1294,8 @@
                         <div class="feature-icon mx-auto mb-3">
                             <i class="fas fa-handshake"></i>
                         </div>
-                        <h4>3. Connect & Hire</h4>
-                        <p class="text-muted">Contact workers directly and hire the perfect match for your family</p>
+                        <h4><?php echo htmlspecialchars(t('index.how_step3_title')); ?></h4>
+                        <p class="text-muted"><?php echo htmlspecialchars(t('index.how_step3_text')); ?></p>
                     </div>
                 </div>
             </div>
@@ -952,21 +1307,21 @@
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-lg-8 mx-auto text-center cta-content" data-aos="fade-up">
-                    <h2>Ready to Find Your Perfect Household Worker?</h2>
-                    <p>Join hundreds of families in Kigali who trust Household Connect for their domestic help needs</p>
+                    <h2><?php echo htmlspecialchars(t('index.cta_title')); ?></h2>
+                    <p><?php echo htmlspecialchars(t('index.cta_text')); ?></p>
                     <?php if (isset($_SESSION['user_id'])): ?>
                         <a href="jobs.php" class="btn btn-light btn-lg me-3">
-                            <i class="fas fa-search me-2"></i>Browse Workers
+                            <i class="fas fa-search me-2"></i><?php echo htmlspecialchars(t('index.cta_browse_workers')); ?>
                         </a>
                         <a href="post-job.php" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-plus me-2"></i>Post a Job
+                            <i class="fas fa-plus me-2"></i><?php echo htmlspecialchars(t('index.cta_post_job')); ?>
                         </a>
                     <?php else: ?>
                         <a href="register.php" class="btn btn-light btn-lg me-3">
-                            <i class="fas fa-user-plus me-2"></i>Get Started Now
+                            <i class="fas fa-user-plus me-2"></i><?php echo htmlspecialchars(t('index.cta_get_started')); ?>
                         </a>
                         <a href="login.php" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-sign-in-alt me-2"></i>Login
+                            <i class="fas fa-sign-in-alt me-2"></i><?php echo htmlspecialchars(t('common.login')); ?>
                         </a>
                     <?php endif; ?>
                 </div>
@@ -975,103 +1330,150 @@
     </section>
 
     <!-- Footer -->
-    <footer>
+    <footer class="site-footer">
         <div class="container">
-            <div class="row">
-                <!-- Brand Section -->
-                <div class="col-lg-4 col-md-6 footer-section">
-                    <a href="index.php" class="footer-brand">
-                        <i class="fas fa-home"></i>
-                        Household Connect
-                    </a>
-                    <p class="footer-description">
-                        Connecting Kigali families with trusted household workers since 2024. Your reliable partner for all domestic help needs.
-                    </p>
-                    <div class="social-icons">
-                        <a href="#" aria-label="Facebook">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" aria-label="Twitter">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" aria-label="Instagram">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                        <a href="#" aria-label="LinkedIn">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
+            <div class="footer-top-card" data-aos="fade-up">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-7">
+                        <div class="footer-kicker">
+                            <i class="fas fa-shield-heart"></i>
+                            <?php echo htmlspecialchars(t('index.footer_kicker')); ?>
+                        </div>
+                        <h2 class="footer-lead"><?php echo htmlspecialchars(t('index.footer_lead')); ?></h2>
+                        <p class="footer-copy">
+                            <?php echo htmlspecialchars(t('index.footer_copy')); ?>
+                        </p>
                     </div>
-                </div>
-                
-                <!-- Quick Links -->
-                <div class="col-lg-2 col-md-6 footer-section">
-                    <h6 class="footer-title">Quick Links</h6>
-                    <ul class="footer-links">
-                        <li><a href="index.php"><i class="fas fa-chevron-right me-1"></i>Home</a></li>
-                        <li><a href="workers.php"><i class="fas fa-chevron-right me-1"></i>Find Workers</a></li>
-                        <li><a href="jobs.php"><i class="fas fa-chevron-right me-1"></i>Browse Jobs</a></li>
-                        <li><a href="about.php"><i class="fas fa-chevron-right me-1"></i>About Us</a></li>
-                        <li><a href="dashboard.php"><i class="fas fa-chevron-right me-1"></i>Dashboard</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Services -->
-                <div class="col-lg-2 col-md-6 footer-section">
-                    <h6 class="footer-title">Services</h6>
-                    <ul class="footer-links">
-                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>House Cleaning</a></li>
-                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Cooking</a></li>
-                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Childcare</a></li>
-                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Elder Care</a></li>
-                        <li><a href="#services"><i class="fas fa-chevron-right me-1"></i>Gardening</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Support -->
-                <div class="col-lg-2 col-md-6 footer-section">
-                    <h6 class="footer-title">Support</h6>
-                    <ul class="footer-links">
-                        <li><a href="help.php"><i class="fas fa-chevron-right me-1"></i>Help Center</a></li>
-                        <li><a href="contact.php"><i class="fas fa-chevron-right me-1"></i>Contact Us</a></li>
-                        <li><a href="privacy.php"><i class="fas fa-chevron-right me-1"></i>Privacy Policy</a></li>
-                        <li><a href="terms.php"><i class="fas fa-chevron-right me-1"></i>Terms of Service</a></li>
-                        <li><a href="faq.php"><i class="fas fa-chevron-right me-1"></i>FAQ</a></li>
-                    </ul>
-                </div>
-                
-                <!-- Contact -->
-                <div class="col-lg-2 col-md-6 footer-section">
-                    <h6 class="footer-title">Get in Touch</h6>
-                    <div class="contact-item">
-                        <i class="fas fa-phone"></i>
-                        <span>+250 788 123 456</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-envelope"></i>
-                        <span>info@household.rw</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-map-marker-alt"></i>
-                        <span>Kigali, Rwanda</span>
-                    </div>
-                    <div class="contact-item">
-                        <i class="fas fa-clock"></i>
-                        <span>Mon-Fri: 8AM-6PM</span>
+                    <div class="col-lg-5">
+                        <div class="footer-stat-grid">
+                            <div class="footer-stat">
+                                <strong><?php echo htmlspecialchars(t('index.footer_stat_1_title')); ?></strong>
+                                <span><?php echo htmlspecialchars(t('index.footer_stat_1_text')); ?></span>
+                            </div>
+                            <div class="footer-stat">
+                                <strong><?php echo htmlspecialchars(t('index.footer_stat_2_title')); ?></strong>
+                                <span><?php echo htmlspecialchars(t('index.footer_stat_2_text')); ?></span>
+                            </div>
+                            <div class="footer-stat">
+                                <strong><?php echo htmlspecialchars(t('index.footer_stat_3_title')); ?></strong>
+                                <span><?php echo htmlspecialchars(t('index.footer_stat_3_text')); ?></span>
+                            </div>
+                            <div class="footer-stat">
+                                <strong><?php echo htmlspecialchars(t('index.footer_stat_4_title')); ?></strong>
+                                <span><?php echo htmlspecialchars(t('index.footer_stat_4_text')); ?></span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Bottom Section -->
+
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="footer-brand-block">
+                        <a href="index.php" class="footer-brand">
+                            <span class="footer-brand-mark">
+                                <i class="fas fa-house-user"></i>
+                            </span>
+                            KOZI CONNECT
+                        </a>
+                        <p class="footer-description">
+                            <?php echo htmlspecialchars(t('index.footer_description')); ?>
+                        </p>
+                        <div class="footer-socials">
+                            <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
+                            <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
+                            <a href="#" aria-label="Twitter"><i class="fab fa-x-twitter"></i></a>
+                            <a href="#" aria-label="LinkedIn"><i class="fab fa-linkedin-in"></i></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-6 col-lg-2">
+                    <h6 class="footer-heading"><?php echo htmlspecialchars(t('index.footer_explore')); ?></h6>
+                    <ul class="footer-links">
+                        <li><a href="index.php"><?php echo htmlspecialchars(t('common.home')); ?></a></li>
+                        <li><a href="workers.php"><?php echo htmlspecialchars(t('index.hero_find_workers')); ?></a></li>
+                        <li><a href="jobs.php"><?php echo htmlspecialchars(t('common.jobs')); ?></a></li>
+                        <li><a href="about.php">About Us</a></li>
+                        <li><a href="dashboard.php"><?php echo htmlspecialchars(t('common.dashboard')); ?></a></li>
+                    </ul>
+                </div>
+
+                <div class="col-sm-6 col-lg-2">
+                    <h6 class="footer-heading"><?php echo htmlspecialchars(t('index.footer_services')); ?></h6>
+                    <ul class="footer-links">
+                        <li><a href="#services">House Cleaning</a></li>
+                        <li><a href="#services">Cooking</a></li>
+                        <li><a href="#services">Childcare</a></li>
+                        <li><a href="#services">Elder Care</a></li>
+                        <li><a href="#services">Gardening</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-sm-6 col-lg-2">
+                    <h6 class="footer-heading"><?php echo htmlspecialchars(t('index.footer_support')); ?></h6>
+                    <ul class="footer-links">
+                        <li><a href="help.php">Help Center</a></li>
+                        <li><a href="contact.php">Contact Us</a></li>
+                        <li><a href="privacy.php">Privacy Policy</a></li>
+                        <li><a href="terms.php">Terms of Service</a></li>
+                        <li><a href="faq.php">FAQ</a></li>
+                    </ul>
+                </div>
+
+                <div class="col-lg-4">
+                    <h6 class="footer-heading"><?php echo htmlspecialchars(t('index.footer_contact')); ?></h6>
+                    <div class="footer-contact-card">
+                        <div class="footer-contact-item">
+                            <div class="footer-contact-icon">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <div>
+                                <span><?php echo htmlspecialchars(t('index.footer_call')); ?></span>
+                                <a href="tel:+250788123456">+250 788 123 456</a>
+                            </div>
+                        </div>
+                        <div class="footer-contact-item">
+                            <div class="footer-contact-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div>
+                                <span><?php echo htmlspecialchars(t('index.footer_email')); ?></span>
+                                <a href="mailto:info@household.rw">info@household.rw</a>
+                            </div>
+                        </div>
+                        <div class="footer-contact-item">
+                            <div class="footer-contact-icon">
+                                <i class="fas fa-location-dot"></i>
+                            </div>
+                            <div>
+                                <span><?php echo htmlspecialchars(t('index.footer_location')); ?></span>
+                                <strong>Kigali, Rwanda</strong>
+                            </div>
+                        </div>
+                        <div class="footer-contact-item">
+                            <div class="footer-contact-icon">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div>
+                                <span><?php echo htmlspecialchars(t('index.footer_hours')); ?></span>
+                                <strong><?php echo htmlspecialchars(t('index.footer_hours_value')); ?></strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="footer-bottom">
                 <div class="row align-items-center">
                     <div class="col-md-6">
-                        <p class="mb-0 mb-md-0">
-                            &copy; 2024 Household Connect. All rights reserved.
+                        <p>
+                            &copy; 2024 <?php echo htmlspecialchars(t('index.footer_copyright')); ?>
                         </p>
                     </div>
                     <div class="col-md-6 text-md-end">
-                        <p class="mb-0">
-                            Made with <span class="heart">&hearts;</span> in Kigali
+                        <p>
+                            <a href="privacy.php"><?php echo htmlspecialchars(t('common.privacy')); ?></a> / <a href="terms.php"><?php echo htmlspecialchars(t('common.terms')); ?></a> / <?php echo htmlspecialchars(t('index.footer_bottom_tag')); ?>
                         </p>
                     </div>
                 </div>
@@ -1175,9 +1577,9 @@
                 container.innerHTML = `
                     <div class="col-12 text-center py-5">
                         <i class="fas fa-users fa-3x text-muted mb-3"></i>
-                        <h4 class="text-muted">No Workers Available Yet</h4>
-                        <p class="text-muted">Be the first to register as a worker and start finding jobs!</p>
-                        <a href="register.php" class="btn btn-primary mt-2">Register as Worker</a>
+                        <h4 class="text-muted"><?php echo addslashes(t('index.no_workers_title')); ?></h4>
+                        <p class="text-muted"><?php echo addslashes(t('index.no_workers_text')); ?></p>
+                        <a href="register.php" class="btn btn-primary mt-2"><?php echo addslashes(t('index.register_worker')); ?></a>
                     </div>
                 `;
             }

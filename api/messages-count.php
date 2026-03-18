@@ -16,10 +16,9 @@ try {
             FROM messages m
             WHERE m.receiver_id = ? AND m.is_read = 0";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $unread_count = $result ? $result->fetch_assoc()['unread_count'] : 0;
+    $unread_count = $stmt->fetchColumn();
     
     // Get recent messages
     $recentSql = "SELECT m.sender_id, u.name as sender_name, m.message, m.created_at
@@ -29,12 +28,11 @@ try {
                   ORDER BY m.created_at DESC
                   LIMIT 5";
     $stmt = $conn->prepare($recentSql);
-    $stmt->bind_param('i', $user_id);
+    $stmt->bindParam(1, $user_id, PDO::PARAM_INT);
     $stmt->execute();
-    $result = $stmt->get_result();
     
     $recent_messages = [];
-    while ($row = $result->fetch_assoc()) {
+    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
         $recent_messages[] = [
             'sender_name' => $row['sender_name'],
             'message' => substr($row['message'], 0, 50) . (strlen($row['message']) > 50 ? '...' : ''),
@@ -73,6 +71,4 @@ function format_time_ago($datetime) {
     }
 }
 
-$stmt->close();
-$conn->close();
 ?>

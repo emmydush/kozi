@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('index.php');
 }
 
 // Get user role
@@ -97,7 +97,7 @@ if ($user_role === 'employer') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Jobs - Household Connect</title>
+    <title><?php echo t('common.my_jobs'); ?> - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -521,16 +521,16 @@ if ($user_role === 'employer') {
             
             <?php if ($user_role === 'employer'): ?>
             <a class="nav-link" href="post-job.php">
-                <i class="fas fa-plus-circle"></i> Post Job
+                <i class="fas fa-plus-circle"></i> <?php echo t('common.post_job'); ?>
             </a>
             <a class="nav-link" href="workers.php">
-                <i class="fas fa-users"></i> Find Workers
+                <i class="fas fa-users"></i> <?php echo t('common.find_workers'); ?>
             </a>
             <a class="nav-link active" href="my-jobs.php">
-                <i class="fas fa-briefcase"></i> My Jobs
+                <i class="fas fa-briefcase"></i> <?php echo t('common.my_jobs'); ?>
             </a>
             <a class="nav-link" href="bookings.php">
-                <i class="fas fa-calendar-check"></i> Bookings
+                <i class="fas fa-calendar-check"></i> <?php echo t('common.bookings'); ?>
             </a>
             <?php else: ?>
             <a class="nav-link" href="jobs.php">
@@ -548,13 +548,13 @@ if ($user_role === 'employer') {
             <?php endif; ?>
             
             <a class="nav-link" href="messages.php">
-                <i class="fas fa-envelope"></i> Messages
+                <i class="fas fa-envelope"></i> <?php echo t('common.messages'); ?>
             </a>
             <a class="nav-link" href="profile.php">
-                <i class="fas fa-user-cog"></i> Profile Settings
+                <i class="fas fa-user-cog"></i> <?php echo t('nav.profile_settings'); ?>
             </a>
             <a class="nav-link" href="reviews.php">
-                <i class="fas fa-star"></i> Reviews
+                <i class="fas fa-star"></i> <?php echo t('common.reviews'); ?>
             </a>
             
             <hr class="text-white-50">
@@ -767,22 +767,34 @@ if ($user_role === 'employer') {
         }
         
         // Delete job
+        let jobToDelete = null;
+        
         function deleteJob(jobId) {
-            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+            jobToDelete = jobId;
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+            modal.show();
+        }
+        
+        // Handle confirm delete button click
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (jobToDelete) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+                
                 fetch('./api/delete-job.php', {
                     method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
-                        job_id: jobId
+                        job_id: jobToDelete
                     })
                 })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         // Remove job from page
-                        const jobElement = document.getElementById('job-' + jobId);
+                        const jobElement = document.getElementById('job-' + jobToDelete);
                         if (jobElement) {
                             jobElement.remove();
                         }
@@ -802,21 +814,49 @@ if ($user_role === 'employer') {
                                 alertDiv.parentNode.removeChild(alertDiv);
                             }
                         }, 3000);
-                        
-                        // Reload page after short delay
-                        setTimeout(() => {
-                            window.location.reload();
-                        }, 1000);
                     } else {
-                        alert('Error: ' + data.message);
+                        // Show error message
+                        const alertDiv = document.createElement('div');
+                        alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+                        alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 300px;';
+                        alertDiv.innerHTML = `
+                            <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+                            <strong>Error!</strong> ${data.message}
+                        `;
+                        document.body.appendChild(alertDiv);
+                        
+                        // Auto-remove after 5 seconds
+                        setTimeout(() => {
+                            if (alertDiv.parentNode) {
+                                alertDiv.parentNode.removeChild(alertDiv);
+                            }
+                        }, 5000);
                     }
                 })
                 .catch(error => {
-                    console.error('Error:', error);
-                    alert('Failed to delete job. Please try again.');
+                    console.error('Error deleting job:', error);
+                    // Show error message
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+                    alertDiv.style.cssText = 'top: 80px; right: 20px; z-index: 9999; min-width: 300px;';
+                    alertDiv.innerHTML = `
+                        <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+                        <strong>Error!</strong> Failed to delete job. Please try again.
+                    `;
+                    document.body.appendChild(alertDiv);
+                    
+                    // Auto-remove after 5 seconds
+                    setTimeout(() => {
+                        if (alertDiv.parentNode) {
+                            alertDiv.parentNode.removeChild(alertDiv);
+                        }
+                    }, 5000);
+                })
+                .finally(() => {
+                    jobToDelete = null;
                 });
             }
-        }
+        });
         <?php else: ?>
         // View job details
         function viewJobDetails(jobId) {
@@ -852,5 +892,33 @@ if ($user_role === 'employer') {
             }
         });
     </script>
+<!-- Custom Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    </div>
+                    <h6 class="text-center">Are you sure you want to delete this job?</h6>
+                    <p class="text-muted text-center mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-2"></i>Delete Job
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

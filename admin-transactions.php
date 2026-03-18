@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -23,15 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get current transaction data
                 $old_sql = "SELECT * FROM transactions WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $transaction_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$transaction_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update transaction status
                 $sql = "UPDATE transactions SET status = ?, admin_notes = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssi", $new_status, $admin_notes, $transaction_id);
+                $stmt->execute([$new_status, $admin_notes, $transaction_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -40,8 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['status' => $new_status, 'admin_notes' => $admin_notes]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $transaction_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $transaction_id, $old_values, $new_values]);
                     
                     redirect('admin-transactions.php?success=' . urlencode('Transaction status updated successfully!'));
                 } else {
@@ -58,15 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            JOIN users u ON t.user_id = u.id 
                            WHERE t.id = ?";
                 $get_stmt = $conn->prepare($get_sql);
-                $get_stmt->bind_param("i", $transaction_id);
-                $get_stmt->execute();
-                $get_result = $get_stmt->get_result();
-                $transaction_data = $get_result->fetch_assoc();
+                $get_stmt->execute([$transaction_id]);
+                $transaction_data = $get_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Delete transaction
                 $sql = "DELETE FROM transactions WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $transaction_id);
+                $stmt->execute([$transaction_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -74,8 +69,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                VALUES (?, 'DELETE_TRANSACTION', 'transactions', ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $old_values = json_encode($transaction_data);
-                    $log_stmt->bind_param("iis", $user_id, $transaction_id, $old_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $transaction_id, $old_values]);
                     
                     redirect('admin-transactions.php?success=' . urlencode('Transaction deleted successfully!'));
                 } else {
@@ -144,12 +138,8 @@ $count_sql = "SELECT COUNT(*) as total FROM transactions t
              JOIN users u ON t.user_id = u.id 
              $where_clause";
 $count_stmt = $conn->prepare($count_sql);
-if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
-}
-$count_stmt->execute();
-$total_result = $count_stmt->get_result();
-$total_transactions = $total_result->fetch_assoc()['total'];
+$count_stmt->execute($params);
+$total_transactions = $count_stmt->fetchColumn();
 $total_pages = ceil($total_transactions / $per_page);
 
 // Get transactions
@@ -164,12 +154,8 @@ $sql = "SELECT t.*, u.name as user_name, u.email as user_email,
 $stmt = $conn->prepare($sql);
 $params[] = $per_page;
 $params[] = $offset;
-$types .= 'ii';
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$transactions = $stmt->get_result();
+$stmt->execute($params);
+$transactions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get transaction statistics
 $stats = [
@@ -197,7 +183,7 @@ $stats_sql = "SELECT
     COALESCE(AVG(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) as average_transaction
     FROM transactions";
 $stats_result = $conn->query($stats_sql);
-if ($stats_row = $stats_result->fetch_assoc()) {
+if ($stats_row = $stats_result->fetch(PDO::FETCH_ASSOC)) {
     $stats = array_merge($stats, $stats_row);
 }
 ?>
@@ -652,8 +638,8 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if ($transactions->num_rows > 0): ?>
-                                <?php while ($transaction = $transactions->fetch_assoc()): ?>
+                            <?php if (!empty($transactions)):
+                                foreach ($transactions as $transaction): ?>
                                     <div class="transaction-card">
                                         <div class="row align-items-start">
                                             <div class="col-md-8">
@@ -755,7 +741,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                                             </div>
                                         </div>
                                     </div>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <div class="text-center py-5">
                                     <i class="fas fa-money-bill-wave fa-3x text-muted mb-3"></i>

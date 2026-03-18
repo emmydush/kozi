@@ -16,7 +16,7 @@ try {
             LEFT JOIN users u ON w.user_id = u.id 
             LEFT JOIN reviews r ON w.id = r.worker_id 
             WHERE w.id = :worker_id AND w.status = 'active' 
-            GROUP BY w.id";
+            GROUP BY w.id, u.name, u.email, u.phone, u.profile_image";
     
     $stmt = $conn->prepare($sql);
     $stmt->bindParam(':worker_id', $worker_id, PDO::PARAM_INT);

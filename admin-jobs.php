@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -18,41 +18,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'update_job_status':
                 $job_id = (int)$_POST['job_id'];
                 $new_status = sanitize_input($_POST['status']);
-                $admin_notes = sanitize_input($_POST['admin_notes']);
                 
                 // Get current job data
                 $old_sql = "SELECT * FROM jobs WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $job_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$job_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Update job status
-                $sql = "UPDATE jobs SET status = ?, admin_notes = ? WHERE id = ?";
+                // Update job status (only update status column since admin_notes doesn't exist)
+                $sql = "UPDATE jobs SET status = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssi", $new_status, $admin_notes, $job_id);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$new_status, $job_id])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values, new_values) 
                                VALUES (?, 'UPDATE_JOB_STATUS', 'jobs', ?, ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
-                    $new_values = json_encode(['status' => $new_status, 'admin_notes' => $admin_notes]);
+                    $new_values = json_encode(['status' => $new_status]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $job_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $job_id, $old_values, $new_values]);
                     
                     // Send notification to employer
-                    $notification_sql = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'job')";
+                    $notification_sql = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'system')";
                     $notification_stmt = $conn->prepare($notification_sql);
                     $title = 'Job Status Updated';
                     $message_text = "Your job posting status has been updated to: " . ucfirst($new_status);
-                    if (!empty($admin_notes)) {
-                        $message_text .= ' Admin notes: ' . $admin_notes;
-                    }
-                    $notification_stmt->bind_param("iss", $old_data['employer_id'], $title, $message_text);
-                    $notification_stmt->execute();
+                    $notification_stmt->execute([$old_data['employer_id'], $title, $message_text]);
                     
                     $message = 'Job status updated successfully!';
                     $message_type = 'success';
@@ -75,19 +66,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get current job data
                 $old_sql = "SELECT * FROM jobs WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $job_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$job_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update job
                 $sql = "UPDATE jobs SET title = ?, description = ?, type = ?, salary = ?, 
                         location = ?, work_hours = ?, requirements = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("sssdsssi", $title, $description, $type, $salary, 
-                                  $location, $work_hours, $requirements, $job_id);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$title, $description, $type, $salary, 
+                                  $location, $work_hours, $requirements, $job_id])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values, new_values) 
                                VALUES (?, 'EDIT_JOB', 'jobs', ?, ?, ?)";
@@ -95,8 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $new_values = json_encode(compact('title', 'description', 'type', 'salary', 
                                                       'location', 'work_hours', 'requirements'));
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $job_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $job_id, $old_values, $new_values]);
                     
                     $message = 'Job updated successfully!';
                     $message_type = 'success';
@@ -112,32 +99,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get job data for logging
                 $get_sql = "SELECT j.*, u.email as employer_email FROM jobs j JOIN users u ON j.employer_id = u.id WHERE j.id = ?";
                 $get_stmt = $conn->prepare($get_sql);
-                $get_stmt->bind_param("i", $job_id);
-                $get_stmt->execute();
-                $get_result = $get_stmt->get_result();
-                $job_data = $get_result->fetch_assoc();
+                $get_stmt->execute([$job_id]);
+                $job_data = $get_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Delete job
                 $sql = "DELETE FROM jobs WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $job_id);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$job_id])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values) 
                                VALUES (?, 'DELETE_JOB', 'jobs', ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $old_values = json_encode($job_data);
-                    $log_stmt->bind_param("iis", $user_id, $job_id, $old_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $job_id, $old_values]);
                     
                     // Send notification to employer
-                    $notification_sql = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'job')";
+                    $notification_sql = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'system')";
                     $notification_stmt = $conn->prepare($notification_sql);
                     $title = 'Job Removed';
                     $message_text = 'Your job posting "' . $job_data['title'] . '" has been removed by an administrator.';
-                    $notification_stmt->bind_param("iss", $job_data['employer_id'], $title, $message_text);
-                    $notification_stmt->execute();
+                    $notification_stmt->execute([$job_data['employer_id'], $title, $message_text]);
                     
                     $message = 'Job deleted successfully!';
                     $message_type = 'success';
@@ -150,20 +132,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             case 'feature_job':
                 $job_id = (int)$_POST['job_id'];
                 $is_featured = isset($_POST['is_featured']) ? 1 : 0;
+                $boolean_featured = $is_featured ? 'true' : 'false';
                 
                 // Get current job data
                 $old_sql = "SELECT * FROM jobs WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $job_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$job_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update featured status (add to jobs table if not exists)
-                $check_column_sql = "SHOW COLUMNS FROM jobs LIKE 'is_featured'";
+                $check_column_sql = "SELECT column_name FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'is_featured'";
                 $column_result = $conn->query($check_column_sql);
                 
-                if ($column_result->num_rows == 0) {
+                if ($column_result->rowCount() == 0) {
                     // Add is_featured column if it doesn't exist
                     $alter_sql = "ALTER TABLE jobs ADD COLUMN is_featured BOOLEAN DEFAULT FALSE";
                     $conn->query($alter_sql);
@@ -171,17 +152,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $sql = "UPDATE jobs SET is_featured = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ii", $is_featured, $job_id);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$boolean_featured, $job_id])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values, new_values) 
                                VALUES (?, 'FEATURE_JOB', 'jobs', ?, ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['is_featured' => $is_featured]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $job_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $job_id, $old_values, $new_values]);
                     
                     $message = 'Job featured status updated successfully!';
                     $message_type = 'success';
@@ -247,12 +226,8 @@ $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_c
 // Get total count
 $count_sql = "SELECT COUNT(*) as total FROM jobs j JOIN users u ON j.employer_id = u.id $where_clause";
 $count_stmt = $conn->prepare($count_sql);
-if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
-}
-$count_stmt->execute();
-$total_result = $count_stmt->get_result();
-$total_jobs = $total_result->fetch_assoc()['total'];
+$count_stmt->execute($params);
+$total_jobs = $count_stmt->fetchColumn();
 $total_pages = ceil($total_jobs / $per_page);
 
 // Get jobs
@@ -265,18 +240,14 @@ $sql = "SELECT j.*, u.name as employer_name, u.email as employer_email
 $stmt = $conn->prepare($sql);
 $params[] = $per_page;
 $params[] = $offset;
-$types .= 'ii';
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$jobs = $stmt->get_result();
+$stmt->execute($params);
+$jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get job types for filter
 $types_sql = "SELECT DISTINCT type FROM jobs ORDER BY type";
 $types_result = $conn->query($types_sql);
 $job_types = [];
-while ($row = $types_result->fetch_assoc()) {
+while ($row = $types_result->fetch(PDO::FETCH_ASSOC)) {
     $job_types[] = $row['type'];
 }
 
@@ -295,17 +266,17 @@ $stats_sql = "SELECT
     COUNT(CASE WHEN status = 'closed' THEN 1 END) as closed_jobs
     FROM jobs";
 $stats_result = $conn->query($stats_sql);
-if ($stats_row = $stats_result->fetch_assoc()) {
+if ($stats_row = $stats_result->fetch(PDO::FETCH_ASSOC)) {
     $stats = array_merge($stats, $stats_row);
 }
 
 // Check if featured column exists and get featured count
-$check_column_sql = "SHOW COLUMNS FROM jobs LIKE 'is_featured'";
+$check_column_sql = "SELECT column_name FROM information_schema.columns WHERE table_name = 'jobs' AND column_name = 'is_featured'";
 $column_result = $conn->query($check_column_sql);
-if ($column_result->num_rows > 0) {
+if ($column_result->fetchColumn()) {
     $featured_sql = "SELECT COUNT(*) as featured_jobs FROM jobs WHERE is_featured = 1";
     $featured_result = $conn->query($featured_sql);
-    if ($featured_row = $featured_result->fetch_assoc()) {
+    if ($featured_row = $featured_result->fetch(PDO::FETCH_ASSOC)) {
         $stats['featured_jobs'] = $featured_row['featured_jobs'];
     }
 }
@@ -779,8 +750,8 @@ if ($column_result->num_rows > 0) {
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if ($jobs->num_rows > 0): ?>
-                                <?php while ($job = $jobs->fetch_assoc()): ?>
+                            <?php if (!empty($jobs)): ?>
+                                <?php foreach ($jobs as $job): ?>
                                     <div class="job-card">
                                         <div class="row align-items-start">
                                             <div class="col-md-8">
@@ -834,13 +805,7 @@ if ($column_result->num_rows > 0) {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <?php if (isset($job['admin_notes']) && !empty($job['admin_notes'])): ?>
-                                                    <div class="mt-2 p-2 bg-light rounded">
-                                                        <small class="text-muted">
-                                                            <strong>Admin Notes:</strong> <?php echo htmlspecialchars($job['admin_notes']); ?>
-                                                        </small>
-                                                    </div>
-                                                <?php endif; ?>
+                                                <!-- Admin notes section removed as column doesn't exist in database -->
                                             </div>
                                             <div class="col-md-4">
                                                 <div class="d-grid gap-2">
@@ -866,7 +831,7 @@ if ($column_result->num_rows > 0) {
                                             </div>
                                         </div>
                                     </div>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <div class="text-center py-5">
                                     <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
@@ -935,11 +900,6 @@ if ($column_result->num_rows > 0) {
                                 <option value="filled">Filled</option>
                                 <option value="closed">Closed</option>
                             </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="admin_notes" class="form-label">Admin Notes</label>
-                            <textarea class="form-control" id="admin_notes" name="admin_notes" rows="3" placeholder="Add notes about this status change..."></textarea>
-                            <small class="text-muted">These notes will be visible to the employer</small>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1139,18 +1099,30 @@ if ($column_result->num_rows > 0) {
         }
 
         // Delete job
+        let jobToDelete = null;
+        
         function deleteJob(jobId) {
-            if (confirm('Are you sure you want to delete this job? This action cannot be undone.')) {
+            jobToDelete = jobId;
+            const modal = new bootstrap.Modal(document.getElementById('deleteConfirmationModal'));
+            modal.show();
+        }
+        
+        // Handle confirm delete button click
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (jobToDelete) {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('deleteConfirmationModal'));
+                modal.hide();
+                
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
                     <input type="hidden" name="action" value="delete_job">
-                    <input type="hidden" name="job_id" value="${jobId}">
+                    <input type="hidden" name="job_id" value="${jobToDelete}">
                 `;
                 document.body.appendChild(form);
                 form.submit();
             }
-        }
+        });
 
         // Handle search on Enter key
         document.getElementById('search').addEventListener('keypress', function(e) {
@@ -1168,5 +1140,33 @@ if ($column_result->num_rows > 0) {
             });
         }, 5000);
     </script>
+<!-- Custom Confirmation Modal -->
+    <div class="modal fade" id="deleteConfirmationModal" tabindex="-1" aria-labelledby="deleteConfirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="deleteConfirmationModalLabel">
+                        <i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-trash-alt fa-3x text-danger mb-3"></i>
+                    </div>
+                    <h6 class="text-center">Are you sure you want to delete this job?</h6>
+                    <p class="text-muted text-center mb-0">This action cannot be undone.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash me-2"></i>Delete Job
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

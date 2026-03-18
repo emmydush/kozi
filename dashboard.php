@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('index.php');
 }
 
 // Get user role
@@ -98,6 +98,10 @@ $dashboard_translations = [
         'reviews_title' => 'Reviews',
         'contact_information' => 'Contact Information',
         'skills_title' => 'Skills',
+        'hourly_rate_short' => '/ hr',
+        'rating_label' => 'Rating',
+        'experience_label' => 'Experience',
+        'location_label' => 'Location',
         'national_id_unavailable' => 'National ID photo not available',
         'no_certifications' => 'No certifications listed',
         'no_specific_skills' => 'No specific skills listed',
@@ -105,10 +109,10 @@ $dashboard_translations = [
         'no_comment' => 'No comment provided',
     ],
     'fr' => [
-        'title' => 'Tableau de bord - KOZI','brand' => '','dashboard' => 'Tableau de bord','post_job' => 'Publier une offre','job_applications' => 'Candidatures','find_workers' => 'Trouver des travailleurs','my_jobs' => 'Mes offres','bookings' => 'Reservations','find_jobs' => 'Trouver des offres','my_applications' => 'Mes candidatures','active_jobs' => 'Offres actives','messages' => 'Messages','help_support' => 'Aide et support','logout' => 'Deconnexion','welcome_back' => 'Bon retour, %s !','welcome_subtitle' => 'Heureux de vous revoir ! Voici ce qui se passe aujourd\'hui sur votre tableau de bord %s.','create_worker_profile' => 'Creez votre profil travailleur','create_worker_profile_text' => 'Pour commencer a trouver des offres, vous devez creer votre profil. Cela aidera les employeurs a connaitre vos competences et votre experience.','create_profile_now' => 'Creer le profil maintenant','posted_jobs' => 'Offres publiees','active_bookings' => 'Reservations actives','available_workers' => 'Travailleurs disponibles','search_workers' => 'Rechercher des travailleurs...','all_types' => 'Tous les types','cleaning' => 'Nettoyage','childcare' => 'Garde d\'enfants','gardening' => 'Jardinage','eldercare' => 'Aide aux personnes agees','cooking' => 'Cuisine','loading_available_workers' => 'Chargement des travailleurs disponibles...','recent_job_postings' => 'Offres recentes','loading_recent_jobs' => 'Chargement des offres recentes...','jobs_applied' => 'Offres postulees','available_jobs' => 'Offres disponibles','loading_available_jobs' => 'Chargement des offres disponibles...','quick_actions' => 'Actions rapides','update_profile' => 'Mettre a jour le profil','browse_jobs' => 'Parcourir les offres','worker_profile' => 'Profil du travailleur','close' => 'Fermer','contact' => 'Contacter','book_now' => 'Reserver','contact_worker' => 'Contacter le travailleur','subject' => 'Sujet','message' => 'Message','cancel' => 'Annuler','send_message' => 'Envoyer le message','book_worker' => 'Reserver le travailleur','start_date' => 'Date de debut','end_date' => 'Date de fin','service_type' => 'Type de service','additional_notes' => 'Notes supplementaires','create_booking' => 'Creer une reservation','available' => 'Disponible','applied' => 'Postule','unknown' => 'Inconnu','apply_now' => 'Postuler','already_applied' => 'Deja postule','not_available' => 'Indisponible','no_recent_jobs' => 'Aucune offre recente','no_available_jobs' => 'Aucune offre disponible pour le moment','application_soon' => 'La fonctionnalite de candidature arrive bientot !','loading_workers' => 'Chargement des travailleurs...','no_workers_match' => 'Aucun travailleur ne correspond a vos criteres.','general_worker' => 'Travailleur general','no_description' => 'Aucune description disponible','view_profile' => 'Voir le profil','no_workers_yet' => 'Aucun travailleur disponible pour le moment','no_workers_yet_text' => 'Soyez la premiere personne a vous inscrire comme travailleur et commencez a entrer en contact avec des employeurs !','register_worker' => 'S\'inscrire comme travailleur','previous' => 'Precedent','next' => 'Suivant','contact_soon' => 'La fonctionnalite de contact arrive bientot !','loading_worker_profile' => 'Chargement du profil du travailleur...','failed_load_worker_profile' => 'Impossible de charger le profil du travailleur. Veuillez reessayer.','name_not_available' => 'Nom non disponible','reviews' => 'avis','location_not_specified' => 'Lieu non precise','experience_not_specified' => 'Experience non precisee','years' => 'ans','other' => 'Autre','available_for_work' => 'Disponible pour travailler','reviews_title' => 'Avis','contact_information' => 'Informations de contact','skills_title' => 'Competences','national_id_unavailable' => 'Photo de carte d\'identite non disponible','no_certifications' => 'Aucune certification indiquee','no_specific_skills' => 'Aucune competence specifique indiquee','no_reviews_yet' => 'Aucun avis pour le moment','no_comment' => 'Aucun commentaire fourni',
+        'title' => 'Tableau de bord - KOZI','brand' => '','dashboard' => 'Tableau de bord','post_job' => 'Publier une offre','job_applications' => 'Candidatures','find_workers' => 'Trouver des travailleurs','my_jobs' => 'Mes offres','bookings' => 'Reservations','find_jobs' => 'Trouver des offres','my_applications' => 'Mes candidatures','active_jobs' => 'Offres actives','messages' => 'Messages','help_support' => 'Aide et support','logout' => 'Deconnexion','welcome_back' => 'Bon retour, %s !','welcome_subtitle' => 'Heureux de vous revoir ! Voici ce qui se passe aujourd\'hui sur votre tableau de bord %s.','create_worker_profile' => 'Creez votre profil travailleur','create_worker_profile_text' => 'Pour commencer a trouver des offres, vous devez creer votre profil. Cela aidera les employeurs a connaitre vos competences et votre experience.','create_profile_now' => 'Creer le profil maintenant','posted_jobs' => 'Offres publiees','active_bookings' => 'Reservations actives','available_workers' => 'Travailleurs disponibles','search_workers' => 'Rechercher des travailleurs...','all_types' => 'Tous les types','cleaning' => 'Nettoyage','childcare' => 'Garde d\'enfants','gardening' => 'Jardinage','eldercare' => 'Aide aux personnes agees','cooking' => 'Cuisine','loading_available_workers' => 'Chargement des travailleurs disponibles...','recent_job_postings' => 'Offres recentes','loading_recent_jobs' => 'Chargement des offres recentes...','jobs_applied' => 'Offres postulees','available_jobs' => 'Offres disponibles','loading_available_jobs' => 'Chargement des offres disponibles...','quick_actions' => 'Actions rapides','update_profile' => 'Mettre a jour le profil','browse_jobs' => 'Parcourir les offres','worker_profile' => 'Profil du travailleur','close' => 'Fermer','contact' => 'Contacter','book_now' => 'Reserver','contact_worker' => 'Contacter le travailleur','subject' => 'Sujet','message' => 'Message','cancel' => 'Annuler','send_message' => 'Envoyer le message','book_worker' => 'Reserver le travailleur','start_date' => 'Date de debut','end_date' => 'Date de fin','service_type' => 'Type de service','additional_notes' => 'Notes supplementaires','create_booking' => 'Creer une reservation','available' => 'Disponible','applied' => 'Postule','unknown' => 'Inconnu','apply_now' => 'Postuler','already_applied' => 'Deja postule','not_available' => 'Indisponible','no_recent_jobs' => 'Aucune offre recente','no_available_jobs' => 'Aucune offre disponible pour le moment','application_soon' => 'La fonctionnalite de candidature arrive bientot !','loading_workers' => 'Chargement des travailleurs...','no_workers_match' => 'Aucun travailleur ne correspond a vos criteres.','general_worker' => 'Travailleur general','no_description' => 'Aucune description disponible','view_profile' => 'Voir le profil','no_workers_yet' => 'Aucun travailleur disponible pour le moment','no_workers_yet_text' => 'Soyez la premiere personne a vous inscrire comme travailleur et commencez a entrer en contact avec des employeurs !','register_worker' => 'S\'inscrire comme travailleur','previous' => 'Precedent','next' => 'Suivant','contact_soon' => 'La fonctionnalite de contact arrive bientot !','loading_worker_profile' => 'Chargement du profil du travailleur...','failed_load_worker_profile' => 'Impossible de charger le profil du travailleur. Veuillez reessayer.','name_not_available' => 'Nom non disponible','reviews' => 'avis','location_not_specified' => 'Lieu non precise','experience_not_specified' => 'Experience non precisee','years' => 'ans','other' => 'Autre','available_for_work' => 'Disponible pour travailler','reviews_title' => 'Avis','contact_information' => 'Informations de contact','skills_title' => 'Competences','hourly_rate_short' => '/ h','rating_label' => 'Note','experience_label' => 'Experience','location_label' => 'Lieu','national_id_unavailable' => 'Photo de carte d\'identite non disponible','no_certifications' => 'Aucune certification indiquee','no_specific_skills' => 'Aucune competence specifique indiquee','no_reviews_yet' => 'Aucun avis pour le moment','no_comment' => 'Aucun commentaire fourni',
     ],
     'rw' => [
-        'title' => 'Imbonerahamwe - KOZI','brand' => '','dashboard' => 'Imbonerahamwe','post_job' => 'Tangaza akazi','job_applications' => 'Abasabye akazi','find_workers' => 'Shaka abakozi','my_jobs' => 'Akazi kanjye','bookings' => 'Bokingi','find_jobs' => 'Shaka akazi','my_applications' => 'Ubusabe bwanjye','active_jobs' => 'Akazi gakora','messages' => 'Ubutumwa','help_support' => 'Ubufasha na serivisi','logout' => 'Sohoka','welcome_back' => 'Murakaza neza, %s!','welcome_subtitle' => 'Twishimiye kongera kukubona! Dore ibiri kubera kuri konti yawe ya %s uyu munsi.','create_worker_profile' => 'Kora profili yawe y\'umukozi','create_worker_profile_text' => 'Kugira ngo utangire gushaka akazi, ugomba kubanza gukora profili yawe. Bizafasha abakoresha kumenya ubushobozi n\'uburambe bwawe.','create_profile_now' => 'Kora profili nonaha','posted_jobs' => 'Akazi katangajwe','active_bookings' => 'Bokingi zikora','available_workers' => 'Abakozi baboneka','search_workers' => 'Shaka abakozi...','all_types' => 'Ubwoko bwose','cleaning' => 'Isuku','childcare' => 'Kurera abana','gardening' => 'Ubusitani','eldercare' => 'Kwita ku bageze mu zabukuru','cooking' => 'Guteka','loading_available_workers' => 'Turimo gupakira abakozi baboneka...','recent_job_postings' => 'Akazi katangajwe vuba','loading_recent_jobs' => 'Turimo gupakira akazi ka vuba...','jobs_applied' => 'Akazi wasabiye','available_jobs' => 'Akazi kaboneka','loading_available_jobs' => 'Turimo gupakira akazi kaboneka...','quick_actions' => 'Ibikorwa byihuse','update_profile' => 'Hindura profili','browse_jobs' => 'Reba akazi','worker_profile' => 'Profili y\'umukozi','close' => 'Funga','contact' => 'Vugana','book_now' => 'Buka nonaha','contact_worker' => 'Vugana n\'umukozi','subject' => 'Umutwe','message' => 'Ubutumwa','cancel' => 'Hagarika','send_message' => 'Ohereza ubutumwa','book_worker' => 'Buka umukozi','start_date' => 'Itariki yo gutangira','end_date' => 'Itariki yo kurangiza','service_type' => 'Ubwoko bwa serivisi','additional_notes' => 'Andi makuru','create_booking' => 'Kora bokingi','available' => 'Biraboneka','applied' => 'Warasabye','unknown' => 'Ntibizwi','apply_now' => 'Saba nonaha','already_applied' => 'Warasabye','not_available' => 'Ntibiboneka','no_recent_jobs' => 'Nta kazi katangajwe vuba','no_available_jobs' => 'Nta kazi kaboneka ubu','application_soon' => 'Uburyo bwo gusaba akazi buraza vuba!','loading_workers' => 'Turimo gupakira abakozi...','no_workers_match' => 'Nta bakozi bahuye n\'ibyo washakaga.','general_worker' => 'Umukozi rusange','no_description' => 'Nta bisobanuro bihari','view_profile' => 'Reba profili','no_workers_yet' => 'Nta bakozi baraboneka kugeza ubu','no_workers_yet_text' => 'Ba uwa mbere wiyandikisha nk\'umukozi utangire guhuzwa n\'abakoresha bashaka serivisi zo mu rugo!','register_worker' => 'Iyandikishe nk\'umukozi','previous' => 'Ibanza','next' => 'Ikurikira','contact_soon' => 'Uburyo bwo kuvugana buraza vuba!','loading_worker_profile' => 'Turimo gupakira profili y\'umukozi...','failed_load_worker_profile' => 'Ntibyakunze gupakira profili y\'umukozi. Ongera ugerageze.','name_not_available' => 'Izina ntirihari','reviews' => 'ibitekerezo','location_not_specified' => 'Aho aherereye ntihasobanuwe','experience_not_specified' => 'Uburambe ntibwasobanuwe','years' => 'imyaka','other' => 'Ibindi','available_for_work' => 'Ariteguye gukora','reviews_title' => 'Ibitekerezo','contact_information' => 'Amakuru yo kuvugana','skills_title' => 'Ubumenyi','national_id_unavailable' => 'Ifoto y\'indangamuntu ntiboneka','no_certifications' => 'Nta byangombwa byanditswe','no_specific_skills' => 'Nta bumenyi bwihariye bwanditswe','no_reviews_yet' => 'Nta bitekerezo birabaho','no_comment' => 'Nta gitekerezo cyatanzwe',
+        'title' => 'Imbonerahamwe - KOZI','brand' => '','dashboard' => 'Imbonerahamwe','post_job' => 'Tangaza akazi','job_applications' => 'Abasabye akazi','find_workers' => 'Shaka abakozi','my_jobs' => 'Akazi kanjye','bookings' => 'Bokingi','find_jobs' => 'Shaka akazi','my_applications' => 'Ubusabe bwanjye','active_jobs' => 'Akazi gakora','messages' => 'Ubutumwa','help_support' => 'Ubufasha na serivisi','logout' => 'Sohoka','welcome_back' => 'Murakaza neza, %s!','welcome_subtitle' => 'Twishimiye kongera kukubona! Dore ibiri kubera kuri konti yawe ya %s uyu munsi.','create_worker_profile' => 'Kora profili yawe y\'umukozi','create_worker_profile_text' => 'Kugira ngo utangire gushaka akazi, ugomba kubanza gukora profili yawe. Bizafasha abakoresha kumenya ubushobozi n\'uburambe bwawe.','create_profile_now' => 'Kora profili nonaha','posted_jobs' => 'Akazi katangajwe','active_bookings' => 'Bokingi zikora','available_workers' => 'Abakozi baboneka','search_workers' => 'Shaka abakozi...','all_types' => 'Ubwoko bwose','cleaning' => 'Isuku','childcare' => 'Kurera abana','gardening' => 'Ubusitani','eldercare' => 'Kwita ku bageze mu zabukuru','cooking' => 'Guteka','loading_available_workers' => 'Turimo gupakira abakozi baboneka...','recent_job_postings' => 'Akazi katangajwe vuba','loading_recent_jobs' => 'Turimo gupakira akazi ka vuba...','jobs_applied' => 'Akazi wasabiye','available_jobs' => 'Akazi kaboneka','loading_available_jobs' => 'Turimo gupakira akazi kaboneka...','quick_actions' => 'Ibikorwa byihuse','update_profile' => 'Hindura profili','browse_jobs' => 'Reba akazi','worker_profile' => 'Profili y\'umukozi','close' => 'Funga','contact' => 'Vugana','book_now' => 'Buka nonaha','contact_worker' => 'Vugana n\'umukozi','subject' => 'Umutwe','message' => 'Ubutumwa','cancel' => 'Hagarika','send_message' => 'Ohereza ubutumwa','book_worker' => 'Buka umukozi','start_date' => 'Itariki yo gutangira','end_date' => 'Itariki yo kurangiza','service_type' => 'Ubwoko bwa serivisi','additional_notes' => 'Andi makuru','create_booking' => 'Kora bokingi','available' => 'Biraboneka','applied' => 'Warasabye','unknown' => 'Ntibizwi','apply_now' => 'Saba nonaha','already_applied' => 'Warasabye','not_available' => 'Ntibiboneka','no_recent_jobs' => 'Nta kazi katangajwe vuba','no_available_jobs' => 'Nta kazi kaboneka ubu','application_soon' => 'Uburyo bwo gusaba akazi buraza vuba!','loading_workers' => 'Turimo gupakira abakozi...','no_workers_match' => 'Nta bakozi bahuye n\'ibyo washakaga.','general_worker' => 'Umukozi rusange','no_description' => 'Nta bisobanuro bihari','view_profile' => 'Reba profili','no_workers_yet' => 'Nta bakozi baraboneka kugeza ubu','no_workers_yet_text' => 'Ba uwa mbere wiyandikisha nk\'umukozi utangire guhuzwa n\'abakoresha bashaka serivisi zo mu rugo!','register_worker' => 'Iyandikishe nk\'umukozi','previous' => 'Ibanza','next' => 'Ikurikira','contact_soon' => 'Uburyo bwo kuvugana buraza vuba!','loading_worker_profile' => 'Turimo gupakira profili y\'umukozi...','failed_load_worker_profile' => 'Ntibyakunze gupakira profili y\'umukozi. Ongera ugerageze.','name_not_available' => 'Izina ntirihari','reviews' => 'ibitekerezo','location_not_specified' => 'Aho aherereye ntihasobanuwe','experience_not_specified' => 'Uburambe ntibwasobanuwe','years' => 'imyaka','other' => 'Ibindi','available_for_work' => 'Ariteguye gukora','reviews_title' => 'Ibitekerezo','contact_information' => 'Amakuru yo kuvugana','skills_title' => 'Ubumenyi','hourly_rate_short' => '/ isaha','rating_label' => 'Amanota','experience_label' => 'Uburambe','location_label' => 'Aho aherereye','national_id_unavailable' => 'Ifoto y\'indangamuntu ntiboneka','no_certifications' => 'Nta byangombwa byanditswe','no_specific_skills' => 'Nta bumenyi bwihariye bwanditswe','no_reviews_yet' => 'Nta bitekerezo birabaho','no_comment' => 'Nta gitekerezo cyatanzwe',
     ],
 ];
 
@@ -628,186 +632,251 @@ if ($user_role === 'worker') {
             justify-content: center;
         }
         
-        /* Modern Worker Cards */
+        /* Employer worker showcase cards */
+        #workers-container {
+            row-gap: 0.5rem;
+        }
+
         .modern-worker-card {
-            transition: all 0.3s ease;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            background: white;
+            border: 1px solid #e7ebf0;
+            border-radius: 22px;
+            background: linear-gradient(180deg, #ffffff 0%, #fbfcfe 100%);
+            box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+            overflow: hidden;
+            transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
         }
 
         .modern-worker-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
-            border-color: #007bff;
+            transform: translateY(-6px);
+            box-shadow: 0 22px 44px rgba(15, 23, 42, 0.14);
+            border-color: rgba(13, 110, 253, 0.18);
         }
 
-        .modern-worker-card .rounded-circle {
-            transition: transform 0.3s ease;
-        }
-
-        .modern-worker-card:hover .rounded-circle {
-            transform: scale(1.05);
-        }
-
-        .modern-worker-card .btn-primary {
-            background-color: #007bff;
-            border-color: #007bff;
-            border-radius: 8px;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .modern-worker-card .btn-primary:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-            transform: translateY(-1px);
-        }
-
-        .modern-worker-card .card-title {
-            color: #212529;
-            font-size: 1.1rem;
-            font-weight: 600;
-        }
-
-        .modern-worker-card .text-muted {
-            color: #6c757d !important;
-            font-size: 0.9rem;
-        }
-
-        .modern-worker-card .card-text {
-            color: #6c757d;
-            font-size: 0.85rem;
-            line-height: 1.4;
-        }
-
-        /* Minimal worker cards styling */
         .worker-card {
-            transition: all 0.3s ease;
-            border: 1px solid #e0e0e0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-radius: 8px;
-            overflow: hidden;
             position: relative;
             height: 100%;
-            background: white;
         }
-        
-        .worker-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            border-color: #007bff;
-        }
-        
-        .worker-card .card-img-top {
-            height: 180px;
-            object-fit: cover;
+
+        .worker-card-top {
             position: relative;
-            width: 100%;
+            padding: 1.2rem 1.2rem 0;
+            background:
+                radial-gradient(circle at top right, rgba(13, 110, 253, 0.16), transparent 36%),
+                linear-gradient(135deg, #0f172a 0%, #1f2937 100%);
+            min-height: 138px;
         }
-        
-        .worker-card .card-img-placeholder {
-            height: 180px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
+
+        .worker-card-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.45rem 0.8rem;
+            border-radius: 999px;
+            background: rgba(255, 255, 255, 0.14);
+            color: #fff;
+            font-size: 0.74rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .worker-card-avatar-shell {
+            position: absolute;
+            left: 1.2rem;
+            bottom: -42px;
+            width: 84px;
+            height: 84px;
+            border-radius: 24px;
+            padding: 4px;
+            background: rgba(255,255,255,0.96);
+            box-shadow: 0 14px 26px rgba(15, 23, 42, 0.18);
+        }
+
+        .worker-card-avatar,
+        .worker-card-avatar-fallback {
+            width: 100%;
+            height: 100%;
+            border-radius: 20px;
+        }
+
+        .worker-card-avatar {
+            object-fit: cover;
+            display: block;
+        }
+
+        .worker-card-avatar-fallback {
+            display: none;
             align-items: center;
             justify-content: center;
-            position: relative;
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f172a 100%);
+            color: #fff;
+            font-size: 1.45rem;
+            font-weight: 700;
         }
-        
-        .worker-card .card-img-placeholder span {
-            color: white;
-            font-size: 3rem;
-            font-weight: bold;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .worker-card .profile-image-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.1) 100%);
-            pointer-events: none;
-        }
-        
-        .worker-card .card-body {
-            padding: 0.75rem;
+
+        .worker-card-body {
+            padding: 3.4rem 1.2rem 1.2rem;
             display: flex;
             flex-direction: column;
+            height: 100%;
+            gap: 1rem;
         }
-        
-        .worker-card .worker-info {
-            text-align: center;
-        }
-        
-        .worker-card .worker-name {
-            font-size: 0.95rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: #333;
-        }
-        
-        .worker-card .worker-type {
-            font-size: 0.75rem;
-            color: #666;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .worker-card .worker-details {
+
+        .worker-card-header {
             display: flex;
             justify-content: space-between;
+            gap: 0.8rem;
+            align-items: flex-start;
+        }
+
+        .worker-name {
+            font-size: 1.08rem;
+            line-height: 1.25;
+            font-weight: 700;
+            color: #0f172a;
+            margin-bottom: 0.18rem;
+        }
+
+        .worker-subtitle {
+            color: #64748b;
+            font-size: 0.88rem;
+        }
+
+        .worker-rate-pill {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: flex-end;
+            padding: 0.55rem 0.75rem;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            min-width: 102px;
+        }
+
+        .worker-rate-value {
+            color: #0f172a;
+            font-size: 0.95rem;
+            font-weight: 700;
+            line-height: 1.1;
+        }
+
+        .worker-rate-label {
+            color: #64748b;
+            font-size: 0.73rem;
+        }
+
+        .worker-meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .worker-meta-card {
+            padding: 0.75rem 0.85rem;
+            border-radius: 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+
+        .worker-meta-label {
+            display: block;
+            color: #64748b;
+            font-size: 0.72rem;
+            margin-bottom: 0.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .worker-meta-value {
+            color: #0f172a;
+            font-size: 0.9rem;
+            font-weight: 600;
+            line-height: 1.35;
+        }
+
+        .worker-rating-stars {
+            display: inline-flex;
+            gap: 0.08rem;
+            margin-right: 0.35rem;
+        }
+
+        .worker-description {
+            color: #475569;
+            font-size: 0.92rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .worker-skills {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.45rem;
+        }
+
+        .worker-skill-chip {
+            display: inline-flex;
             align-items: center;
-            margin-bottom: 0.5rem;
-            font-size: 0.8rem;
-        }
-        
-        .worker-card .worker-rating {
-            color: #ffc107;
-        }
-        
-        .worker-card .worker-rate {
+            padding: 0.42rem 0.7rem;
+            border-radius: 999px;
+            background: #eef4ff;
+            color: #1d4ed8;
+            font-size: 0.76rem;
             font-weight: 600;
-            color: #007bff;
         }
-        
-        .worker-card .worker-actions {
+
+        .worker-card-footer {
             margin-top: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.65rem;
         }
-        
-        .worker-card .btn-view-profile {
-            width: 100%;
-            background: #007bff;
-            border: none;
-            color: white;
-            padding: 0.4rem;
-            border-radius: 4px;
-            font-weight: 500;
-            font-size: 0.8rem;
-            transition: all 0.3s ease;
-        }
-        
-        .worker-card .btn-view-profile:hover {
-            background: #0056b3;
-        }
-        
-        .worker-card .availability-badge {
-            position: absolute;
-            top: 8px;
-            right: 8px;
-            background: rgba(40, 167, 69, 0.9);
-            color: white;
-            padding: 0.2rem 0.4rem;
-            border-radius: 10px;
-            font-size: 0.6rem;
+
+        .worker-card-footer .btn {
+            flex: 1 1 0;
+            min-width: 0;
+            border-radius: 14px;
+            padding: 0.72rem 0.9rem;
             font-weight: 600;
         }
-        
-        .worker-card .availability-badge.busy {
-            background: rgba(255, 193, 7, 0.9);
+
+        .worker-card-footer .btn-outline-dark {
+            border-width: 1px;
+        }
+
+        @media (max-width: 767px) {
+            .worker-card-top {
+                min-height: 126px;
+            }
+
+            .worker-card-avatar-shell {
+                width: 76px;
+                height: 76px;
+                bottom: -38px;
+            }
+
+            .worker-card-body {
+                padding-top: 3.1rem;
+            }
+        }
+
+        @media (max-width: 575px) {
+            .worker-card-header {
+                flex-direction: column;
+            }
+
+            .worker-rate-pill {
+                align-items: flex-start;
+                min-width: auto;
+                width: 100%;
+            }
+
+            .worker-meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .worker-card-footer .btn {
+                flex-basis: 100%;
+            }
         }
         
         /* Search and filter styling */
@@ -886,7 +955,7 @@ if ($user_role === 'worker') {
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <h3><i class="fas fa-home"></i> <?php echo htmlspecialchars(dt('brand')); ?></h3>
+            <h3><?php echo htmlspecialchars(dt('brand')); ?></h3>
         </div>
         
         <nav class="nav flex-column p-3">
@@ -1098,8 +1167,8 @@ if ($user_role === 'worker') {
 
     <!-- Worker Profile Modal -->
     <div class="modal fade" id="workerProfileModal" tabindex="-1" aria-labelledby="workerProfileModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable worker-profile-dialog">
+            <div class="modal-content worker-profile-shell">
                 <div class="modal-header text-white" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%);">
                     <h5 class="modal-title" id="workerProfileModalLabel">
                         <i class="fas fa-user me-2"></i><?php echo htmlspecialchars(dt('worker_profile')); ?>
@@ -1111,7 +1180,7 @@ if ($user_role === 'worker') {
                         <!-- Worker profile content will be loaded here -->
                     </div>
                 </div>
-                <div class="modal-footer bg-light">
+                <div class="modal-footer bg-light worker-profile-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                         <i class="fas fa-times me-2"></i><?php echo htmlspecialchars(dt('close')); ?>
                     </button>
@@ -1244,7 +1313,7 @@ if ($user_role === 'worker') {
             
             if (userRole === 'unknown') {
                 console.error('User role not detected - redirecting to login');
-                window.location.href = 'login.php';
+                window.location.href = 'index.php';
                 return;
             }
             
@@ -1290,7 +1359,7 @@ if ($user_role === 'worker') {
                 
                 if (response.status === 401) {
                     console.error('Session expired - redirecting to login');
-                    window.location.href = 'login.php';
+                    window.location.href = 'index.php';
                     return;
                 } else if (!response.ok) {
                     console.error('HTTP Error:', response.status, response.statusText);
@@ -1673,6 +1742,86 @@ if ($user_role === 'worker') {
                 displayFallbackWorkers();
             });
         }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function truncateText(value, length = 120) {
+            const normalized = String(value ?? '').trim();
+            if (!normalized) return '';
+            return normalized.length > length ? `${normalized.slice(0, length).trim()}...` : normalized;
+        }
+
+        function getWorkerInitials(name) {
+            const cleaned = String(name ?? '').trim();
+            if (!cleaned) return '?';
+            return cleaned
+                .split(/\s+/)
+                .slice(0, 2)
+                .map(part => part.charAt(0).toUpperCase())
+                .join('');
+        }
+
+        function formatWorkerType(type) {
+            const normalized = String(type ?? '').trim().toLowerCase();
+            if (!normalized) return tr('general_worker');
+            const translated = tr(normalized);
+            if (translated && translated !== normalized) {
+                return translated;
+            }
+            return normalized
+                .split(/[_\s-]+/)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
+
+        function parseWorkerList(value) {
+            if (Array.isArray(value)) {
+                return value.map(item => String(item).trim()).filter(Boolean);
+            }
+
+            const raw = String(value ?? '').trim();
+            if (!raw) {
+                return [];
+            }
+
+            try {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    return parsed.map(item => String(item).trim()).filter(Boolean);
+                }
+            } catch (error) {
+                // Fall back to comma-separated parsing below.
+            }
+
+            return raw
+                .split(',')
+                .map(item => item.replace(/[\[\]\"]/g, '').trim())
+                .filter(Boolean);
+        }
+
+        function formatSkillLabel(skill) {
+            const normalized = String(skill ?? '').trim().toLowerCase();
+            if (!normalized) {
+                return '';
+            }
+
+            const translated = tr(normalized);
+            if (translated && translated !== normalized) {
+                return translated;
+            }
+
+            return normalized
+                .split(/[_\s-]+/)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
         
         function displayWorkers(workers) {
             const container = document.getElementById('workers-container');
@@ -1684,17 +1833,79 @@ if ($user_role === 'worker') {
             }
             
             container.innerHTML = workers.map(worker => {
-                const skills = worker.skills ? worker.skills.split(',').slice(0, 3) : [];
-                
+                const name = escapeHtml(worker.name || tr('name_not_available'));
+                const typeLabel = escapeHtml(formatWorkerType(worker.type));
+                const description = escapeHtml(truncateText(worker.description || tr('no_description'), 132));
+                const location = escapeHtml(worker.location || tr('location_not_specified'));
+                const experience = worker.experience_years
+                    ? `${escapeHtml(worker.experience_years)}+ ${escapeHtml(tr('years'))}`
+                    : escapeHtml(tr('experience_not_specified'));
+                const rate = escapeHtml(worker.formatted_rate || 'RWF 0');
+                const profileImage = escapeHtml(worker.profile_image || '');
+                const ratingValue = Number(worker.avg_rating || 0).toFixed(1);
+                const reviewCount = Number(worker.review_count || 0);
+                const skills = parseWorkerList(worker.skills).slice(0, 4);
+                const skillMarkup = skills.length
+                    ? skills.map(skill => `<span class="worker-skill-chip">${escapeHtml(formatSkillLabel(skill))}</span>`).join('')
+                    : `<span class="worker-skill-chip">${escapeHtml(typeLabel)}</span>`;
+                const initials = escapeHtml(getWorkerInitials(worker.name));
+                const phoneAvailable = worker.phone && worker.phone !== 'Not provided';
+                const phoneHref = phoneAvailable ? `tel:${String(worker.phone).replace(/[^\d+]/g, '')}` : '#';
+
                 return `
-                    <div class="col-md-6 col-lg-3 mb-4">
-                        <div class="card h-100 shadow-sm border-0 worker-card modern-worker-card">
-                            <div class="text-center p-3">
-                                <img src="${worker.profile_image}" class="rounded-circle mb-3" alt="${worker.name}" style="width: 120px; height: 120px; object-fit: cover; border: 3px solid #f8f9fa;">
-                                <h5 class="card-title mb-1 fw-bold">${worker.name}</h5>
-                                <p class="text-muted mb-2">${worker.type || tr('general_worker')}</p>
-                                <p class="card-text text-muted small mb-3">${worker.description ? worker.description.substring(0, 80) + (worker.description.length > 80 ? '...' : '') : tr('no_description')}</p>
-                                <button class="btn btn-primary w-100" onclick="viewWorkerProfile(${worker.id})">${tr('view_profile')}</button>
+                    <div class="col-12 col-md-6 col-xl-4 mb-4">
+                        <div class="card worker-card modern-worker-card">
+                            <div class="worker-card-top">
+                                <span class="worker-card-badge">
+                                    <i class="fas fa-circle-check"></i>${tr('available')}
+                                </span>
+                                <div class="worker-card-avatar-shell">
+                                    <img src="${profileImage}" class="worker-card-avatar" alt="${name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="worker-card-avatar-fallback">${initials}</div>
+                                </div>
+                            </div>
+                            <div class="worker-card-body">
+                                <div class="worker-card-header">
+                                    <div>
+                                        <div class="worker-name">${name}</div>
+                                        <div class="worker-subtitle">${typeLabel}</div>
+                                    </div>
+                                    <div class="worker-rate-pill">
+                                        <span class="worker-rate-value">${rate}</span>
+                                        <span class="worker-rate-label">${tr('hourly_rate_short')}</span>
+                                    </div>
+                                </div>
+
+                                <div class="worker-meta-grid">
+                                    <div class="worker-meta-card">
+                                        <span class="worker-meta-label">${tr('rating_label')}</span>
+                                        <div class="worker-meta-value">
+                                            <span class="worker-rating-stars">${getRatingStars(worker.avg_rating || 0)}</span>
+                                            ${escapeHtml(ratingValue)} (${reviewCount})
+                                        </div>
+                                    </div>
+                                    <div class="worker-meta-card">
+                                        <span class="worker-meta-label">${tr('experience_label')}</span>
+                                        <div class="worker-meta-value">${experience}</div>
+                                    </div>
+                                    <div class="worker-meta-card" style="grid-column: 1 / -1;">
+                                        <span class="worker-meta-label">${tr('location_label')}</span>
+                                        <div class="worker-meta-value">${location}</div>
+                                    </div>
+                                </div>
+
+                                <p class="worker-description">${description}</p>
+
+                                <div class="worker-skills">${skillMarkup}</div>
+
+                                <div class="worker-card-footer">
+                                    <button class="btn btn-primary" onclick="viewWorkerProfile(${worker.id})">
+                                        <i class="fas fa-user me-2"></i>${tr('view_profile')}
+                                    </button>
+                                    <a class="btn btn-outline-dark ${phoneAvailable ? '' : 'disabled'}" ${phoneAvailable ? `href="${phoneHref}"` : 'href="#" aria-disabled="true"'} onclick="${phoneAvailable ? '' : `contactWorker(${worker.id}); return false;`}">
+                                        <i class="fas fa-phone me-2"></i>${tr('contact')}
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1836,22 +2047,19 @@ if ($user_role === 'worker') {
             
             modalContent.innerHTML = `
                 <div class="worker-profile-modal">
-                    <!-- Modern Header Section -->
-                    <div class="profile-header" style="background: linear-gradient(135deg, #000000 0%, #333333 100%); position: relative;">
-                        <div class="container-fluid">
-                            <div class="row align-items-center py-4">
-                                <div class="col-md-4 text-center">
+                    <div class="profile-header">
+                        <div class="container-fluid px-3 px-lg-4">
+                            <div class="row g-3 align-items-center py-3 py-lg-4">
+                                <div class="col-12 col-lg-3 text-center">
                                     <div class="profile-avatar-container position-relative">
                                         <img src="${profileImage}" class="profile-avatar" alt="${worker.name}" 
-                                             style="width: 150px; height: 150px; object-fit: cover; border: 4px solid rgba(255,255,255,0.9); border-radius: 50%; box-shadow: 0 8px 24px rgba(0,0,0,0.3); display: block; margin: 0 auto;"
                                              onerror="this.style.display='none'; this.parentElement.querySelector('.profile-avatar-fallback').style.display='flex';">
-                                        <div class="profile-avatar-fallback rounded-circle d-flex align-items-center justify-content-center position-absolute top-0 start-50 translate-middle-x" 
-                                             style="width: 150px; height: 150px; background: rgba(255,255,255,0.2); display: none; border: 4px solid rgba(255,255,255,0.9); box-shadow: 0 8px 24px rgba(0,0,0,0.3);">
-                                            <span style="color: white; font-size: 2.5rem; font-weight: bold;">${initials}</span>
+                                        <div class="profile-avatar-fallback rounded-circle d-flex align-items-center justify-content-center position-absolute top-0 start-50 translate-middle-x">
+                                             <span style="color: white; font-size: 2.5rem; font-weight: bold;">${initials}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-5">
+                                <div class="col-12 col-lg-6">
                                     <div class="profile-info text-white">
                                         <h2 class="mb-3 fw-bold">${worker.name || tr('name_not_available')}</h2>
                                         <div class="profile-rating mb-3">
@@ -1872,8 +2080,8 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3">
-                                    <div class="rate-card bg-white rounded-3 shadow-lg p-4 text-center">
+                                <div class="col-12 col-lg-3">
+                                    <div class="rate-card bg-white rounded-4 shadow-lg p-3 text-center h-100">
                                         <div class="rate-icon mb-2">
                                             <i class="fas fa-money-bill-wave fa-2x text-dark"></i>
                                         </div>
@@ -1886,13 +2094,11 @@ if ($user_role === 'worker') {
                         </div>
                     </div>
                     
-                    <!-- Modern Content Section -->
                     <div class="profile-content bg-white">
-                        <div class="container-fluid py-4">
-                            <div class="row g-4">
+                        <div class="container-fluid px-3 px-lg-4 py-3">
+                            <div class="row g-3 g-lg-4">
                                 <div class="col-lg-8">
-                                    <!-- Services Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-tools text-dark me-2"></i>Services Offered
@@ -1903,8 +2109,7 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                     
-                                    <!-- Availability Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-calendar-check text-dark me-2"></i>Availability
@@ -1923,8 +2128,7 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                     
-                                    <!-- Reviews Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                             <i class="fas fa-star text-dark me-2"></i>${tr('reviews_title')}
@@ -1935,8 +2139,7 @@ if ($user_role === 'worker') {
                                 </div>
                                 
                                 <div class="col-lg-4">
-                                    <!-- Contact Info Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                             <i class="fas fa-phone text-dark me-2"></i>${tr('contact_information')}
@@ -1964,8 +2167,7 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                     
-                                    <!-- Skills Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                             <i class="fas fa-check-circle text-dark me-2"></i>${tr('skills_title')}
@@ -1974,8 +2176,7 @@ if ($user_role === 'worker') {
                                         ${getWorkerSkills(worker.skills)}
                                     </div>
                                     
-                                    <!-- Education Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-graduation-cap text-dark me-2"></i>Education
@@ -1986,8 +2187,7 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                     
-                                    <!-- Languages Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-language text-dark me-2"></i>Languages
@@ -1998,8 +2198,7 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                     
-                                    <!-- National ID Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-id-card text-dark me-2"></i>Identity Verification
@@ -2026,8 +2225,7 @@ if ($user_role === 'worker') {
                                         </div>
                                     </div>
                                     
-                                    <!-- Certifications Card -->
-                                    <div class="content-card bg-light rounded-3 shadow-sm p-4 mb-4">
+                                    <div class="content-card bg-light rounded-4 shadow-sm p-3 mb-3">
                                         <div class="card-header-modern mb-3">
                                             <h5 class="mb-0 fw-bold text-dark">
                                                 <i class="fas fa-certificate text-dark me-2"></i>Certifications
@@ -2044,16 +2242,50 @@ if ($user_role === 'worker') {
                 </div>
                 
                 <style>
+                    .worker-profile-dialog {
+                        max-width: 980px;
+                        width: 95%;
+                        margin: 1rem auto;
+                    }
+
+                    .worker-profile-shell {
+                        border: none;
+                        border-radius: 22px;
+                        overflow: hidden;
+                    }
+
+                    .worker-profile-footer {
+                        gap: 0.75rem;
+                        flex-wrap: wrap;
+                    }
+
+                    .worker-profile-footer .btn {
+                        flex: 1 1 150px;
+                        min-height: 46px;
+                    }
+
+                    .profile-header {
+                        background: linear-gradient(135deg, #000000 0%, #333333 100%);
+                        position: relative;
+                    }
+
                     .profile-avatar-container {
                         position: relative;
                         display: inline-block;
-                        width: 150px;
-                        height: 150px;
+                        width: 126px;
+                        height: 126px;
                     }
                     
                     .profile-avatar {
-                        transition: transform 0.3s ease;
+                        width: 126px;
+                        height: 126px;
+                        object-fit: cover;
+                        border: 4px solid rgba(255,255,255,0.9);
+                        border-radius: 50%;
+                        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
                         display: block;
+                        margin: 0 auto;
+                        transition: transform 0.3s ease;
                     }
                     
                     .profile-avatar-fallback {
@@ -2061,21 +2293,36 @@ if ($user_role === 'worker') {
                         position: absolute;
                         top: 0;
                         left: 0;
-                        width: 100%;
-                        height: 100%;
+                        width: 126px;
+                        height: 126px;
+                        background: rgba(255,255,255,0.2);
+                        display: none;
+                        border: 4px solid rgba(255,255,255,0.9);
+                        box-shadow: 0 8px 24px rgba(0,0,0,0.3);
                     }
                     
                     .profile-avatar:hover, .profile-avatar-fallback:hover {
                         transform: scale(1.05);
                     }
                     
+                    .profile-info h2 {
+                        font-size: 1.85rem;
+                        line-height: 1.2;
+                    }
+
+                    .profile-description {
+                        font-size: 0.94rem;
+                        line-height: 1.6;
+                    }
+
                     .stars {
-                        font-size: 1.2rem;
+                        font-size: 1rem;
                     }
                     
                     .profile-badges .badge {
                         font-weight: 500;
-                        border-radius: 20px;
+                        margin-right: 0.5rem;
+                        margin-bottom: 0.5rem;
                     }
                     
                     .content-card {
@@ -2090,44 +2337,251 @@ if ($user_role === 'worker') {
                     
                     .card-header-modern h5 {
                         color: #000000;
+                        font-weight: 600;
                     }
                     
-                    .services-grid .row .col-md-6 {
-                        margin-bottom: 0.5rem;
-                    }
-                    
-                    .services-grid .d-flex {
-                        padding: 0.5rem;
-                        border-radius: 8px;
+                    .service-item {
+                        padding: 1rem;
+                        border-bottom: 1px solid #e9ecef;
                         transition: background-color 0.2s ease;
                     }
                     
-                    .services-grid .d-flex:hover {
+                    .service-item:last-child {
+                        border-bottom: none;
+                    }
+                    
+                    .service-item:hover {
                         background-color: #f8f9fa;
                     }
                     
+                    .availability-badges {
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                    }
+                    
+                    .availability-badges .badge {
+                        font-weight: 500;
+                    }
+                    
+                    .review-item {
+                        padding: 1rem;
+                        border-bottom: 1px solid #e9ecef;
+                    }
+                    
+                    .review-item:last-child {
+                        border-bottom: none;
+                    }
+                    
+                    .review-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 0.5rem;
+                    }
+                    
+                    .review-stars {
+                        color: #ffc107;
+                        margin-bottom: 0.5rem;
+                    }
+                    
+                    .contact-item {
+                        padding: 1rem;
+                        border-bottom: 1px solid #e9ecef;
+                        transition: background-color 0.2s ease;
+                    }
+                    
+                    .contact-item:last-child {
+                        border-bottom: none;
+                    }
+                    
+                    .contact-item:hover {
+                        background-color: #f8f9fa;
+                    }
+
                     .rate-card {
                         border: none;
                         transition: transform 0.2s ease;
+                    }
+
+                    .rate-card h3 {
+                        font-size: 1.35rem;
                     }
                     
                     .rate-card:hover {
                         transform: translateY(-2px);
                     }
-                    
-                    .availability-badges .badge {
-                        font-weight: 500;
-                        border-radius: 20px;
+
+                    @media (max-width: 991px) {
+                        .worker-profile-dialog {
+                            max-width: 100%;
+                            width: 95%;
+                            margin: 0.5rem auto;
+                        }
+
+                        .worker-profile-shell {
+                            border-radius: 20px;
+                        }
+
+                        .profile-info {
+                            text-align: center;
+                        }
+
+                        .rate-card {
+                            max-width: 320px;
+                            margin: 0 auto;
+                        }
                     }
-                    
-                    .contact-item {
-                        padding: 0.75rem;
-                        border-radius: 8px;
-                        transition: background-color 0.2s ease;
+
+                    @media (max-width: 767px) {
+                        .worker-profile-dialog {
+                            width: 98%;
+                            margin: 0.25rem auto;
+                            max-width: none;
+                        }
+
+                        .worker-profile-shell {
+                            border-radius: 16px;
+                        }
+
+                        .profile-avatar-container {
+                            width: 90px;
+                            height: 90px;
+                        }
+
+                        .profile-avatar,
+                        .profile-avatar-fallback {
+                            width: 90px;
+                            height: 90px;
+                        }
+
+                        .profile-info h2 {
+                            font-size: 1.35rem;
+                            line-height: 1.2;
+                        }
+
+                        .profile-description {
+                            font-size: 0.9rem;
+                        }
+
+                        .profile-badges {
+                            display: flex;
+                            flex-wrap: wrap;
+                            justify-content: center;
+                            gap: 0.35rem;
+                        }
+
+                        .profile-badges .badge {
+                            margin: 0 !important;
+                            font-size: 0.75rem;
+                            padding: 0.35rem 0.6rem;
+                        }
+
+                        .content-card {
+                            border-radius: 12px !important;
+                            margin-bottom: 0.75rem !important;
+                        }
+
+                        .service-item {
+                            padding: 0.75rem !important;
+                        }
+
+                        .review-header {
+                            flex-direction: column;
+                            gap: 0.5rem;
+                        }
+
+                        .contact-item {
+                            padding: 0.75rem;
+                        }
+
+                        .rate-card {
+                            padding: 1.5rem 1rem !important;
+                        }
+
+                        .rate-card h3 {
+                            font-size: 1.15rem;
+                        }
                     }
-                    
-                    .contact-item:hover {
-                        background-color: #f8f9fa;
+
+                    @media (max-width: 575px) {
+                        .worker-profile-dialog {
+                            width: 100%;
+                            margin: 0;
+                            max-width: 100%;
+                            height: 100vh;
+                        }
+
+                        .worker-profile-shell {
+                            border-radius: 0;
+                            height: 100vh;
+                            display: flex;
+                            flex-direction: column;
+                        }
+
+                        .modal-header {
+                            padding: 0.75rem 1rem;
+                            flex-shrink: 0;
+                        }
+
+                        .modal-title {
+                            font-size: 0.95rem;
+                        }
+
+                        .modal-body {
+                            flex: 1;
+                            overflow-y: auto;
+                        }
+
+                        .worker-profile-footer {
+                            padding: 0.75rem 1rem;
+                            flex-shrink: 0;
+                            gap: 0.5rem;
+                        }
+
+                        .worker-profile-footer .btn {
+                            flex-basis: 100%;
+                            width: 100%;
+                            min-height: 42px;
+                            font-size: 0.9rem;
+                        }
+
+                        .content-card:hover,
+                        .rate-card:hover,
+                        .profile-avatar:hover,
+                        .profile-avatar-fallback:hover {
+                            transform: none;
+                        }
+
+                        .id-photo .btn {
+                            width: 100%;
+                        }
+
+                        .profile-header {
+                            padding: 1rem 0;
+                        }
+
+                        .profile-avatar-container {
+                            width: 80px;
+                            height: 80px;
+                        }
+
+                        .profile-avatar,
+                        .profile-avatar-fallback {
+                            width: 80px;
+                            height: 80px;
+                            border-width: 3px;
+                        }
+
+                        .profile-info h2 {
+                            font-size: 1.2rem;
+                            margin-bottom: 0.5rem;
+                        }
+
+                        .content-card {
+                            padding: 0.75rem !important;
+                            border-radius: 8px !important;
+                        }
                     }
                 </style>
             `;
@@ -2184,17 +2638,17 @@ if ($user_role === 'worker') {
         }
         
         function getWorkerSkills(skills) {
-            if (!skills || skills.trim() === '') {
+            const skillsArray = parseWorkerList(skills);
+
+            if (!skillsArray.length) {
                 return `<p class="text-muted opacity-75">${tr('no_specific_skills')}</p>`;
             }
-            
-            const skillsArray = skills.split(',').map(skill => skill.trim()).filter(skill => skill);
-            
+
             return `
                 <div class="skills-container d-flex flex-wrap gap-2">
                     ${skillsArray.map(skill => `
                         <span class="skill-badge bg-dark text-white px-3 py-2 rounded-pill fw-medium">
-                            <i class="fas fa-check-circle me-1"></i>${skill}
+                            <i class="fas fa-check-circle me-1"></i>${escapeHtml(formatSkillLabel(skill))}
                         </span>
                     `).join('')}
                 </div>

@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -23,15 +23,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get current review data
                 $old_sql = "SELECT * FROM reviews WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $review_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$review_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update review status
                 $sql = "UPDATE reviews SET status = ?, admin_notes = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssi", $new_status, $admin_notes, $review_id);
+                $stmt->execute([$new_status, $admin_notes, $review_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -40,8 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['status' => $new_status, 'admin_notes' => $admin_notes]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $review_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $review_id, $old_values, $new_values]);
                     
                     redirect('admin-reviews.php?success=' . urlencode('Review status updated successfully!'));
                 } else {
@@ -59,15 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                            JOIN workers w ON r.worker_id = w.id 
                            WHERE r.id = ?";
                 $get_stmt = $conn->prepare($get_sql);
-                $get_stmt->bind_param("i", $review_id);
-                $get_stmt->execute();
-                $get_result = $get_stmt->get_result();
-                $review_data = $get_result->fetch_assoc();
+                $get_stmt->execute([$review_id]);
+                $review_data = $get_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Delete review
                 $sql = "DELETE FROM reviews WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("i", $review_id);
+                $stmt->execute([$review_id]);
                 
                 if ($stmt->execute()) {
                     // Log admin action
@@ -75,8 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                VALUES (?, 'DELETE_REVIEW', 'reviews', ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
                     $old_values = json_encode($review_data);
-                    $log_stmt->bind_param("iis", $user_id, $review_id, $old_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $review_id, $old_values]);
                     
                     redirect('admin-reviews.php?success=' . urlencode('Review deleted successfully!'));
                 } else {
@@ -132,12 +126,8 @@ $count_sql = "SELECT COUNT(*) as total FROM reviews r
              JOIN workers w ON r.worker_id = w.id 
              $where_clause";
 $count_stmt = $conn->prepare($count_sql);
-if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
-}
-$count_stmt->execute();
-$total_result = $count_stmt->get_result();
-$total_reviews = $total_result->fetch_assoc()['total'];
+$count_stmt->execute($params);
+$total_reviews = $count_stmt->fetchColumn();
 $total_pages = ceil($total_reviews / $per_page);
 
 // Get reviews
@@ -154,12 +144,8 @@ $sql = "SELECT r.*, u.name as user_name, u.email as user_email,
 $stmt = $conn->prepare($sql);
 $params[] = $per_page;
 $params[] = $offset;
-$types .= 'ii';
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$reviews = $stmt->get_result();
+$stmt->execute($params);
+$reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Get review statistics
 $stats = [
@@ -187,7 +173,7 @@ $stats_sql = "SELECT
     COUNT(CASE WHEN rating = 1 THEN 1 END) as one_star_reviews
     FROM reviews";
 $stats_result = $conn->query($stats_sql);
-if ($stats_row = $stats_result->fetch_assoc()) {
+if ($stats_row = $stats_result->fetch(PDO::FETCH_ASSOC)) {
     $stats = array_merge($stats, $stats_row);
 }
 ?>
@@ -614,8 +600,8 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if ($reviews->num_rows > 0): ?>
-                                <?php while ($review = $reviews->fetch_assoc()): ?>
+                            <?php if (!empty($reviews)):
+                                foreach ($reviews as $review): ?>
                                     <div class="review-card">
                                         <div class="row align-items-start">
                                             <div class="col-md-8">
@@ -689,7 +675,7 @@ if ($stats_row = $stats_result->fetch_assoc()) {
                                             </div>
                                         </div>
                                     </div>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <div class="text-center py-5">
                                     <i class="fas fa-star fa-3x text-muted mb-3"></i>

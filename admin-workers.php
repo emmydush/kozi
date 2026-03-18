@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
 require_admin();
@@ -23,23 +23,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Get current worker data
                 $old_sql = "SELECT * FROM workers WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $worker_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$worker_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
                 
                 // Update worker verification status
                 $sql = "UPDATE workers SET status = ?, admin_notes = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ssi", $verification_status, $admin_notes, $worker_id);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$verification_status, $admin_notes, $worker_id])) {
                     // Update user verification status if worker is approved
                     if ($verification_status === 'active') {
                         $user_sql = "UPDATE users SET is_verified = TRUE WHERE id = ?";
                         $user_stmt = $conn->prepare($user_sql);
-                        $user_stmt->bind_param("i", $old_data['user_id']);
-                        $user_stmt->execute();
+                        $user_stmt->execute([$old_data['user_id']]);
                     }
                     
                     // Log admin action
@@ -48,8 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $log_stmt = $conn->prepare($log_sql);
                     $new_values = json_encode(['status' => $verification_status, 'admin_notes' => $admin_notes]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $worker_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $worker_id, $old_values, $new_values]);
                     
                     // Send notification to worker
                     $notification_sql = "INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, 'system')";
@@ -61,6 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (!empty($admin_notes)) {
                         $message_text .= ' Admin notes: ' . $admin_notes;
                     }
+                    $notification_stmt->execute([$old_data['user_id'], $title, $message_text]);
                     $notification_stmt->bind_param("iss", $old_data['user_id'], $title, $message_text);
                     $notification_stmt->execute();
                     
@@ -74,30 +70,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
             case 'toggle_featured':
                 $worker_id = (int)$_POST['worker_id'];
-                $is_featured = isset($_POST['is_featured']) ? 1 : 0;
+                $featured = isset($_POST['featured']) ? (int)$_POST['featured'] : 0;
+                $boolean_featured = $featured ? 'true' : 'false';
+                
+                // Validate worker ID
+                if ($worker_id <= 0) {
+                    $message = 'Invalid worker ID';
+                    $message_type = 'danger';
+                    break;
+                }
                 
                 // Get current worker data
                 $old_sql = "SELECT * FROM workers WHERE id = ?";
                 $old_stmt = $conn->prepare($old_sql);
-                $old_stmt->bind_param("i", $worker_id);
-                $old_stmt->execute();
-                $old_result = $old_stmt->get_result();
-                $old_data = $old_result->fetch_assoc();
+                $old_stmt->execute([$worker_id]);
+                $old_data = $old_stmt->fetch(PDO::FETCH_ASSOC);
+                
+                if (!$old_data) {
+                    $message = 'Worker not found';
+                    $message_type = 'danger';
+                    break;
+                }
                 
                 // Update featured status
                 $sql = "UPDATE workers SET is_featured = ? WHERE id = ?";
                 $stmt = $conn->prepare($sql);
-                $stmt->bind_param("ii", $is_featured, $worker_id);
                 
-                if ($stmt->execute()) {
+                if ($stmt->execute([$boolean_featured, $worker_id])) {
                     // Log admin action
                     $log_sql = "INSERT INTO admin_logs (admin_id, action, table_name, record_id, old_values, new_values) 
                                VALUES (?, 'TOGGLE_FEATURED', 'workers', ?, ?, ?)";
                     $log_stmt = $conn->prepare($log_sql);
-                    $new_values = json_encode(['is_featured' => $is_featured]);
+                    $new_values = json_encode(['is_featured' => (bool)$featured]);
                     $old_values = json_encode($old_data);
-                    $log_stmt->bind_param("iiss", $user_id, $worker_id, $old_values, $new_values);
-                    $log_stmt->execute();
+                    $log_stmt->execute([$user_id, $worker_id, $old_values, $new_values]);
                     
                     $message = 'Worker featured status updated successfully!';
                     $message_type = 'success';
@@ -233,8 +239,7 @@ if (!empty($status_filter)) {
 
 if (!empty($featured_filter)) {
     $where_conditions[] = "w.is_featured = ?";
-    $params[] = $featured_filter === 'yes' ? 1 : 0;
-    $types .= 'i';
+    $params[] = $featured_filter === 'yes' ? true : false;
 }
 
 $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_conditions) : '';
@@ -243,11 +248,11 @@ $where_clause = !empty($where_conditions) ? 'WHERE ' . implode(' AND ', $where_c
 $count_sql = "SELECT COUNT(*) as total FROM workers w JOIN users u ON w.user_id = u.id $where_clause";
 $count_stmt = $conn->prepare($count_sql);
 if (!empty($params)) {
-    $count_stmt->bind_param($types, ...$params);
+    $count_stmt->execute($params);
+} else {
+    $count_stmt->execute();
 }
-$count_stmt->execute();
-$total_result = $count_stmt->get_result();
-$total_workers = $total_result->fetch_assoc()['total'];
+$total_workers = $count_stmt->fetchColumn();
 $total_pages = ceil($total_workers / $per_page);
 
 // Get workers
@@ -260,18 +265,13 @@ $sql = "SELECT w.*, u.email, u.phone, u.address, u.created_at as user_created_at
 $stmt = $conn->prepare($sql);
 $params[] = $per_page;
 $params[] = $offset;
-$types .= 'ii';
-if (!empty($params)) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$workers = $stmt->get_result();
+$stmt->execute($params);
 
 // Get worker types for filter
 $types_sql = "SELECT DISTINCT type FROM workers ORDER BY type";
 $types_result = $conn->query($types_sql);
 $worker_types = [];
-while ($row = $types_result->fetch_assoc()) {
+foreach ($types_result->fetchAll(PDO::FETCH_ASSOC) as $row) {
     $worker_types[] = $row['type'];
 }
 ?>
@@ -598,6 +598,61 @@ while ($row = $types_result->fetch_assoc()) {
         .mobile-menu-toggle {
             display: none;
         }
+
+        /* Modern Confirmation Modal Styles */
+        #customConfirmModal .modal-content {
+            border: none;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        #customConfirmModal .modal-header {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-bottom: 1px solid #dee2e6;
+            padding: 1.5rem;
+        }
+
+        #customConfirmModal .modal-body {
+            padding: 2rem 1.5rem;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #495057;
+        }
+
+        #customConfirmModal .modal-footer {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        #customConfirmModal .btn {
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        #customConfirmModal .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        #customConfirmModal .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        #customConfirmModal .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: white;
+        }
+
+        #customConfirmModal .modal-title {
+            font-weight: 700;
+            color: #495057;
+        }
     </style>
 </head>
 <body>
@@ -696,7 +751,7 @@ while ($row = $types_result->fetch_assoc()) {
                                 <?php 
                                 $pending_sql = "SELECT COUNT(*) as count FROM workers WHERE status = 'pending_verification'";
                                 $pending_result = $conn->query($pending_sql);
-                                echo $pending_result->fetch_assoc()['count'];
+                                echo $pending_result->fetchColumn();
                                 ?>
                             </div>
                             <div class="stat-label">Pending Verification</div>
@@ -706,7 +761,7 @@ while ($row = $types_result->fetch_assoc()) {
                                 <?php 
                                 $active_sql = "SELECT COUNT(*) as count FROM workers WHERE status = 'active'";
                                 $active_result = $conn->query($active_sql);
-                                echo $active_result->fetch_assoc()['count'];
+                                echo $active_result->fetchColumn();
                                 ?>
                             </div>
                             <div class="stat-label">Active Workers</div>
@@ -714,9 +769,9 @@ while ($row = $types_result->fetch_assoc()) {
                         <div class="stat-card">
                             <div class="stat-value">
                                 <?php 
-                                $featured_sql = "SELECT COUNT(*) as count FROM workers WHERE is_featured = 1";
+                                $featured_sql = "SELECT COUNT(*) as count FROM workers WHERE is_featured = true";
                                 $featured_result = $conn->query($featured_sql);
-                                echo $featured_result->fetch_assoc()['count'];
+                                echo $featured_result->fetchColumn();
                                 ?>
                             </div>
                             <div class="stat-label">Featured Workers</div>
@@ -780,8 +835,12 @@ while ($row = $types_result->fetch_assoc()) {
                             </div>
                         </div>
                         <div class="card-body">
-                            <?php if ($workers->num_rows > 0): ?>
-                                <?php while ($worker = $workers->fetch_assoc()): ?>
+                            <?php 
+                            // Fetch all workers first
+                            $all_workers = $stmt->fetchAll(PDO::FETCH_ASSOC);
+                            if (count($all_workers) > 0): 
+                            ?>
+                                <?php foreach ($all_workers as $worker): ?>
                                     <div class="worker-card">
                                         <div class="row align-items-center">
                                             <div class="col-md-2 text-center">
@@ -881,7 +940,7 @@ while ($row = $types_result->fetch_assoc()) {
                                             </div>
                                         <?php endif; ?>
                                     </div>
-                                <?php endwhile; ?>
+                                <?php endforeach; ?>
                             <?php else: ?>
                                 <div class="text-center py-5">
                                     <i class="fas fa-hard-hat fa-3x text-muted mb-3"></i>
@@ -1168,22 +1227,22 @@ while ($row = $types_result->fetch_assoc()) {
         // Toggle featured status
         function toggleFeatured(workerId, isFeatured) {
             const action = isFeatured ? 'feature' : 'unfeature';
-            if (confirm(`Are you sure you want to ${action} this worker?`)) {
+            showCustomConfirm(`Are you sure you want to ${action} this worker?`, () => {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
                     <input type="hidden" name="action" value="toggle_featured">
                     <input type="hidden" name="worker_id" value="${workerId}">
-                    <input type="hidden" name="is_featured" value="${isFeatured}">
+                    <input type="hidden" name="featured" value="${isFeatured ? 0 : 1}">
                 `;
                 document.body.appendChild(form);
                 form.submit();
-            }
+            });
         }
 
         // Delete worker
         function deleteWorker(workerId) {
-            if (confirm('Are you sure you want to delete this worker? This action cannot be undone and will remove all associated data.')) {
+            showCustomConfirm('Are you sure you want to delete this worker? This action cannot be undone and will remove all associated data.', () => {
                 const form = document.createElement('form');
                 form.method = 'POST';
                 form.innerHTML = `
@@ -1192,7 +1251,7 @@ while ($row = $types_result->fetch_assoc()) {
                 `;
                 document.body.appendChild(form);
                 form.submit();
-            }
+            });
         }
 
         // Handle search on Enter key
@@ -1210,6 +1269,61 @@ while ($row = $types_result->fetch_assoc()) {
                 bsAlert.close();
             });
         }, 5000);
+
+        // Custom confirmation dialog function
+        function showCustomConfirm(message, onConfirm, onCancel = null) {
+            const modalElement = document.getElementById('customConfirmModal');
+            const messageElement = document.getElementById('customConfirmModalBody');
+            const confirmBtn = document.getElementById('customConfirmOKButton');
+            
+            // Set the message
+            messageElement.textContent = message;
+            
+            // Remove previous event listeners
+            const newConfirmBtn = confirmBtn.cloneNode(true);
+            confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+            
+            // Add click event listener
+            newConfirmBtn.addEventListener('click', () => {
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                modal.hide();
+                if (onConfirm) onConfirm();
+            });
+            
+            // Handle modal hidden event for cancel
+            modalElement.addEventListener('hidden.bs.modal', function () {
+                if (onCancel) onCancel();
+            }, { once: true });
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
     </script>
+
+    <!-- Custom Confirmation Modal -->
+    <div class="modal fade" id="customConfirmModal" tabindex="-1" aria-labelledby="customConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="customConfirmModalLabel">
+                        <i class="fas fa-exclamation-triangle text-warning me-2"></i>Confirm Action
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="customConfirmModalBody">
+                    <!-- Message will be inserted here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <button type="button" class="btn btn-danger" id="customConfirmOKButton">
+                        <i class="fas fa-check me-2"></i>Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

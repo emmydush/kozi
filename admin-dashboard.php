@@ -1,10 +1,8 @@
 <?php
-require_once 'config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and is admin
-if (!is_logged_in() || !is_admin()) {
-    redirect('login.php');
-}
+require_admin();
 
 // Get admin user info
 $user_name = $_SESSION['user_name'];
@@ -38,7 +36,7 @@ $sql = "SELECT
     (SELECT COUNT(*) FROM reviews) as total_reviews";
 
 $result = $conn->query($sql);
-if ($result && $row = $result->fetch_assoc()) {
+if ($result && $row = $result->fetch(PDO::FETCH_ASSOC)) {
     $stats = array_merge($stats, $row);
 }
 
@@ -55,25 +53,25 @@ $activities_sql = "
 
 $activities_result = $conn->query($activities_sql);
 if ($activities_result) {
-    while ($row = $activities_result->fetch_assoc()) {
+    while ($row = $activities_result->fetch(PDO::FETCH_ASSOC)) {
         $recent_activities[] = $row;
     }
 }
 
 // Get top workers by rating
 $top_workers_sql = "
-    SELECT w.name, w.type, w.average_rating as rating, w.total_jobs as review_count, u.email 
+    SELECT w.name, w.type, w.rating, w.review_count, u.email 
     FROM workers w 
     JOIN users u ON w.user_id = u.id 
-    WHERE w.average_rating > 0 
-    ORDER BY w.average_rating DESC, w.total_jobs DESC 
+    WHERE w.rating > 0 
+    ORDER BY w.rating DESC, w.review_count DESC 
     LIMIT 5
 ";
 
 $top_workers = [];
 $top_workers_result = $conn->query($top_workers_sql);
 if ($top_workers_result) {
-    while ($row = $top_workers_result->fetch_assoc()) {
+    while ($row = $top_workers_result->fetch(PDO::FETCH_ASSOC)) {
         $top_workers[] = $row;
     }
 }
@@ -91,7 +89,7 @@ $pending_jobs_sql = "
 $recent_jobs = [];
 $recent_jobs_result = $conn->query($pending_jobs_sql);
 if ($recent_jobs_result) {
-    while ($row = $recent_jobs_result->fetch_assoc()) {
+    while ($row = $recent_jobs_result->fetch(PDO::FETCH_ASSOC)) {
         $recent_jobs[] = $row;
     }
 }
@@ -102,7 +100,7 @@ if ($recent_jobs_result) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard - Household Connect</title>
+    <title>Admin Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>

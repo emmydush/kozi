@@ -3,7 +3,7 @@ require_once 'config.php';
 
 // Check if user is logged in
 if (!is_logged_in()) {
-    redirect('login.php');
+    redirect('index.php');
 }
 
 // Get user role and ID
@@ -47,7 +47,7 @@ $this_month_bookings = count(array_filter($bookings, fn($b) => date('Y-m', strto
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bookings - Household Connect</title>
+    <title><?php echo t('common.bookings'); ?> - Household Connect</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <style>
@@ -358,26 +358,26 @@ $this_month_bookings = count(array_filter($bookings, fn($b) => date('Y-m', strto
                 <i class="fas fa-tachometer-alt"></i> Dashboard
             </a>
             <a class="nav-link" href="post-job.php">
-                <i class="fas fa-plus-circle"></i> Post Job
+                <i class="fas fa-plus-circle"></i> <?php echo t('common.post_job'); ?>
             </a>
             <a class="nav-link" href="workers.php">
-                <i class="fas fa-users"></i> Find Workers
+                <i class="fas fa-users"></i> <?php echo t('common.find_workers'); ?>
             </a>
             <a class="nav-link" href="my-jobs.php">
-                <i class="fas fa-briefcase"></i> My Jobs
+                <i class="fas fa-briefcase"></i> <?php echo t('common.my_jobs'); ?>
             </a>
             <a class="nav-link active" href="bookings.php">
-                <i class="fas fa-calendar-check"></i> Bookings
+                <i class="fas fa-calendar-check"></i> <?php echo t('common.bookings'); ?>
             </a>
             
             <a class="nav-link" href="messages.php">
-                <i class="fas fa-envelope"></i> Messages
+                <i class="fas fa-envelope"></i> <?php echo t('common.messages'); ?>
             </a>
             <a class="nav-link" href="profile.php">
-                <i class="fas fa-user-cog"></i> Profile Settings
+                <i class="fas fa-user-cog"></i> <?php echo t('nav.profile_settings'); ?>
             </a>
             <a class="nav-link" href="reviews.php">
-                <i class="fas fa-star"></i> Reviews
+                <i class="fas fa-star"></i> <?php echo t('common.reviews'); ?>
             </a>
             
             <hr class="text-white-50">
@@ -395,7 +395,7 @@ $this_month_bookings = count(array_filter($bookings, fn($b) => date('Y-m', strto
     <div class="main-content">
         <div class="row">
             <div class="col-12">
-                <h2>Bookings</h2>
+                <h2><?php echo t('common.bookings'); ?></h2>
                 <p class="text-muted">Manage your worker bookings and schedules</p>
             </div>
         </div>
@@ -516,7 +516,7 @@ $this_month_bookings = count(array_filter($bookings, fn($b) => date('Y-m', strto
                                 <h4 class="text-muted">No Bookings Yet</h4>
                                 <p class="text-muted">When you create bookings with workers, they will appear here.</p>
                                 <a href="workers.php" class="btn btn-primary mt-3">
-                                    <i class="fas fa-search me-2"></i>Find Workers
+                                    <i class="fas fa-search me-2"></i><?php echo t('common.find_workers'); ?>
                                 </a>
                             </div>
                         <?php else: ?>
