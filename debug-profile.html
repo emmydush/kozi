@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .debug-section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+    </style>
+</head>
+<body>
+    <h1>Profile Settings Debug</h1>
+    
+    <div class="debug-section">
+        <h2>Form Elements Test</h2>
+        <div id="form-test-results"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>API Test</h2>
+        <button onclick="testPersonalAPI()">Test Personal Update API</button>
+        <button onclick="testSecurityAPI()">Test Security Update API</button>
+        <div id="api-test-results"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Console Log</h2>
+        <div id="console-log"></div>
+    </div>
+
+    <script>
+        // Redirect console.log to our div
+        const originalLog = console.log;
+        const originalError = console.error;
+        const consoleLogDiv = document.getElementById('console-log');
+        
+        function addToConsole(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = type;
+            div.textContent = new Date().toLocaleTimeString() + ': ' + message;
+            consoleLogDiv.appendChild(div);
+            consoleLogDiv.scrollTop = consoleLogDiv.scrollHeight;
+        }
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addToConsole(args.join(' '), 'info');
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addToConsole(args.join(' '), 'error');
+        };
+        
+        // Test form elements
+        function testFormElements() {
+            const results = document.getElementById('form-test-results');
+            results.innerHTML = '<h3>Testing Form Elements...</h3>';
+            
+            // Simulate the same IDs as in profile.php
+            const elements = [
+                'personal-form',
+                'security-form', 
+                'professional-form',
+                'name',
+                'email',
+                'phone',
+                'current-password',
+                'new-password',
+                'confirm-password',
+                'experience',
+                'availability'
+            ];
+            
+            let found = 0;
+            let missing = 0;
+            
+            elements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    found++;
+                    results.innerHTML += `<div class="success">✓ Found: ${id}</div>`;
+                } else {
+                    missing++;
+                    results.innerHTML += `<div class="error">✗ Missing: ${id}</div>`;
+                }
+            });
+            
+            results.innerHTML += `<h3>Summary: ${found} found, ${missing} missing</h3>`;
+        }
+        
+        // Test Personal API
+        async function testPersonalAPI() {
+            const results = document.getElementById('api-test-results');
+            results.innerHTML = '<h3>Testing Personal API...</h3>';
+            
+            try {
+                const testData = {
+                    type: 'personal',
+                    name: 'Test Name',
+                    email: 'test@example.com',
+                    phone: '+1234567890'
+                };
+                
+                console.log('Sending test data:', testData);
+                
+                const response = await fetch('api/update-profile.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(testData)
+                });
+                
+                console.log('Response status:', response.status);
+                
+                const result = await response.json();
+                console.log('API Response:', result);
+                
+                if (result.success) {
+                    results.innerHTML += `<div class="success">✓ API works: ${result.message}</div>`;
+                } else {
+                    results.innerHTML += `<div class="error">✗ API failed: ${result.message}</div>`;
+                }
+            } catch (error) {
+                console.error('API test error:', error);
+                results.innerHTML += `<div class="error">✗ API Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Test Security API
+        async function testSecurityAPI() {
+            const results = document.getElementById('api-test-results');
+            results.innerHTML = '<h3>Testing Security API...</h3>';
+            
+            try {
+                const testData = {
+                    type: 'security',
+                    current_password: 'test123',
+                    new_password: 'newtest123',
+                    confirm_password: 'newtest123'
+                };
+                
+                console.log('Sending security test data:', testData);
+                
+                const response = await fetch('api/update-profile.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(testData)
+                });
+                
+                console.log('Security response status:', response.status);
+                
+                const result = await response.json();
+                console.log('Security API Response:', result);
+                
+                if (result.success) {
+                    results.innerHTML += `<div class="success">✓ Security API works: ${result.message}</div>`;
+                } else {
+                    results.innerHTML += `<div class="error">✗ Security API failed: ${result.message}</div>`;
+                }
+            } catch (error) {
+                console.error('Security API test error:', error);
+                results.innerHTML += `<div class="error">✗ Security API Error: ${error.message}</div>`;
+            }
+        }
+        
+        // Run tests when page loads
+        window.addEventListener('load', function() {
+            console.log('Debug page loaded');
+            testFormElements();
+        });
+    </script>
+</body>
+</html>

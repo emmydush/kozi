@@ -79,6 +79,25 @@ try {
     $stmt->bindParam(':user_id', $user_id);
     
     if ($stmt->execute()) {
+        // Also update workers table if user is a worker
+        if ($_SESSION['user_role'] === 'worker') {
+            // Check if worker record exists
+            $worker_check_sql = "SELECT id FROM workers WHERE user_id = :user_id";
+            $worker_check_stmt = $conn->prepare($worker_check_sql);
+            $worker_check_stmt->bindParam(':user_id', $user_id);
+            $worker_check_stmt->execute();
+            $existing_worker = $worker_check_stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($existing_worker) {
+                // Update worker profile image
+                $worker_sql = "UPDATE workers SET profile_image = :profile_image WHERE user_id = :user_id";
+                $worker_stmt = $conn->prepare($worker_sql);
+                $worker_stmt->bindParam(':profile_image', $relativePath);
+                $worker_stmt->bindParam(':user_id', $user_id);
+                $worker_stmt->execute();
+            }
+        }
+        
         header('Content-Type: application/json');
         echo json_encode([
             'success' => true, 

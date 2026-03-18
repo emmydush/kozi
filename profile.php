@@ -585,97 +585,104 @@ if ($user_role === 'worker') {
         });
         
         document.addEventListener('DOMContentLoaded', function() {
+            console.log('Profile page DOM loaded');
+            
             // Load current profile picture
             loadCurrentProfilePicture();
             
-            <?php if ($user_role === 'worker'): ?>
-            // National ID photo upload functionality
+            // National ID photo upload functionality (only for workers)
             const uploadIdBtn = document.getElementById('upload-id-btn');
-            const nationalIdPhotoInput = document.getElementById('national-id-photo-input');
-            const idPhotoPreview = document.getElementById('id-photo-preview');
-            const idUploadStatus = document.getElementById('id-upload-status');
+            console.log('Upload ID button found:', !!uploadIdBtn);
             
-            // Click handlers
-            uploadIdBtn.addEventListener('click', () => nationalIdPhotoInput.click());
-            
-            // File change handler
-            nationalIdPhotoInput.addEventListener('change', function(e) {
-                const file = e.target.files[0];
-                if (file) {
-                    // Validate file
-                    if (!file.type.startsWith('image/')) {
-                        showIdUploadStatus('Please select an image file', 'error');
-                        return;
-                    }
-                    
-                    if (file.size > 5 * 1024 * 1024) {
-                        showIdUploadStatus('File size must be less than 5MB', 'error');
-                        return;
-                    }
-                    
-                    // Show preview
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        idPhotoPreview.innerHTML = `<img src="${e.target.result}" alt="ID preview" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
-                    };
-                    reader.readAsDataURL(file);
-                    
-                    // Upload file
-                    uploadNationalIdPhoto(file);
-                }
-            });
-            
-            function uploadNationalIdPhoto(file) {
-                const formData = new FormData();
-                formData.append('national_id_photo', file);
+            if (uploadIdBtn) {
+                const nationalIdPhotoInput = document.getElementById('national-id-photo-input');
+                const idPhotoPreview = document.getElementById('id-photo-preview');
+                const idUploadStatus = document.getElementById('id-upload-status');
                 
-                showIdUploadStatus('<span class="upload-loading"></span>Uploading...', 'loading');
+                // Click handlers
+                uploadIdBtn.addEventListener('click', () => {
+                    console.log('Upload ID button clicked');
+                    nationalIdPhotoInput.click();
+                });
                 
-                fetch('api/upload-national-id.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                .then(response => response.json())
-                .then(result => {
-                    if (result.success) {
-                        showIdUploadStatus('✅ ID photo uploaded successfully!', 'success');
-                        // Update preview with uploaded file
-                        setTimeout(() => {
-                            idPhotoPreview.innerHTML = `<img src="uploads/${result.filename}" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
-                        }, 1000);
-                    } else {
-                        showIdUploadStatus('❌ ' + result.message, 'error');
+                // File change handler
+                nationalIdPhotoInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        // Validate file
+                        if (!file.type.startsWith('image/')) {
+                            showIdUploadStatus('Please select an image file', 'error');
+                            return;
+                        }
+                        
+                        if (file.size > 5 * 1024 * 1024) {
+                            showIdUploadStatus('File size must be less than 5MB', 'error');
+                            return;
+                        }
+                        
+                        // Show preview
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            idPhotoPreview.innerHTML = `<img src="${e.target.result}" alt="ID preview" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                        };
+                        reader.readAsDataURL(file);
+                        
+                        // Upload file
+                        uploadNationalIdPhoto(file);
+                    }
+                });
+                
+                function uploadNationalIdPhoto(file) {
+                    const formData = new FormData();
+                    formData.append('national_id_photo', file);
+                    
+                    showIdUploadStatus('<span class="upload-loading"></span>Uploading...', 'loading');
+                    
+                    fetch('api/upload-national-id.php', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            showIdUploadStatus('✅ ID photo uploaded successfully!', 'success');
+                            // Update preview with uploaded file
+                            setTimeout(() => {
+                                idPhotoPreview.innerHTML = `<img src="uploads/${result.filename}" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                            }, 1000);
+                        } else {
+                            showIdUploadStatus('❌ ' + result.message, 'error');
+                            // Reset preview on error
+                            <?php if ($national_id_photo): ?>
+                            idPhotoPreview.innerHTML = `<img src="uploads/<?php echo htmlspecialchars($national_id_photo); ?>" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
+                            <?php else: ?>
+                            idPhotoPreview.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle"></i> No ID photo uploaded</small>';
+                            <?php endif; ?>
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Upload error:', error);
+                        showIdUploadStatus('❌ Upload failed. Please try again.', 'error');
                         // Reset preview on error
                         <?php if ($national_id_photo): ?>
                         idPhotoPreview.innerHTML = `<img src="uploads/<?php echo htmlspecialchars($national_id_photo); ?>" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
                         <?php else: ?>
                         idPhotoPreview.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle"></i> No ID photo uploaded</small>';
                         <?php endif; ?>
-                    }
-                })
-                .catch(error => {
-                    console.error('Upload error:', error);
-                    showIdUploadStatus('❌ Upload failed. Please try again.', 'error');
-                    // Reset preview on error
-                    <?php if ($national_id_photo): ?>
-                    idPhotoPreview.innerHTML = `<img src="uploads/<?php echo htmlspecialchars($national_id_photo); ?>" alt="National ID" style="max-height: 100px; border-radius: 8px; border: 1px solid #ddd;">`;
-                    <?php else: ?>
-                    idPhotoPreview.innerHTML = '<small class="text-muted"><i class="fas fa-info-circle"></i> No ID photo uploaded</small>';
-                    <?php endif; ?>
-                });
-            }
-            
-            function showIdUploadStatus(message, type) {
-                idUploadStatus.innerHTML = message;
-                idUploadStatus.className = `mt-2 text-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'muted'}`;
+                    });
+                }
                 
-                if (type === 'success') {
-                    setTimeout(() => {
-                        idUploadStatus.innerHTML = '';
-                    }, 3000);
+                function showIdUploadStatus(message, type) {
+                    idUploadStatus.innerHTML = message;
+                    idUploadStatus.className = `mt-2 text-${type === 'error' ? 'danger' : type === 'success' ? 'success' : 'muted'}`;
+                    
+                    if (type === 'success') {
+                        setTimeout(() => {
+                            idUploadStatus.innerHTML = '';
+                        }, 3000);
+                    }
                 }
             }
-            <?php endif; ?>
             
             // Profile picture upload functionality
             const changePhotoBtn = document.getElementById('change-photo-btn');
@@ -683,12 +690,21 @@ if ($user_role === 'worker') {
             const profileAvatar = document.getElementById('profile-avatar');
             const uploadStatus = document.getElementById('upload-status');
             
-            // Click handlers
-            changePhotoBtn.addEventListener('click', () => profileImageInput.click());
-            profileAvatar.addEventListener('click', () => profileImageInput.click());
+            console.log('Change photo button found:', !!changePhotoBtn);
+            console.log('Profile image input found:', !!profileImageInput);
             
-            // File change handler
-            profileImageInput.addEventListener('change', function(e) {
+            // Only add event listeners if elements exist
+            if (changePhotoBtn && profileImageInput) {
+                console.log('Adding event listeners to profile photo upload');
+                // Click handlers
+                changePhotoBtn.addEventListener('click', () => {
+                    console.log('Change photo button clicked');
+                    profileImageInput.click();
+                });
+                profileAvatar.addEventListener('click', () => profileImageInput.click());
+                
+                // File change handler
+                profileImageInput.addEventListener('change', function(e) {
                 const file = e.target.files[0];
                 if (file) {
                     // Validate file
@@ -781,61 +797,87 @@ if ($user_role === 'worker') {
                     navbarAvatar.innerHTML = `<img src="${imagePath}" alt="Profile" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                 }
             }
-        });
-        
-        // Form submissions
-        document.getElementById('personal-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                type: 'personal',
-                name: document.getElementById('name').value,
-                email: document.getElementById('email').value,
-                phone: document.getElementById('phone').value
-            };
-            
-            // Add national ID if worker
-            <?php if ($user_role === 'worker'): ?>
-            formData.national_id = document.getElementById('national_id').value;
-            <?php endif; ?>
-            
-            try {
-                console.log('Submitting form data:', formData);
-                
-                const response = await fetch('api/update-profile.php', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    credentials: 'include',
-                    body: JSON.stringify(formData)
-                });
-                
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                
-                const result = await response.json();
-                console.log('API Response:', result);
-                
-                if (result.success) {
-                    showNotification('Success', result.message, 'success');
-                    // Update navbar if name changed
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    showNotification('Error', result.message || 'Update failed', 'error');
-                }
-            } catch (error) {
-                console.error('Form submission error:', error);
-                showNotification('Error', 'An error occurred. Please try again.', 'error');
             }
         });
         
-        document.getElementById('security-form').addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const currentPassword = document.getElementById('current-password').value;
-            const newPassword = document.getElementById('new-password').value;
-            const confirmPassword = document.getElementById('confirm-password').value;
+        // Form submissions
+        const personalForm = document.getElementById('personal-form');
+        console.log('Personal form found:', !!personalForm);
+        
+        if (personalForm) {
+            personalForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                console.log('Personal form submitted');
+                
+                // Check if all required fields exist
+                const nameField = document.getElementById('name');
+                const emailField = document.getElementById('email');
+                const phoneField = document.getElementById('phone');
+                
+                console.log('Name field found:', !!nameField, 'Value:', nameField?.value);
+                console.log('Email field found:', !!emailField, 'Value:', emailField?.value);
+                console.log('Phone field found:', !!phoneField, 'Value:', phoneField?.value);
+                
+                const formData = {
+                    type: 'personal',
+                    name: nameField?.value || '',
+                    email: emailField?.value || '',
+                    phone: phoneField?.value || ''
+                };
+                
+                // Add national ID if worker
+                <?php if ($user_role === 'worker'): ?>
+                const nationalIdField = document.getElementById('national_id');
+                if (nationalIdField) {
+                    formData.national_id = nationalIdField.value;
+                }
+                <?php endif; ?>
+                
+                try {
+                    console.log('Submitting form data:', formData);
+                    
+                    const response = await fetch('api/update-profile.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        credentials: 'include',
+                        body: JSON.stringify(formData)
+                    });
+                    
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    const result = await response.json();
+                    console.log('API Response:', result);
+                    
+                    if (result.success) {
+                        showNotification('Success', result.message, 'success');
+                        // Update navbar if name changed
+                        setTimeout(() => location.reload(), 1500);
+                    } else {
+                        showNotification('Error', result.message || 'Update failed', 'error');
+                    }
+                } catch (error) {
+                    console.error('Form submission error:', error);
+                    showNotification('Error', 'An error occurred. Please try again.', 'error');
+                }
+            });
+        }
+        
+        const securityForm = document.getElementById('security-form');
+        console.log('Security form found:', !!securityForm);
+        
+        if (securityForm) {
+            securityForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                console.log('Security form submitted');
+                
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
             
             if (newPassword !== confirmPassword) {
                 showNotification('Error', 'Passwords do not match!', 'error');
@@ -870,16 +912,21 @@ if ($user_role === 'worker') {
                 showNotification('Error', 'An error occurred. Please try again.', 'error');
             }
         });
+        }
         
         const professionalForm = document.getElementById('professional-form');
+        console.log('Professional form found:', !!professionalForm);
+        
         if (professionalForm) {
             professionalForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const skills = [];
-            document.querySelectorAll('input[name="skills[]"]:checked').forEach(checkbox => {
-                skills.push(checkbox.value);
-            });
+                e.preventDefault();
+                
+                console.log('Professional form submitted');
+                
+                const skills = [];
+                document.querySelectorAll('input[name="skills[]"]:checked').forEach(checkbox => {
+                    skills.push(checkbox.value);
+                });
             
             const formData = {
                 type: 'professional',
